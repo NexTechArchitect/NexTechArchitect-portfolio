@@ -68,10 +68,10 @@ function EntryPointReactorCanvas() {
     const ops: UOp[] = Array.from({ length: isMobile ? 7 : 14 }, (_, i) => ({
       angle:  (i / (isMobile ? 7 : 14)) * Math.PI * 2,
       orbitR: (isMobile ? 55 : 80) + (i % 3) * (isMobile ? 28 : 42),   // Z dim — orbit depth
-      speed:  0.004 + (i % 5) * 0.003,                                   // F dim — unique speed
+      speed:  0.004 + (i % 5) * 0.003,                                 // F dim — unique speed
       phase:  (i / 14) * Math.PI * 2,
       freq:   0.6 + i * 0.18,
-      z:      0.5 + (i % 3) * 0.25,                                      // Z dim — depth scale
+      z:      0.5 + (i % 3) * 0.25,                                    // Z dim — depth scale
       label:  LABELS[i % LABELS.length],
       color:  COLORS[i % COLORS.length],
       size:   2 + i % 3,
@@ -89,7 +89,7 @@ function EntryPointReactorCanvas() {
       W = c.width = c.offsetWidth; H = c.height = c.offsetHeight;
       ctx.fillStyle = "rgba(4,0,10,0.18)"; ctx.fillRect(0,0,W,H);
 
-      const cx = W/2, cy = H/2;
+      const cx = W/2, cy = H/2 - (isMobile ? 40 : 0); // Shift up on mobile
 
       // Orbit rings (Z dim — depth layers)
       [1,2,3].forEach((layer, li) => {
@@ -113,7 +113,7 @@ function EntryPointReactorCanvas() {
 
       // Orbiting UserOp particles
       ops.forEach(op => {
-        op.angle += op.speed;                                             // T dim
+        op.angle += op.speed;                                           // T dim
 
         // 5th dim: vertical oscillation at unique frequency
         const vOsc = Math.sin(t * 0.02 * op.freq + op.phase) * (isMobile?10:16);
@@ -398,7 +398,7 @@ function VaultCard({ children, className="", glow="rgba(245,158,11,0.08)" }: { c
   return (
     <motion.div ref={ref} onMouseMove={onMove} onMouseLeave={onLeave}
       style={{ rotateX:rX, rotateY:rY, transformStyle:"preserve-3d", perspective:1200 }}
-      className={`relative rounded-3xl overflow-hidden aa-glass transition-colors duration-300 hover:border-[#F59E0B]/40 ${className}`}
+      className={`relative rounded-2xl md:rounded-3xl overflow-hidden aa-glass transition-colors duration-300 hover:border-[#F59E0B]/40 ${className}`}
     >
       <motion.div className="absolute inset-0 z-0 pointer-events-none"
         style={{ background: useTransform(()=>`radial-gradient(500px circle at ${shX.get()} ${shY.get()}, ${glow}, transparent 55%)`) }}
@@ -421,13 +421,14 @@ export default function AACoreCaseStudy() {
   ] as const;
 
   return (
-    <div className="w-full bg-[#04000A] text-slate-300 aa-body overflow-hidden selection:bg-[#F59E0B]/30 selection:text-[#FCD34D]">
+    <div className="w-full bg-[#04000A] text-slate-300 aa-body overflow-x-hidden selection:bg-[#F59E0B]/30 selection:text-[#FCD34D]">
       <style>{CSS}</style>
 
       {/* ══════════════════════════════════════
-          HERO — Reactor Canvas + Title
+         HERO — Reactor Canvas + Title
       ══════════════════════════════════════ */}
-      <div className="relative w-full min-h-[52vh] md:min-h-[62vh] flex flex-col justify-end border-b border-[#F59E0B]/20 overflow-hidden">
+      {/* Mobile height reduced to 40vh, Desktop 62vh to fix the huge gap */}
+      <div className="relative w-full min-h-[40vh] md:min-h-[62vh] flex flex-col justify-end border-b border-[#F59E0B]/20 overflow-hidden pt-12 md:pt-0">
 
         <EntryPointReactorCanvas />
 
@@ -435,36 +436,38 @@ export default function AACoreCaseStudy() {
         <div className="absolute inset-0 bg-gradient-to-t from-[#04000A] via-[#04000A]/65 to-transparent pointer-events-none" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#04000A] via-[#04000A]/30 to-transparent pointer-events-none" />
 
-        <div className="relative z-10 px-6 md:px-16 pt-28 pb-14 w-full max-w-7xl mx-auto">
+        {/* Adjusted padding for mobile to bring content up */}
+        <div className="relative z-10 px-5 md:px-16 pt-16 md:pt-28 pb-8 md:pb-14 w-full max-w-7xl mx-auto">
           <motion.div initial={{ opacity:0, y:32 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.7, ease:"easeOut" }}>
 
             {/* Badges */}
-            <div className="flex flex-wrap items-center gap-3 mb-6">
-              <span className="px-3 py-1.5 bg-[#F59E0B]/15 border border-[#F59E0B]/50 text-[#FCD34D] text-[10px] font-bold uppercase tracking-[0.2em] rounded shadow-[0_0_15px_rgba(245,158,11,0.25)] aa-mono">
+            <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-4 md:mb-6">
+              <span className="px-2 md:px-3 py-1 md:py-1.5 bg-[#F59E0B]/15 border border-[#F59E0B]/50 text-[#FCD34D] text-[8px] md:text-[10px] font-bold uppercase tracking-[0.2em] rounded shadow-[0_0_15px_rgba(245,158,11,0.25)] aa-mono">
                 ERC-4337
               </span>
-              <span className="px-3 py-1.5 bg-white/5 border border-white/10 text-slate-300 text-[10px] font-bold uppercase tracking-[0.2em] rounded backdrop-blur-md aa-mono">
-                No Hard Fork Required
+              <span className="px-2 md:px-3 py-1 md:py-1.5 bg-white/5 border border-white/10 text-slate-300 text-[8px] md:text-[10px] font-bold uppercase tracking-[0.2em] rounded backdrop-blur-md aa-mono">
+                No Hard Fork
               </span>
-              <span className="px-3 py-1.5 bg-[#00D4FF]/10 border border-[#00D4FF]/30 text-[#00D4FF] text-[10px] font-bold uppercase tracking-[0.2em] rounded aa-mono">
+              <span className="px-2 md:px-3 py-1 md:py-1.5 bg-[#00D4FF]/10 border border-[#00D4FF]/30 text-[#00D4FF] text-[8px] md:text-[10px] font-bold uppercase tracking-[0.2em] rounded aa-mono">
                 Foundry
               </span>
             </div>
 
-            <h1 className="text-4xl md:text-6xl lg:text-[76px] font-black tracking-tight leading-[1.04] text-white mb-6 aa-heading">
+            {/* Text sizes optimized for mobile to avoid taking up the whole screen */}
+            <h1 className="text-3xl sm:text-5xl md:text-[76px] font-black tracking-tight leading-[1.05] text-white mb-4 md:mb-6 aa-heading">
               Account <br className="hidden md:block" />
               <span className="aa-gold-text">Abstraction.</span>
             </h1>
 
-            <p className="text-slate-400 text-sm md:text-base aa-body font-medium max-w-2xl leading-relaxed mb-8 border-l-2 border-[#F59E0B] pl-4 md:pl-6 bg-gradient-to-r from-[#F59E0B]/08 to-transparent py-2">
+            <p className="text-slate-400 text-xs md:text-base aa-body font-medium max-w-2xl leading-relaxed mb-6 md:mb-8 border-l-2 border-[#F59E0B] pl-3 md:pl-6 bg-gradient-to-r from-[#F59E0B]/08 to-transparent py-1.5 md:py-2">
               From-scratch ERC-4337 implementation — bypassing high-level SDKs to expose raw{" "}
               <strong className="text-white">UserOperation packing</strong>, EntryPoint validation,
-              and Paymaster gas sponsorship mechanics directly in Solidity and Foundry.
+              and Paymaster gas sponsorship.
             </p>
 
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
               <Link href="https://github.com/NexTechArchitect/ERC4337-Account-Abstraction-Foundry" target="_blank"
-                className="group relative px-8 py-4 bg-[#F59E0B] text-[#04000A] font-black text-[11px] uppercase tracking-[0.2em] rounded-xl overflow-hidden transition-all hover:shadow-[0_0_40px_rgba(245,158,11,0.4)] aa-mono"
+                className="group relative px-6 md:px-8 py-3 md:py-4 bg-[#F59E0B] text-[#04000A] font-black text-[10px] md:text-[11px] uppercase tracking-[0.2em] rounded-xl overflow-hidden transition-all hover:shadow-[0_0_40px_rgba(245,158,11,0.4)] aa-mono text-center"
               >
                 <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
                 <span className="relative z-10 flex items-center justify-center gap-2">
@@ -478,40 +481,41 @@ export default function AACoreCaseStudy() {
       </div>
 
       {/* ══════════════════════════════════════
-          METRICS BAR
+         METRICS BAR
       ══════════════════════════════════════ */}
       <div className="border-b border-white/5 bg-[#020008]">
-        <div className="max-w-7xl mx-auto px-6 md:px-16 py-8 grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-0 md:divide-x divide-[#F59E0B]/15">
+        {/* Grid-cols-2 on mobile looks messy if text is too big. Made it compact. */}
+        <div className="max-w-7xl mx-auto px-5 md:px-16 py-6 md:py-8 grid grid-cols-2 md:grid-cols-4 gap-y-6 gap-x-4 md:gap-0 md:divide-x divide-[#F59E0B]/15">
           {[
             { value:"4337", prefix:"ERC-", label:"Standard",     sub:"No consensus change",   color:"text-[#FCD34D]" },
-            { value:"0.7",  prefix:"v",    label:"EntryPoint",    sub:"Latest spec",           color:"text-white" },
-            { value:"3",    suffix:"x",    label:"Core Modules",  sub:"Account·Paymaster·Keys",color:"text-[#00D4FF]" },
+            { value:"0.7",  prefix:"v",    label:"EntryPoint",   sub:"Latest spec",           color:"text-white" },
+            { value:"3",    suffix:"x",    label:"Core Modules", sub:"Account·Paymaster·Keys",color:"text-[#00D4FF]" },
             { value:"0",    suffix:"gas",  label:"User Friction", sub:"Gasless onboarding",    color:"text-[#34D399]" },
           ].map((s,i) => (
             <motion.div key={i} initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.3+i*0.1 }}
-              className="px-0 md:px-8 text-center md:text-left first:pl-0">
-              <h3 className={`text-3xl md:text-5xl font-black mb-2 ${s.color} aa-heading`}>
+              className="px-0 md:px-8 text-left first:pl-0">
+              <h3 className={`text-2xl sm:text-3xl md:text-5xl font-black mb-1 md:mb-2 ${s.color} aa-heading`}>
                 {s.prefix}{s.value}{s.suffix}
               </h3>
-              <p className="text-white font-bold text-[10px] uppercase tracking-widest mb-1 aa-mono">{s.label}</p>
-              <p className="text-slate-500 text-[9px] uppercase tracking-wider aa-mono">{s.sub}</p>
+              <p className="text-white font-bold text-[8px] md:text-[10px] uppercase tracking-widest mb-0.5 md:mb-1 aa-mono truncate">{s.label}</p>
+              <p className="text-slate-500 text-[7px] md:text-[9px] uppercase tracking-wider aa-mono truncate">{s.sub}</p>
             </motion.div>
           ))}
         </div>
       </div>
 
       {/* ══════════════════════════════════════
-          STICKY TABS
+         STICKY TABS
       ══════════════════════════════════════ */}
       <div className="sticky top-0 z-50 bg-[#04000A]/92 backdrop-blur-xl border-b border-[#F59E0B]/18">
         <div className="max-w-7xl mx-auto px-4 md:px-16 flex overflow-x-auto aa-scroll">
           {TABS.map((tb, i) => (
             <button key={tb.id} onClick={() => setTab(tb.id)}
-              className={`relative flex-shrink-0 px-6 py-5 text-[10px] font-bold uppercase tracking-[0.2em] transition-colors aa-mono ${
+              className={`relative flex-shrink-0 px-4 md:px-6 py-4 md:py-5 text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em] transition-colors aa-mono ${
                 tab === tb.id ? "text-[#F59E0B]" : "text-slate-500 hover:text-white"
               }`}
             >
-              <span className="opacity-30 mr-2">0{i+1}</span>{tb.label}
+              <span className="opacity-30 mr-1.5 md:mr-2">0{i+1}</span>{tb.label}
               {tab === tb.id && (
                 <motion.div layoutId="aa-tab"
                   className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#F59E0B]"
@@ -524,41 +528,41 @@ export default function AACoreCaseStudy() {
       </div>
 
       {/* ══════════════════════════════════════
-          CONTENT
+         CONTENT
       ══════════════════════════════════════ */}
-      <div className="max-w-7xl mx-auto px-6 md:px-16 py-12 md:py-20 min-h-[60vh]">
+      <div className="max-w-7xl mx-auto px-5 md:px-16 py-8 md:py-20 min-h-[60vh]">
         <AnimatePresence mode="wait">
 
           {/* ─── TAB 1: Architecture ─── */}
           {tab === "arch" && (
             <motion.div key="arch" initial={{ opacity:0, y:18 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:-18 }}
-              className="space-y-7">
+              className="space-y-6 md:space-y-7">
 
               {/* EOA vs Smart Account comparison */}
-              <VaultCard className="p-7 md:p-10">
-                <h3 className="text-base font-black uppercase tracking-widest text-[#FCD34D] mb-7 text-center aa-mono">
+              <VaultCard className="p-5 md:p-10">
+                <h3 className="text-sm md:text-base font-black uppercase tracking-widest text-[#FCD34D] mb-5 md:mb-7 text-center aa-mono">
                   EOA vs Smart Account
                 </h3>
                 <div className="overflow-x-auto aa-scroll">
-                  <table className="w-full text-sm min-w-[500px]">
+                  <table className="w-full text-xs md:text-sm min-w-[450px]">
                     <thead>
                       <tr className="border-b border-white/8">
-                        <th className="text-left py-3 pr-6 text-slate-500 font-bold uppercase tracking-wider text-[10px] aa-mono">Feature</th>
-                        <th className="text-left py-3 pr-6 text-slate-400 font-bold uppercase tracking-wider text-[10px] aa-mono">Traditional EOA</th>
-                        <th className="text-left py-3 text-[#F59E0B] font-bold uppercase tracking-wider text-[10px] aa-mono">Smart Account (AA)</th>
+                        <th className="text-left py-2 md:py-3 pr-4 md:pr-6 text-slate-500 font-bold uppercase tracking-wider text-[9px] md:text-[10px] aa-mono">Feature</th>
+                        <th className="text-left py-2 md:py-3 pr-4 md:pr-6 text-slate-400 font-bold uppercase tracking-wider text-[9px] md:text-[10px] aa-mono">Traditional EOA</th>
+                        <th className="text-left py-2 md:py-3 text-[#F59E0B] font-bold uppercase tracking-wider text-[9px] md:text-[10px] aa-mono">Smart Account (AA)</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
                       {[
-                        ["Control",       "Single Private Key",      "Arbitrary Logic (Multi-sig, Social Recovery)"],
-                        ["Gas Payment",   "ETH only",                "ETH, ERC-20, or Sponsored (Gasless)"],
-                        ["Security",      "Seed Phrase Risk",        "Session Keys, Spending Limits"],
+                        ["Control",       "Single Private Key",      "Arbitrary Logic (Multi-sig)"],
+                        ["Gas Payment",   "ETH only",                "ETH, ERC-20, Sponsored"],
+                        ["Security",      "Seed Phrase Risk",        "Session Keys, Spend Limits"],
                         ["Upgradability", "Impossible",              "Possible (via Proxies)"],
                       ].map(([feat, eoa, aa], i) => (
                         <tr key={i} className="hover:bg-white/[0.02] transition-colors">
-                          <td className="py-4 pr-6 text-slate-400 font-semibold text-xs aa-mono">{feat}</td>
-                          <td className="py-4 pr-6 text-slate-500 text-xs aa-body">{eoa}</td>
-                          <td className="py-4 text-[#34D399] text-xs font-semibold aa-body">{aa}</td>
+                          <td className="py-3 md:py-4 pr-4 md:pr-6 text-slate-400 font-semibold text-[10px] md:text-xs aa-mono">{feat}</td>
+                          <td className="py-3 md:py-4 pr-4 md:pr-6 text-slate-500 text-[11px] md:text-xs aa-body">{eoa}</td>
+                          <td className="py-3 md:py-4 text-[#34D399] text-[11px] md:text-xs font-semibold aa-body">{aa}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -566,25 +570,25 @@ export default function AACoreCaseStudy() {
                 </div>
               </VaultCard>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-7">
                 {/* SmartAccount.sol */}
-                <VaultCard className="p-7 flex flex-col" glow="rgba(245,158,11,0.10)">
-                  <div className="flex items-center justify-between mb-5">
-                    <h3 className="text-base font-black text-white aa-heading">Smart Account Core</h3>
-                    <span className="text-2xl opacity-40">🔐</span>
+                <VaultCard className="p-5 md:p-7 flex flex-col" glow="rgba(245,158,11,0.10)">
+                  <div className="flex items-center justify-between mb-4 md:mb-5">
+                    <h3 className="text-sm md:text-base font-black text-white aa-heading">Smart Account Core</h3>
+                    <span className="text-xl md:text-2xl opacity-40">🔐</span>
                   </div>
-                  <p className="text-sm text-slate-400 leading-relaxed mb-6 aa-body">
-                    Implements <code className="text-[#FCD34D] bg-[#F59E0B]/10 px-1.5 py-0.5 rounded text-[10px] aa-mono">IAccount</code> interface.
+                  <p className="text-xs md:text-sm text-slate-400 leading-relaxed mb-5 md:mb-6 aa-body">
+                    Implements <code className="text-[#FCD34D] bg-[#F59E0B]/10 px-1.5 py-0.5 rounded text-[9px] md:text-[10px] aa-mono">IAccount</code> interface.
                     Handles nonce management, ECDSA signature validation, and execution — all in Solidity without SDK wrappers.
                   </p>
-                  <div className="bg-[#020008] border border-[#F59E0B]/15 rounded-xl p-5 aa-mono text-xs space-y-2.5 mt-auto">
+                  <div className="bg-[#020008] border border-[#F59E0B]/15 rounded-lg md:rounded-xl p-4 md:p-5 aa-mono text-[10px] md:text-xs space-y-2 md:space-y-2.5 mt-auto">
                     {[
                       ["Nonce Mgmt",   "Prevents replay attacks"],
                       ["Sig Validate", "Verifies owner / session key"],
                       ["Execute",      "Calls target if valid"],
                     ].map(([k,v]) => (
-                      <div key={k} className="flex flex-col sm:flex-row sm:items-center gap-1.5">
-                        <span className="text-[#F59E0B] font-semibold w-28 flex-shrink-0">{k}:</span>
+                      <div key={k} className="flex flex-col sm:flex-row sm:items-center gap-1 md:gap-1.5">
+                        <span className="text-[#F59E0B] font-semibold w-24 md:w-28 flex-shrink-0">{k}:</span>
                         <span className="text-slate-300">{v}</span>
                       </div>
                     ))}
@@ -592,23 +596,23 @@ export default function AACoreCaseStudy() {
                 </VaultCard>
 
                 {/* Paymaster */}
-                <VaultCard className="p-7 flex flex-col" glow="rgba(167,139,250,0.10)">
-                  <div className="flex items-center justify-between mb-5">
-                    <h3 className="text-base font-black text-white aa-heading">Gas Sponsorship</h3>
-                    <span className="text-2xl opacity-40">⛽</span>
+                <VaultCard className="p-5 md:p-7 flex flex-col" glow="rgba(167,139,250,0.10)">
+                  <div className="flex items-center justify-between mb-4 md:mb-5">
+                    <h3 className="text-sm md:text-base font-black text-white aa-heading">Gas Sponsorship</h3>
+                    <span className="text-xl md:text-2xl opacity-40">⛽</span>
                   </div>
-                  <p className="text-sm text-slate-400 leading-relaxed mb-6 aa-body">
-                    <code className="text-[#A78BFA] bg-[#A78BFA]/10 px-1.5 py-0.5 rounded text-[10px] aa-mono">SimplePaymaster.sol</code> deposits ETH into the EntryPoint.
+                  <p className="text-xs md:text-sm text-slate-400 leading-relaxed mb-5 md:mb-6 aa-body">
+                    <code className="text-[#A78BFA] bg-[#A78BFA]/10 px-1.5 py-0.5 rounded text-[9px] md:text-[10px] aa-mono">SimplePaymaster.sol</code> deposits ETH into the EntryPoint.
                     Gas deducted from Paymaster, not the Smart Account — enabling true gasless UX.
                   </p>
-                  <div className="bg-[#020008] border border-[#A78BFA]/15 rounded-xl p-5 aa-mono text-xs space-y-2.5 mt-auto">
+                  <div className="bg-[#020008] border border-[#A78BFA]/15 rounded-lg md:rounded-xl p-4 md:p-5 aa-mono text-[10px] md:text-xs space-y-2 md:space-y-2.5 mt-auto">
                     {[
                       ["Decoupling",  "Sender ≠ Gas payer"],
                       ["ERC-20 Gas", "Pay fees in any token"],
                       ["Gasless",    "Pure Web2 onboarding"],
                     ].map(([k,v]) => (
-                      <div key={k} className="flex flex-col sm:flex-row sm:items-center gap-1.5">
-                        <span className="text-[#A78BFA] font-semibold w-28 flex-shrink-0">{k}:</span>
+                      <div key={k} className="flex flex-col sm:flex-row sm:items-center gap-1 md:gap-1.5">
+                        <span className="text-[#A78BFA] font-semibold w-24 md:w-28 flex-shrink-0">{k}:</span>
                         <span className="text-slate-300">{v}</span>
                       </div>
                     ))}
@@ -617,18 +621,18 @@ export default function AACoreCaseStudy() {
               </div>
 
               {/* Alt Mempool explanation */}
-              <VaultCard className="p-7 md:p-10" glow="rgba(0,212,255,0.07)">
-                <h3 className="text-base font-black uppercase tracking-widest text-[#00D4FF] mb-6 aa-mono">Why ERC-4337?</h3>
-                <div className="grid sm:grid-cols-3 gap-6">
+              <VaultCard className="p-5 md:p-10" glow="rgba(0,212,255,0.07)">
+                <h3 className="text-sm md:text-base font-black uppercase tracking-widest text-[#00D4FF] mb-5 md:mb-6 aa-mono">Why ERC-4337?</h3>
+                <div className="grid sm:grid-cols-3 gap-5 md:gap-6">
                   {[
                     { icon:"🔀", title:"Alternative Mempool", desc:"UserOps go to a separate mempool — no Ethereum consensus change required." },
                     { icon:"📦", title:"Bundlers", desc:"Special nodes bundle UserOps into standard Ethereum txs and submit via handleOps()." },
                     { icon:"🎯", title:"EntryPoint Singleton", desc:"One contract coordinates all validation and execution across every Smart Account." },
                   ].map((item,i) => (
-                    <div key={i} className="flex flex-col gap-3">
-                      <span className="text-3xl">{item.icon}</span>
-                      <h4 className="text-white font-bold text-sm aa-heading">{item.title}</h4>
-                      <p className="text-slate-400 text-xs leading-relaxed aa-body">{item.desc}</p>
+                    <div key={i} className="flex flex-col gap-2 md:gap-3">
+                      <span className="text-2xl md:text-3xl">{item.icon}</span>
+                      <h4 className="text-white font-bold text-xs md:text-sm aa-heading">{item.title}</h4>
+                      <p className="text-slate-400 text-[11px] md:text-xs leading-relaxed aa-body">{item.desc}</p>
                     </div>
                   ))}
                 </div>
@@ -640,28 +644,28 @@ export default function AACoreCaseStudy() {
           {/* ─── TAB 2: Transaction Flow ─── */}
           {tab === "flow" && (
             <motion.div key="flow" initial={{ opacity:0, y:18 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:-18 }}
-              className="space-y-7">
+              className="space-y-6 md:space-y-7">
 
               {/* Live UserOp pipeline */}
               <VaultCard className="p-0 overflow-hidden" glow="rgba(0,212,255,0.08)">
-                <div className="px-7 pt-6 pb-3 border-b border-white/5 flex items-center justify-between bg-[#020008]">
-                  <h3 className="text-sm font-black text-white uppercase tracking-widest aa-mono">Live UserOp Pipeline</h3>
-                  <span className="bg-[#00D4FF]/15 text-[#00D4FF] text-[9px] px-2.5 py-1 rounded font-bold uppercase tracking-wider animate-pulse aa-mono">Simulating</span>
+                <div className="px-5 md:px-7 pt-5 md:pt-6 pb-3 border-b border-white/5 flex items-center justify-between bg-[#020008]">
+                  <h3 className="text-xs md:text-sm font-black text-white uppercase tracking-widest aa-mono">Live UserOp Pipeline</h3>
+                  <span className="bg-[#00D4FF]/15 text-[#00D4FF] text-[8px] md:text-[9px] px-2 py-1 rounded font-bold uppercase tracking-wider animate-pulse aa-mono">Simulating</span>
                 </div>
-                <div className="bg-[#04000A] px-4 py-6">
+                <div className="bg-[#04000A] px-2 md:px-4 py-4 md:py-6">
                   <UserOpFlowCanvas />
                 </div>
-                <div className="px-7 pb-6 pt-2 bg-[#020008] border-t border-white/5 aa-mono text-[10px]">
+                <div className="px-5 md:px-7 pb-5 md:pb-6 pt-2 bg-[#020008] border-t border-white/5 aa-mono text-[9px] md:text-[10px]">
                   <p className="text-slate-500 mb-1">{"// ERC-4337 standard lifecycle"}</p>
                   <p className="text-slate-400">Sign <span className="text-[#F59E0B]">UserOp</span> → Alt Mempool → Bundler → <span className="text-[#00D4FF]">EntryPoint.handleOps()</span> → Execute</p>
                 </div>
               </VaultCard>
 
               {/* Validation signal canvas */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-7">
                 <VaultCard className="p-0 overflow-hidden" glow="rgba(245,158,11,0.08)">
-                  <div className="px-6 pt-5 pb-3 border-b border-white/5 bg-[#020008]">
-                    <h3 className="text-sm font-black text-white uppercase tracking-widest aa-mono">Validation Signal</h3>
+                  <div className="px-5 md:px-6 pt-4 md:pt-5 pb-3 border-b border-white/5 bg-[#020008]">
+                    <h3 className="text-xs md:text-sm font-black text-white uppercase tracking-widest aa-mono">Validation Signal</h3>
                   </div>
                   <div className="bg-[#04000A] p-4">
                     <ValidationCanvas />
@@ -669,9 +673,9 @@ export default function AACoreCaseStudy() {
                 </VaultCard>
 
                 {/* Step breakdown */}
-                <VaultCard className="p-7" glow="rgba(52,211,153,0.07)">
-                  <h3 className="text-sm font-black text-white uppercase tracking-widest mb-6 aa-mono">Flow Breakdown</h3>
-                  <div className="space-y-4">
+                <VaultCard className="p-5 md:p-7" glow="rgba(52,211,153,0.07)">
+                  <h3 className="text-xs md:text-sm font-black text-white uppercase tracking-widest mb-5 md:mb-6 aa-mono">Flow Breakdown</h3>
+                  <div className="space-y-3 md:space-y-4">
                     {[
                       { n:"01", title:"UserOperation Signed",    desc:"User signs the packed UserOp with their private key or session key.",       color:"#F59E0B" },
                       { n:"02", title:"Bundler Aggregation",     desc:"Bundler picks up UserOps from alt mempool, simulates locally, calls handleOps.", color:"#A78BFA" },
@@ -680,14 +684,14 @@ export default function AACoreCaseStudy() {
                     ].map((s,i) => (
                       <motion.div key={i}
                         initial={{ opacity:0, x:-16 }} animate={{ opacity:1, x:0 }} transition={{ delay:i*0.09 }}
-                        className="flex items-start gap-4 p-4 rounded-xl bg-[#020008] border border-white/5 hover:border-white/10 transition-colors"
+                        className="flex items-start gap-3 md:gap-4 p-3 md:p-4 rounded-xl bg-[#020008] border border-white/5 hover:border-white/10 transition-colors"
                       >
-                        <span className="text-2xl font-black flex-shrink-0 mt-0.5 aa-heading" style={{ color:s.color+"55" }}>
+                        <span className="text-xl md:text-2xl font-black flex-shrink-0 mt-0.5 aa-heading" style={{ color:s.color+"55" }}>
                           {s.n}
                         </span>
                         <div>
-                          <h4 className="font-bold text-white text-sm mb-1 aa-heading">{s.title}</h4>
-                          <p className="text-slate-400 text-xs leading-relaxed aa-body">{s.desc}</p>
+                          <h4 className="font-bold text-white text-xs md:text-sm mb-1 aa-heading">{s.title}</h4>
+                          <p className="text-slate-400 text-[10px] md:text-xs leading-relaxed aa-body">{s.desc}</p>
                         </div>
                       </motion.div>
                     ))}
@@ -701,42 +705,42 @@ export default function AACoreCaseStudy() {
           {/* ─── TAB 3: Session Keys ─── */}
           {tab === "session" && (
             <motion.div key="session" initial={{ opacity:0, y:18 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:-18 }}
-              className="space-y-7">
+              className="space-y-6 md:space-y-7">
 
-              <VaultCard className="p-7 md:p-10" glow="rgba(244,114,182,0.08)">
-                <div className="flex items-center gap-4 mb-8">
-                  <span className="text-4xl">🔑</span>
+              <VaultCard className="p-5 md:p-10" glow="rgba(244,114,182,0.08)">
+                <div className="flex items-center gap-3 md:gap-4 mb-6 md:mb-8">
+                  <span className="text-3xl md:text-4xl">🔑</span>
                   <div>
-                    <h3 className="text-xl font-black text-white aa-heading">Session Key Manager</h3>
-                    <p className="text-[#F472B6] text-[10px] font-bold uppercase tracking-widest aa-mono">SessionKeyManager.sol</p>
+                    <h3 className="text-lg md:text-xl font-black text-white aa-heading">Session Key Manager</h3>
+                    <p className="text-[#F472B6] text-[9px] md:text-[10px] font-bold uppercase tracking-widest aa-mono">SessionKeyManager.sol</p>
                   </div>
                 </div>
-                <p className="text-slate-300 text-sm leading-relaxed mb-8 max-w-2xl aa-body">
+                <p className="text-slate-300 text-xs md:text-sm leading-relaxed mb-6 md:mb-8 max-w-2xl aa-body">
                   Session keys allow users to generate a <strong className="text-white">temporary key with restricted permissions</strong> — e.g.
                   <em className="text-[#FCD34D]"> "Can only interact with Uniswap for the next 2 hours."</em> This removes constant wallet pop-ups
                   while maintaining cryptographic security.
                 </p>
 
-                <div className="grid sm:grid-cols-3 gap-5 mb-8">
+                <div className="grid sm:grid-cols-3 gap-4 md:gap-5 mb-6 md:mb-8">
                   {[
                     { title:"Time-Bound",      desc:"Session expires after a set duration — no manual revocation needed.",          color:"#F472B6" },
                     { title:"Scope-Limited",   desc:"Key can only call whitelisted contracts or functions.",                        color:"#FCD34D" },
                     { title:"Delegated Auth",  desc:"Owner can authorize without exposing their primary private key.",              color:"#A78BFA" },
                   ].map((item,i) => (
-                    <div key={i} className="p-5 rounded-2xl bg-[#020008] border border-white/5 hover:border-white/10 transition-colors">
-                      <h4 className="font-bold text-sm mb-2 aa-heading" style={{ color:item.color }}>{item.title}</h4>
-                      <p className="text-slate-400 text-xs leading-relaxed aa-body">{item.desc}</p>
+                    <div key={i} className="p-4 md:p-5 rounded-xl md:rounded-2xl bg-[#020008] border border-white/5 hover:border-white/10 transition-colors">
+                      <h4 className="font-bold text-xs md:text-sm mb-1.5 md:mb-2 aa-heading" style={{ color:item.color }}>{item.title}</h4>
+                      <p className="text-slate-400 text-[10px] md:text-xs leading-relaxed aa-body">{item.desc}</p>
                     </div>
                   ))}
                 </div>
 
                 {/* Script table from README */}
                 <div className="overflow-x-auto aa-scroll">
-                  <table className="w-full text-xs min-w-[400px]">
+                  <table className="w-full text-[10px] md:text-xs min-w-[360px]">
                     <thead>
                       <tr className="border-b border-white/8">
-                        <th className="text-left py-3 pr-8 text-slate-500 uppercase tracking-wider aa-mono">Script</th>
-                        <th className="text-left py-3 text-slate-500 uppercase tracking-wider aa-mono">Purpose</th>
+                        <th className="text-left py-2 md:py-3 pr-4 md:pr-8 text-slate-500 uppercase tracking-wider aa-mono">Script</th>
+                        <th className="text-left py-2 md:py-3 text-slate-500 uppercase tracking-wider aa-mono">Purpose</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
@@ -749,10 +753,10 @@ export default function AACoreCaseStudy() {
                         { cmd:"SendUserOp.s.sol",       desc:"Constructs and transmits a packed UserOperation." },
                       ].map((r,i) => (
                         <tr key={i} className="hover:bg-white/[0.02] transition-colors">
-                          <td className="py-3 pr-8">
-                            <code className="text-[#F59E0B] bg-[#F59E0B]/08 px-2 py-0.5 rounded aa-mono">{r.cmd}</code>
+                          <td className="py-2.5 md:py-3 pr-4 md:pr-8">
+                            <code className="text-[#F59E0B] bg-[#F59E0B]/08 px-1.5 md:px-2 py-0.5 rounded aa-mono">{r.cmd}</code>
                           </td>
-                          <td className="py-3 text-slate-400 aa-body">{r.desc}</td>
+                          <td className="py-2.5 md:py-3 text-slate-400 aa-body">{r.desc}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -761,9 +765,9 @@ export default function AACoreCaseStudy() {
               </VaultCard>
 
               {/* Disclaimer */}
-              <div className="border-l-4 border-l-amber-500 bg-amber-500/5 p-6 rounded-r-2xl">
-                <h4 className="text-amber-400 font-bold text-sm uppercase tracking-widest mb-2 aa-mono">Disclaimer</h4>
-                <p className="text-slate-300 text-sm leading-relaxed aa-body">
+              <div className="border-l-4 border-l-amber-500 bg-amber-500/5 p-4 md:p-6 rounded-r-xl md:rounded-r-2xl">
+                <h4 className="text-amber-400 font-bold text-xs md:text-sm uppercase tracking-widest mb-1.5 md:mb-2 aa-mono">Disclaimer</h4>
+                <p className="text-slate-300 text-[10px] md:text-sm leading-relaxed aa-body">
                   This repo is for <strong className="text-white">educational purposes and protocol exploration</strong>.
                   Core ERC-4337 features are implemented but the code has not been formally audited.
                   Do not deploy to production without a thorough security review.

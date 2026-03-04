@@ -159,7 +159,7 @@ function MerkleProofCanvas() {
     let W = c.width = c.offsetWidth, H = c.height = c.offsetHeight, id: number, t = 0;
     
     const resize = () => { W = c.width = c.offsetWidth; H = c.height = c.offsetHeight; };
-    window.addEventListener("resize", resize);
+    resize(); window.addEventListener("resize", resize);
 
     const levels = [
       [{ x: 0.5, label: "Root Hash", active: true }],
@@ -323,7 +323,7 @@ function InstitutionalCard({ children, className = "", glowColor = "rgba(16,185,
   return (
     <motion.div ref={ref} onMouseMove={onMove} onMouseLeave={onLeave}
       style={{ rotateX: sRX, rotateY: sRY, transformStyle: "preserve-3d", perspective: 1200 }}
-      className={`relative rounded-3xl overflow-hidden glass-card transition-colors duration-300 hover:border-[#10B981]/40 ${className}`}
+      className={`relative rounded-2xl md:rounded-3xl overflow-hidden glass-card transition-colors duration-300 hover:border-[#10B981]/40 ${className}`}
     >
       <motion.div className="absolute inset-0 z-0 pointer-events-none mix-blend-screen"
         style={{ background: useTransform(() => `radial-gradient(600px circle at ${shineX.get()} ${shineY.get()}, ${glowColor}, transparent 50%)`) }}
@@ -346,11 +346,12 @@ export default function MerkleAirdropCaseStudy() {
   ] as const;
 
   return (
-    <div className="w-full bg-[#020A08] text-slate-300 merkle-font overflow-hidden selection:bg-[#10B981]/30 selection:text-[#A7F3D0]">
+    <div className="w-full bg-[#020A08] text-slate-300 merkle-font overflow-x-hidden selection:bg-[#10B981]/30 selection:text-[#A7F3D0]">
       <style>{CSS}</style>
 
       {/* ── HERO SECTION ── */}
-      <div className="relative w-full min-h-[50vh] md:min-h-[60vh] flex flex-col justify-end border-b border-[#10B981]/20">
+      {/* Mobile min-height reduced to 40vh to prevent massive top gap */}
+      <div className="relative w-full min-h-[40vh] md:min-h-[60vh] flex flex-col justify-end border-b border-[#10B981]/20">
         
         {/* 5D Background Canvas */}
         <AuroraForestCanvas />
@@ -359,31 +360,33 @@ export default function MerkleAirdropCaseStudy() {
         <div className="absolute inset-0 bg-gradient-to-t from-[#020A08] via-[#020A08]/70 to-transparent pointer-events-none" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#020A08] via-[#020A08]/40 to-transparent pointer-events-none" />
 
-        <div className="relative z-10 px-6 md:px-16 pt-32 pb-16 w-full max-w-7xl mx-auto">
+        {/* Padding adjusted for mobile (pt-16 instead of pt-32) */}
+        <div className="relative z-10 px-5 md:px-16 pt-16 md:pt-32 pb-8 md:pb-16 w-full max-w-7xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: "easeOut" }}>
             
             {/* Badges */}
-            <div className="flex flex-wrap items-center gap-3 mb-6">
-              <span className="px-3 py-1.5 bg-[#064E3B] border border-[#10B981]/50 text-[#34D399] text-[10px] font-bold uppercase tracking-[0.2em] rounded shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+            <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-4 md:mb-6">
+              <span className="px-2 md:px-3 py-1 md:py-1.5 bg-[#064E3B] border border-[#10B981]/50 text-[#34D399] text-[8px] md:text-[10px] font-bold uppercase tracking-[0.2em] rounded shadow-[0_0_15px_rgba(16,185,129,0.3)]">
                 EIP-712 Signatures
               </span>
-              <span className="px-3 py-1.5 bg-white/5 border border-white/10 text-slate-300 text-[10px] font-bold uppercase tracking-[0.2em] rounded backdrop-blur-md">
+              <span className="px-2 md:px-3 py-1 md:py-1.5 bg-white/5 border border-white/10 text-slate-300 text-[8px] md:text-[10px] font-bold uppercase tracking-[0.2em] rounded backdrop-blur-md">
                 O(1) Gas Complexity
               </span>
             </div>
 
-            <h1 className="text-4xl md:text-7xl lg:text-[80px] font-black tracking-tight leading-[1.05] text-white mb-6">
+            {/* Mobile text size adjusted */}
+            <h1 className="text-3xl sm:text-5xl md:text-[80px] font-black tracking-tight leading-[1.05] text-white mb-4 md:mb-6">
               Merkle-712 <br className="hidden md:block" />
               <span className="aurora-text">Airdrop Protocol.</span>
             </h1>
 
-            <p className="text-slate-400 text-sm md:text-lg font-medium max-w-2xl leading-relaxed mb-10 border-l-2 border-[#10B981] pl-4 md:pl-6 bg-gradient-to-r from-[#10B981]/10 to-transparent py-2">
+            <p className="text-slate-400 text-xs md:text-lg font-medium max-w-2xl leading-relaxed mb-6 md:mb-10 border-l-2 border-[#10B981] pl-3 md:pl-6 bg-gradient-to-r from-[#10B981]/10 to-transparent py-1.5 md:py-2">
               Solves the "Million User Problem" in token distribution. Combines off-chain Merkle Trees for extreme data compression with on-chain <strong className="text-white">EIP-712 structured signatures</strong> to prevent front-running claim bots.
             </p>
 
             <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4">
               <Link href="https://github.com/NexTechArchitect/Siso-Merkle-Airdrop" target="_blank"
-                className="group relative px-8 py-4 bg-[#10B981] text-[#020A08] font-black text-[11px] md:text-xs uppercase tracking-[0.2em] rounded overflow-hidden transition-all hover:shadow-[0_0_40px_rgba(16,185,129,0.4)]"
+                className="group relative px-6 md:px-8 py-3 md:py-4 bg-[#10B981] text-[#020A08] font-black text-[10px] md:text-xs uppercase tracking-[0.2em] rounded-xl overflow-hidden transition-all hover:shadow-[0_0_40px_rgba(16,185,129,0.4)] text-center"
               >
                 <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
                 <span className="relative z-10 flex items-center justify-center gap-2">
@@ -398,19 +401,20 @@ export default function MerkleAirdropCaseStudy() {
 
       {/* ── METRICS BAR ── */}
       <div className="border-b border-white/5 bg-[#010605]">
-        <div className="max-w-7xl mx-auto px-6 md:px-16 py-8 grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-4 divide-y md:divide-y-0 md:divide-x divide-[#10B981]/20">
+        {/* Mobile grid-cols-2 */}
+        <div className="max-w-7xl mx-auto px-5 md:px-16 py-6 md:py-8 grid grid-cols-2 md:grid-cols-4 gap-y-6 md:gap-y-0 gap-x-4 md:gap-4 divide-x divide-[#10B981]/20">
           {[
             { value: "O(1)", label: "Gas Per Claim", sub: "Log(n) Proof Path", color: "text-[#34D399]" },
             { value: "32", suffix: "b", label: "Merkle Root", sub: "1M Users Compressed", color: "text-white" },
             { value: "712", prefix: "EIP-", label: "Security Std", sub: "Anti Front-Run", color: "text-blue-400" },
             { value: "97", suffix: "d", label: "Vesting Cycle", sub: "Phased Economy", color: "text-amber-400" }
           ].map((stat, i) => (
-            <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 + i * 0.1 }} className="pt-6 md:pt-0 px-2 md:px-6 text-center md:text-left">
-              <h3 className={`text-3xl md:text-5xl font-black mb-2 ${stat.color} drop-shadow-lg merkle-serif`}>
+            <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 + i * 0.1 }} className="px-2 md:px-6 text-left">
+              <h3 className={`text-2xl sm:text-3xl md:text-5xl font-black mb-1 md:mb-2 ${stat.color} drop-shadow-lg merkle-serif leading-none`}>
                 {stat.prefix}{stat.value}{stat.suffix}
               </h3>
-              <p className="text-white font-bold text-[10px] md:text-xs uppercase tracking-widest mb-1">{stat.label}</p>
-              <p className="text-slate-500 text-[9px] md:text-[10px] uppercase tracking-wider">{stat.sub}</p>
+              <p className="text-white font-bold text-[8px] md:text-[10px] uppercase tracking-widest mb-0.5 md:mb-1 truncate">{stat.label}</p>
+              <p className="text-slate-500 text-[7px] md:text-[9px] uppercase tracking-wider truncate">{stat.sub}</p>
             </motion.div>
           ))}
         </div>
@@ -421,11 +425,11 @@ export default function MerkleAirdropCaseStudy() {
         <div className="max-w-7xl mx-auto px-4 md:px-16 flex overflow-x-auto merkle-scroll">
           {TABS.map((t, i) => (
             <button key={t.id} onClick={() => setActiveTab(t.id)}
-              className={`relative flex-shrink-0 px-6 py-5 text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] transition-colors ${
+              className={`relative flex-shrink-0 px-4 md:px-6 py-4 md:py-5 text-[9px] md:text-xs font-bold uppercase tracking-[0.2em] transition-colors ${
                 activeTab === t.id ? "text-[#10B981]" : "text-slate-500 hover:text-white"
               }`}
             >
-              <span className="opacity-40 mr-2 text-white">0{i + 1}</span> {t.label}
+              <span className="opacity-40 mr-1.5 md:mr-2 text-white">0{i + 1}</span> {t.label}
               {activeTab === t.id && (
                 <motion.div layoutId="merkle-tab" className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#10B981] shadow-[0_0_12px_rgba(16,185,129,0.8)]" />
               )}
@@ -435,35 +439,35 @@ export default function MerkleAirdropCaseStudy() {
       </div>
 
       {/* ── CONTENT AREA ── */}
-      <div className="max-w-7xl mx-auto px-6 md:px-16 py-12 md:py-20 min-h-[60vh]">
+      <div className="max-w-7xl mx-auto px-5 md:px-16 py-8 md:py-20 min-h-[60vh]">
         <AnimatePresence mode="wait">
           
           {/* ════ TAB 1: MATH ════ */}
           {activeTab === "math" && (
-            <motion.div key="mth" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-8">
+            <motion.div key="mth" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-6 md:space-y-8">
               
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
                 
                 {/* Tree Structure */}
-                <InstitutionalCard className="p-8 flex flex-col" glowColor="rgba(16,185,129,0.1)">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-black text-white">Tree Compression</h3>
-                    <span className="text-3xl opacity-50">🌳</span>
+                <InstitutionalCard className="p-5 md:p-8 flex flex-col" glowColor="rgba(16,185,129,0.1)">
+                  <div className="flex items-center justify-between mb-4 md:mb-6">
+                    <h3 className="text-lg md:text-xl font-black text-white">Tree Compression</h3>
+                    <span className="text-2xl md:text-3xl opacity-50">🌳</span>
                   </div>
-                  <p className="text-sm text-slate-400 leading-relaxed mb-6">
+                  <p className="text-xs md:text-sm text-slate-400 leading-relaxed mb-4 md:mb-6">
                     Storing 1,000,000 users on-chain is cost-prohibitive. We compress all balances into a single 32-byte Root Hash.
                   </p>
-                  <div className="bg-[#010605] border border-[#064E3B] rounded-xl p-5 merkle-mono text-xs text-slate-300 space-y-3 shadow-inner flex-1">
-                    <div className="flex flex-col md:flex-row md:items-center gap-2">
-                      <span className="text-[#10B981] font-bold w-16">Leaves:</span> 
+                  <div className="bg-[#010605] border border-[#064E3B] rounded-lg md:rounded-xl p-4 md:p-5 merkle-mono text-[9px] md:text-xs text-slate-300 space-y-2 md:space-y-3 shadow-inner flex-1 overflow-x-auto">
+                    <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2">
+                      <span className="text-[#10B981] font-bold w-14 md:w-16">Leaves:</span> 
                       <span>Keccak256(address, amount)</span>
                     </div>
-                    <div className="flex flex-col md:flex-row md:items-center gap-2">
-                      <span className="text-[#10B981] font-bold w-16">Nodes:</span> 
+                    <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2">
+                      <span className="text-[#10B981] font-bold w-14 md:w-16">Nodes:</span> 
                       <span>Keccak256(Child_A, Child_B)</span>
                     </div>
-                    <div className="flex flex-col md:flex-row md:items-center gap-2">
-                      <span className="text-[#10B981] font-bold w-16">Root:</span> 
+                    <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2">
+                      <span className="text-[#10B981] font-bold w-14 md:w-16">Root:</span> 
                       <span className="text-white">Final 32-byte Hash</span>
                     </div>
                   </div>
@@ -471,17 +475,17 @@ export default function MerkleAirdropCaseStudy() {
 
                 {/* Proof Visualizer */}
                 <InstitutionalCard className="p-0 overflow-hidden flex flex-col" glowColor="rgba(52,211,153,0.08)">
-                  <div className="p-6 border-b border-white/5 flex items-center justify-between bg-[#04120E]">
-                    <h3 className="text-sm font-black text-white uppercase tracking-widest">Cryptographic Proof</h3>
-                    <span className="bg-[#10B981]/20 text-[#10B981] text-[9px] px-2 py-1 rounded font-bold uppercase tracking-wider animate-pulse">Live Verifying</span>
+                  <div className="p-4 md:p-6 border-b border-white/5 flex items-center justify-between bg-[#04120E]">
+                    <h3 className="text-[10px] md:text-sm font-black text-white uppercase tracking-widest">Cryptographic Proof</h3>
+                    <span className="bg-[#10B981]/20 text-[#10B981] text-[8px] md:text-[9px] px-2 py-1 rounded font-bold uppercase tracking-wider animate-pulse">Live Verifying</span>
                   </div>
-                  <div className="bg-[#020A08] flex-1 relative">
+                  <div className="bg-[#020A08] flex-1 relative min-h-[220px]">
                     <MerkleProofCanvas />
                   </div>
-                  <div className="p-6 border-t border-white/5 bg-[#04120E] merkle-mono text-[10px] md:text-xs">
-                     <p className="text-slate-500 mb-2">{"// Verification Logic"}</p>
+                  <div className="p-4 md:p-6 border-t border-white/5 bg-[#04120E] merkle-mono text-[9px] md:text-xs overflow-x-auto">
+                     <p className="text-slate-500 mb-1.5 md:mb-2">{"// Verification Logic"}</p>
                      <p className="text-slate-400">{"if ("}<span className="text-[#34D399] font-bold">CalculatedRoot</span> == <span className="text-[#10B981] font-bold">StoredRoot</span>{") {"}</p>
-                     <p className="text-white pl-4 my-1">=&gt; Valid Claim Allowed</p>
+                     <p className="text-white pl-3 md:pl-4 my-1">=&gt; Valid Claim Allowed</p>
                      <p className="text-slate-400">{"}"}</p>
                   </div>
                 </InstitutionalCard>
@@ -492,25 +496,25 @@ export default function MerkleAirdropCaseStudy() {
 
           {/* ════ TAB 2: ARCHITECTURE FLOW ════ */}
           {activeTab === "architecture" && (
-            <motion.div key="arch" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-10">
+            <motion.div key="arch" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-6 md:space-y-10">
               
-              <InstitutionalCard className="p-8 md:p-12" glowColor="rgba(59,130,246,0.08)">
-                <h3 className="text-lg font-black uppercase tracking-widest text-[#34D399] mb-10 text-center">Hybrid Verification Pipeline</h3>
+              <InstitutionalCard className="p-5 md:p-12" glowColor="rgba(59,130,246,0.08)">
+                <h3 className="text-sm md:text-lg font-black uppercase tracking-widest text-[#34D399] mb-6 md:mb-10 text-center">Hybrid Verification Pipeline</h3>
                 
-                <div className="flex flex-col gap-10 max-w-4xl mx-auto">
+                <div className="flex flex-col gap-6 md:gap-10 max-w-4xl mx-auto">
                   
                   {/* Backend */}
-                  <div className="flex flex-col md:flex-row items-stretch gap-6 relative">
+                  <div className="flex flex-col md:flex-row items-stretch gap-4 md:gap-6 relative">
                     <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-1 h-20 bg-emerald-500 rounded-full hidden md:block" />
-                    <div className="w-full md:w-1/3 bg-[#010605] border border-emerald-500/30 p-6 rounded-2xl shadow-lg">
-                      <h4 className="text-emerald-400 font-black mb-2 flex items-center gap-2"><span className="text-xl">1</span> Backend Engine</h4>
-                      <p className="text-xs text-slate-400 leading-relaxed">Parses JSON whitelist, hashes address/amount pairs, and builds the Merkle Tree via Node.js scripts.</p>
+                    <div className="w-full md:w-1/3 bg-[#010605] border border-emerald-500/30 p-4 md:p-6 rounded-xl md:rounded-2xl shadow-lg">
+                      <h4 className="text-emerald-400 font-black mb-2 flex items-center gap-2"><span className="text-lg md:text-xl">1</span> Backend Engine</h4>
+                      <p className="text-[10px] md:text-xs text-slate-400 leading-relaxed">Parses JSON whitelist, hashes address/amount pairs, and builds the Merkle Tree via Node.js scripts.</p>
                     </div>
                     <div className="hidden md:flex flex-col justify-center text-emerald-500 font-black text-2xl">→</div>
-                    <div className="w-full md:w-2/3 bg-[#04120E] border border-white/10 p-6 rounded-2xl flex flex-col justify-center">
-                      <h4 className="text-white font-bold mb-2">Output Generated</h4>
-                      <p className="text-xs text-slate-400 mb-2">A single 32-byte Merkle Root is deployed to the Smart Contract. User proofs are stored in a database/IPFS.</p>
-                      <code className="text-[10px] text-emerald-300 bg-emerald-500/10 px-2 py-1 rounded w-fit">0x8a3f...d9c2</code>
+                    <div className="w-full md:w-2/3 bg-[#04120E] border border-white/10 p-4 md:p-6 rounded-xl md:rounded-2xl flex flex-col justify-center">
+                      <h4 className="text-white text-sm md:text-base font-bold mb-1.5 md:mb-2">Output Generated</h4>
+                      <p className="text-[10px] md:text-xs text-slate-400 mb-2">A single 32-byte Merkle Root is deployed to the Smart Contract. User proofs are stored in a database/IPFS.</p>
+                      <code className="text-[9px] md:text-[10px] text-emerald-300 bg-emerald-500/10 px-2 py-1 rounded w-fit">0x8a3f...d9c2</code>
                     </div>
                   </div>
 
@@ -518,22 +522,22 @@ export default function MerkleAirdropCaseStudy() {
                   <div className="h-px bg-gradient-to-r from-transparent via-[#10B981]/30 to-transparent w-full" />
 
                   {/* Frontend/Blockchain */}
-                  <div className="flex flex-col md:flex-row items-stretch gap-6 relative">
+                  <div className="flex flex-col md:flex-row items-stretch gap-4 md:gap-6 relative">
                     <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-1 h-20 bg-blue-500 rounded-full hidden md:block" />
-                    <div className="w-full md:w-1/3 bg-[#010605] border border-blue-500/30 p-6 rounded-2xl shadow-lg">
-                      <h4 className="text-blue-400 font-black mb-2 flex items-center gap-2"><span className="text-xl">2</span> EIP-712 Sign</h4>
-                      <p className="text-xs text-slate-400 leading-relaxed">User connects MetaMask and signs Typed Structured Data. This binds the claim request to their specific wallet and chain ID.</p>
+                    <div className="w-full md:w-1/3 bg-[#010605] border border-blue-500/30 p-4 md:p-6 rounded-xl md:rounded-2xl shadow-lg">
+                      <h4 className="text-blue-400 font-black mb-2 flex items-center gap-2"><span className="text-lg md:text-xl">2</span> EIP-712 Sign</h4>
+                      <p className="text-[10px] md:text-xs text-slate-400 leading-relaxed">User connects MetaMask and signs Typed Structured Data. This binds the claim request to their specific wallet and chain ID.</p>
                     </div>
                     <div className="hidden md:flex flex-col justify-center text-blue-500 font-black text-2xl">→</div>
-                    <div className="w-full md:w-2/3 bg-[#04120E] border border-white/10 p-6 rounded-2xl">
-                      <h4 className="text-white font-bold mb-4">3. On-Chain Smart Contract</h4>
-                      <div className="space-y-3 text-xs merkle-mono">
-                        <div className="flex flex-col sm:flex-row justify-between bg-black/50 p-3 rounded border border-white/5">
-                          <span className="text-slate-500 mb-1 sm:mb-0">Verify Signature:</span>
+                    <div className="w-full md:w-2/3 bg-[#04120E] border border-white/10 p-4 md:p-6 rounded-xl md:rounded-2xl">
+                      <h4 className="text-white text-sm md:text-base font-bold mb-3 md:mb-4">3. On-Chain Smart Contract</h4>
+                      <div className="space-y-2 md:space-y-3 text-[9px] md:text-xs merkle-mono">
+                        <div className="flex flex-col sm:flex-row justify-between bg-black/50 p-2 md:p-3 rounded border border-white/5">
+                          <span className="text-slate-500 mb-0.5 sm:mb-0">Verify Signature:</span>
                           <span className="text-blue-400">ECDSA.tryRecover == msg.sender</span>
                         </div>
-                        <div className="flex flex-col sm:flex-row justify-between bg-black/50 p-3 rounded border border-white/5">
-                          <span className="text-slate-500 mb-1 sm:mb-0">Verify Proof:</span>
+                        <div className="flex flex-col sm:flex-row justify-between bg-black/50 p-2 md:p-3 rounded border border-white/5">
+                          <span className="text-slate-500 mb-0.5 sm:mb-0">Verify Proof:</span>
                           <span className="text-emerald-400">MerkleProof.verify(proof, root)</span>
                         </div>
                       </div>
@@ -544,9 +548,9 @@ export default function MerkleAirdropCaseStudy() {
               </InstitutionalCard>
 
               {/* Explainer */}
-              <div className="bg-[#010605] border-l-4 border-l-rose-500 p-6 rounded-r-2xl max-w-4xl mx-auto shadow-lg">
-                <h4 className="text-rose-400 font-bold text-sm uppercase tracking-widest mb-2">Why EIP-712 is Critical</h4>
-                <p className="text-slate-300 text-sm leading-relaxed">
+              <div className="bg-[#010605] border-l-4 border-l-rose-500 p-5 md:p-6 rounded-r-xl md:rounded-r-2xl max-w-4xl mx-auto shadow-lg">
+                <h4 className="text-rose-400 font-bold text-xs md:text-sm uppercase tracking-widest mb-1.5 md:mb-2">Why EIP-712 is Critical</h4>
+                <p className="text-slate-300 text-[10px] md:text-sm leading-relaxed">
                   Without EIP-712, a front-running bot can monitor the mempool, copy a user's valid Merkle proof, replace the <code className="text-rose-400 bg-rose-500/10 px-1 rounded">msg.sender</code>, and execute the transaction with higher gas to steal the airdrop. EIP-712 cryptographically binds the proof to the original user's address.
                 </p>
               </div>
@@ -556,34 +560,34 @@ export default function MerkleAirdropCaseStudy() {
 
           {/* ════ TAB 3: TIMELINE ════ */}
           {activeTab === "timeline" && (
-            <motion.div key="time" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-8">
+            <motion.div key="time" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-6 md:space-y-8">
               
-              <InstitutionalCard className="p-8 md:p-12">
-                <div className="text-center max-w-2xl mx-auto mb-10">
-                  <h3 className="text-xl font-black text-white mb-3">Phased Vesting Mechanics</h3>
-                  <p className="text-slate-400 text-sm leading-relaxed">
+              <InstitutionalCard className="p-5 md:p-12">
+                <div className="text-center max-w-2xl mx-auto mb-6 md:mb-10">
+                  <h3 className="text-lg md:text-xl font-black text-white mb-2 md:mb-3">Phased Vesting Mechanics</h3>
+                  <p className="text-slate-400 text-xs md:text-sm leading-relaxed">
                     Immediate 100% unlocks create massive sell pressure, crashing the token economy. This protocol enforces a staggered release schedule with a holding cliff.
                   </p>
                 </div>
 
-                <div className="mb-10 bg-[#010605] border border-white/5 rounded-2xl overflow-hidden p-4">
+                <div className="mb-6 md:mb-10 bg-[#010605] border border-white/5 rounded-xl md:rounded-2xl overflow-hidden p-2 md:p-4">
                   <VestingCanvas />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                   {[
                     { day: "Day 0", title: "TGE Starts", desc: "Claim first 50% immediately.", color: "text-emerald-400", bg: "bg-emerald-500/10" },
                     { day: "Day 30", title: "Cliff Starts", desc: "Claims paused to encourage holding.", color: "text-amber-400", bg: "bg-amber-500/10" },
                     { day: "Day 90", title: "Cliff Ends", desc: "Remaining 50% unlocked.", color: "text-blue-400", bg: "bg-blue-500/10" },
                     { day: "Day 97", title: "Expiry", desc: "Claims closed. Unclaimed tokens burned.", color: "text-rose-400", bg: "bg-rose-500/10" }
                   ].map((phase, i) => (
-                    <div key={i} className={`p-5 rounded-xl border border-white/5 ${phase.bg}`}>
-                      <div className="flex justify-between items-start mb-3">
-                        <span className={`text-[10px] font-black uppercase tracking-widest ${phase.color}`}>{phase.day}</span>
-                        <span className="text-xl opacity-50">⏳</span>
+                    <div key={i} className={`p-4 md:p-5 rounded-xl border border-white/5 ${phase.bg}`}>
+                      <div className="flex justify-between items-start mb-2 md:mb-3">
+                        <span className={`text-[9px] md:text-[10px] font-black uppercase tracking-widest ${phase.color}`}>{phase.day}</span>
+                        <span className="text-lg md:text-xl opacity-50">⏳</span>
                       </div>
-                      <h4 className="text-white font-bold mb-2">{phase.title}</h4>
-                      <p className="text-xs text-slate-400">{phase.desc}</p>
+                      <h4 className="text-white text-sm md:text-base font-bold mb-1 md:mb-2">{phase.title}</h4>
+                      <p className="text-[10px] md:text-xs text-slate-400">{phase.desc}</p>
                     </div>
                   ))}
                 </div>

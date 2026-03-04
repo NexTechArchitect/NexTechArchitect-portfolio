@@ -57,7 +57,7 @@ function ProjectCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.06, type: "spring", damping: 22, stiffness: 130 }}
       style={{ perspective: 1000 }}
-      className="flex-shrink-0 w-[80vw] sm:w-[380px] md:w-[400px] snap-center"
+      className="w-full flex justify-center" // Centered for mobile Grid
     >
       <motion.div
         ref={ref}
@@ -67,14 +67,14 @@ function ProjectCard({
         onMouseLeave={onLeave}
         onClick={onClick}
         whileTap={{ scale: 0.975 }}
-        className="cursor-pointer"
+        className="cursor-pointer w-full max-w-[360px] md:max-w-[400px]" // Controlled Width
       >
         {/* ── Card ── */}
         <div
-          className="relative flex flex-col overflow-hidden"
+          className="relative flex flex-col overflow-hidden h-full"
           style={{
             borderRadius: 24,
-            height: 440,
+            minHeight: 400, // Reduced slightly for mobile
             background: "#ffffff",
             border: `1px solid ${hovered ? accent + "40" : "#e8e5df"}`,
             boxShadow: hovered
@@ -100,9 +100,9 @@ function ProjectCard({
           />
 
           {/* Index + tag row */}
-          <div className="flex items-center justify-between px-7 pt-6 pb-0">
+          <div className="flex items-center justify-between px-5 sm:px-7 pt-5 sm:pt-6 pb-0">
             <span
-              className="text-[10px] font-semibold tracking-[0.22em] uppercase"
+              className="text-[9px] sm:text-[10px] font-semibold tracking-[0.22em] uppercase"
               style={{
                 color: accent,
                 fontFamily: "JetBrains Mono, monospace",
@@ -111,7 +111,7 @@ function ProjectCard({
               {project.tag || project.category || "Contract"}
             </span>
             <span
-              className="text-[11px] font-medium tabular-nums"
+              className="text-[10px] sm:text-[11px] font-medium tabular-nums"
               style={{ color: "#c8c2b8", fontFamily: "JetBrains Mono, monospace" }}
             >
               {String(index + 1).padStart(2, "0")}
@@ -119,10 +119,10 @@ function ProjectCard({
           </div>
 
           {/* Body */}
-          <div className="flex flex-col flex-1 px-7 pt-5 pb-6">
+          <div className="flex flex-col flex-1 px-5 sm:px-7 pt-4 pb-5">
             {/* Icon */}
             <div
-              className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl mb-5 flex-shrink-0"
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center text-xl sm:text-2xl mb-4 flex-shrink-0"
               style={{
                 background: accent + "12",
                 border: `1px solid ${accent}25`,
@@ -133,7 +133,7 @@ function ProjectCard({
 
             {/* Title */}
             <h3
-              className="text-2xl leading-tight mb-3 text-gray-900"
+              className="text-xl sm:text-2xl leading-tight mb-2 sm:mb-3 text-gray-900"
               style={{ fontFamily: "DM Serif Display, Georgia, serif", fontWeight: 400 }}
             >
               {project.title}
@@ -141,7 +141,7 @@ function ProjectCard({
 
             {/* Description */}
             <p
-              className="text-sm leading-relaxed text-gray-500 flex-1"
+              className="text-xs sm:text-sm leading-relaxed text-gray-500 flex-1"
               style={{
                 fontFamily: "DM Sans, sans-serif",
                 display: "-webkit-box",
@@ -154,11 +154,11 @@ function ProjectCard({
             </p>
 
             {/* Tech chips */}
-            <div className="flex flex-wrap gap-1.5 mt-4 mb-5">
-              {(project.tech || []).slice(0, 4).map((t: string) => (
+            <div className="flex flex-wrap gap-1 mt-3 mb-4">
+              {(project.tech || []).slice(0, 3).map((t: string) => ( // Show only 3 chips on mobile
                 <span
                   key={t}
-                  className="text-[9px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-lg"
+                  className="text-[8px] sm:text-[9px] font-semibold uppercase tracking-wider px-2 sm:px-2.5 py-1 rounded-lg"
                   style={{
                     color: "#888",
                     background: "#f5f3ef",
@@ -173,11 +173,11 @@ function ProjectCard({
 
             {/* CTA row */}
             <div
-              className="flex items-center justify-between pt-4"
+              className="flex items-center justify-between pt-3 sm:pt-4"
               style={{ borderTop: "1px solid #f0ece5" }}
             >
               <span
-                className="text-[11px] font-semibold tracking-[0.16em] uppercase transition-colors duration-300"
+                className="text-[10px] sm:text-[11px] font-semibold tracking-[0.16em] uppercase transition-colors duration-300"
                 style={{
                   fontFamily: "JetBrains Mono, monospace",
                   color: hovered ? accent : "#999",
@@ -186,7 +186,7 @@ function ProjectCard({
                 View Details
               </span>
               <motion.div
-                className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-colors duration-200"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold transition-colors duration-200"
                 animate={{
                   x: hovered ? 4 : 0,
                   background: hovered ? accent : "#f5f3ef",
@@ -219,35 +219,31 @@ export default function ProjectGalleryOverlay({
   title: string;
   onProjectClick: (p: any) => void;
 }) {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Handle Hardware Back Button
   useEffect(() => {
-    const h = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
     if (isOpen) {
-      window.addEventListener("keydown", h);
       document.body.style.overflow = "hidden";
+      window.history.pushState({ overlayOpen: true }, "");
+
+      const handlePopState = () => {
+        onClose();
+      };
+      window.addEventListener("popstate", handlePopState);
+
+      const h = (e: KeyboardEvent) => {
+        if (e.key === "Escape") onClose();
+      };
+      window.addEventListener("keydown", h);
+
+      return () => {
+        document.body.style.overflow = "";
+        window.removeEventListener("popstate", handlePopState);
+        window.removeEventListener("keydown", h);
+      };
     }
-    return () => {
-      window.removeEventListener("keydown", h);
-      document.body.style.overflow = "";
-    };
   }, [isOpen, onClose]);
 
-  // Sync active dot with scroll position
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el || !isOpen) return;
-    const onScroll = () => {
-      const cardWidth = el.scrollWidth / projects.length;
-      const idx = Math.round(el.scrollLeft / cardWidth);
-      setActiveIndex(Math.min(Math.max(idx, 0), projects.length - 1));
-    };
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
-  }, [isOpen, projects.length]);
 
   if (!isOpen) return null;
 
@@ -261,7 +257,7 @@ export default function ProjectGalleryOverlay({
         animate={{ opacity: 1, y: "0%" }}
         exit={{ opacity: 0, y: "4%" }}
         transition={{ type: "spring", damping: 28, stiffness: 200 }}
-        className="fixed inset-0 z-[150] flex flex-col"
+        className="fixed inset-0 z-[150] flex flex-col overflow-y-auto" // Changed to overflow-y-auto
         style={{ background: "#FDFCF8" }}
       >
         {/* Subtle top ambient */}
@@ -278,7 +274,7 @@ export default function ProjectGalleryOverlay({
           initial={{ opacity: 0, y: -16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05, duration: 0.4 }}
-          className="flex-shrink-0 flex items-center justify-between px-6 sm:px-10 md:px-16 py-5 sm:py-7"
+          className="flex-shrink-0 flex items-center justify-between px-6 sm:px-10 md:px-16 py-5 sm:py-7 sticky top-0 bg-[#FDFCF8]/90 backdrop-blur-md z-20" // Sticky Header
           style={{ borderBottom: "1px solid #ede9e2" }}
         >
           <div>
@@ -300,7 +296,9 @@ export default function ProjectGalleryOverlay({
             </span>
 
             <button
-              onClick={onClose}
+              onClick={() => {
+                window.history.back(); // Trigger popstate
+              }}
               className="w-11 h-11 rounded-full flex items-center justify-center font-bold text-gray-600 transition-all duration-200 hover:bg-gray-900 hover:text-white"
               style={{ background: "#f0ece5", border: "1px solid #e2ddd5" }}
             >
@@ -309,56 +307,23 @@ export default function ProjectGalleryOverlay({
           </div>
         </motion.div>
 
-        {/* Mobile swipe hint */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="sm:hidden text-[9px] font-mono tracking-[0.22em] uppercase text-gray-400 px-6 pt-4 pb-0"
-        >
-          Swipe to explore →
-        </motion.p>
-
-        {/* ── Cards Row ── */}
+        {/* ── Grid Layout ── */}
         <div
-          ref={scrollRef}
-          className="flex-1 flex items-center gap-4 sm:gap-6 overflow-x-auto overflow-y-hidden px-6 sm:px-10 md:px-16 py-8 sm:py-12 snap-x snap-mandatory"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          className="w-full max-w-7xl mx-auto px-4 sm:px-10 md:px-16 py-8 sm:py-12"
         >
-          <style>{`div::-webkit-scrollbar{display:none}`}</style>
-
-          {projects.map((project, i) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              index={i}
-              onClick={() => onProjectClick(project)}
-            />
-          ))}
-
-          {/* End spacer */}
-          <div className="flex-shrink-0 w-6 sm:w-10" />
+           {/* Mobile: 1 column, sm: 2 cols, lg: 3 cols */}
+           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 justify-items-center">
+            {projects.map((project, i) => (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                index={i}
+                onClick={() => onProjectClick(project)}
+              />
+            ))}
+          </div>
         </div>
 
-        {/* ── Bottom — progress dots ── */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.45 }}
-          className="flex-shrink-0 flex items-center justify-center gap-2 pb-7 sm:pb-9"
-        >
-          {projects.map((_, i) => (
-            <div
-              key={i}
-              className="rounded-full transition-all duration-300"
-              style={{
-                width: i === activeIndex ? 22 : 6,
-                height: 6,
-                background: i === activeIndex ? "#FF4F00" : "#ddd8d0",
-              }}
-            />
-          ))}
-        </motion.div>
       </motion.div>
     </AnimatePresence>
   );
