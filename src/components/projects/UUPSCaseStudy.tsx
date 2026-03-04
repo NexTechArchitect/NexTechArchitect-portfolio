@@ -216,7 +216,7 @@ export default function UUPSCaseStudy() {
         </div>
 
         {/* ── CONTENT ── */}
-        <div className="max-w-7xl mx-auto px-5 md:px-12 py-6 md:py-16 min-h-[50vh]">
+        <div className="max-w-7xl mx-auto px-5 md:px-12 py-6 md:py-16">
           <AnimatePresence mode="wait">
             {tab==="overview" && (
               <motion.div key="ov" initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-10}} className="space-y-5 md:space-y-8">
@@ -375,6 +375,28 @@ export default function UUPSCaseStudy() {
             )}
           </AnimatePresence>
         </div>
+
+        {/* ── BOTTOM CTA ── */}
+        <div className="border-t bg-[#FDF9F3]" style={{borderColor:"rgba(184,115,51,0.15)"}}>
+          <div className="max-w-7xl mx-auto px-5 md:px-12 py-8 md:py-12 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div>
+              <p className="u-label text-[9px] md:text-[10px] text-[#B87333]/70 mb-1">UUPS Upgradeable Protocol</p>
+              <p className="text-[#A08060] text-xs md:text-sm">EIP-1822 · EIP-1967 · DelegateCall · Foundry</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link href="https://github.com/NexTechArchitect/uups-protocol-config" target="_blank"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl border text-[10px] font-bold uppercase tracking-widest u-label hover:bg-[#B87333]/10 transition-all"
+                style={{borderColor:"rgba(184,115,51,0.35)", color:"#B87333"}}>
+                GitHub ↗
+              </Link>
+              <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl border" style={{background:"rgba(184,115,51,0.05)",borderColor:"rgba(184,115,51,0.15)"}}>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="u-label text-[9px] text-[#A08060] uppercase tracking-widest">V3 Live</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </>
   );

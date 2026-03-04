@@ -205,7 +205,7 @@ export default function AACoreCaseStudy() {
       </div>
 
       {/* ── CONTENT ── */}
-      <div className="max-w-7xl mx-auto px-5 md:px-16 py-6 md:py-16 min-h-[50vh]">
+      <div className="max-w-7xl mx-auto px-5 md:px-16 py-6 md:py-16">
         <AnimatePresence mode="wait">
 
           {tab==="arch" && (
@@ -338,6 +338,27 @@ export default function AACoreCaseStudy() {
 
         </AnimatePresence>
       </div>
+
+      {/* ── BOTTOM CTA ── */}
+      <div className="border-t border-[#F59E0B]/15 bg-[#05070B]">
+        <div className="max-w-7xl mx-auto px-5 md:px-16 py-8 md:py-12 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div>
+            <p className="aa-mono text-[9px] md:text-[10px] text-[#F59E0B]/60 uppercase tracking-widest mb-1">ERC-4337 Account Abstraction</p>
+            <p className="text-slate-500 text-xs md:text-sm">EntryPoint v0.7 · Paymaster · Session Keys · Foundry</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link href="https://github.com/NexTechArchitect/ERC4337-Account-Abstraction-Foundry" target="_blank"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[#F59E0B]/30 text-[#F59E0B] text-[10px] font-bold uppercase tracking-widest aa-mono hover:bg-[#F59E0B]/10 transition-all">
+              GitHub ↗
+            </Link>
+            <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#F59E0B]/5 border border-[#F59E0B]/10">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="aa-mono text-[9px] text-slate-400 uppercase tracking-widest">Educational</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 }

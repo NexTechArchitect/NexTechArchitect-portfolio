@@ -299,7 +299,7 @@ export default function MerkleAirdropCaseStudy() {
       </div>
 
       {/* ── CONTENT ── */}
-      <div className="max-w-7xl mx-auto px-5 md:px-16 py-6 md:py-16 min-h-[50vh]">
+      <div className="max-w-7xl mx-auto px-5 md:px-16 py-6 md:py-16">
         <AnimatePresence mode="wait">
           {activeTab === "math" && (
             <motion.div key="mth" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} className="space-y-5 md:space-y-8">
@@ -421,6 +421,27 @@ export default function MerkleAirdropCaseStudy() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* ── BOTTOM CTA ── */}
+      <div className="border-t border-[#00F2FE]/10 bg-[#08090C]">
+        <div className="max-w-7xl mx-auto px-5 md:px-16 py-8 md:py-12 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div>
+            <p className="merkle-mono text-[9px] md:text-[10px] text-[#00F2FE]/60 uppercase tracking-widest mb-1">Merkle-712 Airdrop Protocol</p>
+            <p className="text-slate-400 text-xs md:text-sm">O(1) gas · EIP-712 · Solidity · Hardhat</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link href="https://github.com/NexTechArchitect/Siso-Merkle-Airdrop" target="_blank"
+              className="group flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[#00F2FE]/30 text-[#00F2FE] text-[10px] font-bold uppercase tracking-widest merkle-mono hover:bg-[#00F2FE]/10 transition-all">
+              GitHub ↗
+            </Link>
+            <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#00F2FE]/5 border border-[#00F2FE]/10">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="merkle-mono text-[9px] text-slate-400 uppercase tracking-widest">Deployed</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 }
