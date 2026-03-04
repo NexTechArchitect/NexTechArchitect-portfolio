@@ -1,5 +1,5 @@
 
-# 🚀 NexTechArchitect | Web3 Full-Stack Portfolio
+#  NexTechArchitect | Web3 Full-Stack Portfolio
 
 A high-performance, interactive portfolio showcasing **10 production-grade Web3 projects** (8 Core Solidity Architectures & 2 Full-Stack dApps). Built with a focus on deep technical explanations, gas-optimized smart contracts, and seamless modern user experiences.
 
@@ -30,8 +30,8 @@ A high-performance, interactive portfolio showcasing **10 production-grade Web3 
 
 ### 💻 Full-Stack dApps (2)
 End-to-end decentralized applications featuring robust on-chain logic paired with highly interactive, consumer-grade Next.js frontends.
-1. **Nexus Perpetuals DEX** - Full-stack decentralized perpetual exchange interface and core logic.
-2. **Web3 Application Gateway** - Interactive frontend seamlessly connected to custom EVM protocols.
+1. **Nexus Perpetuals DEX**: Full-stack decentralized perpetual exchange interface and core logic.
+2. **DAO Governance System**: A complete decentralized autonomous organization platform featuring proposal creation, token-weighted voting mechanisms, and automated on-chain execution.
 
 ### ⚙️ Core Solidity & Architecture (8)
 Deep technical implementations of complex Ethereum standards, focusing on storage safety, gas efficiency, and cryptography.
