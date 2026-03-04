@@ -1,7 +1,7 @@
 
-# NexTechArchitect | Web3 Full-Stack Portfolio
+# 🚀 NexTechArchitect | Web3 Full-Stack Portfolio
 
-A high-performance, interactive portfolio showcasing production-grade Smart Contracts, decentralized architectures, and modern Web3 frontends. Built with a focus on deep technical explanations, gas-optimized Solidity, and seamless user experiences.
+A high-performance, interactive portfolio showcasing **10 production-grade Web3 projects** (8 Core Solidity Architectures & 2 Full-Stack dApps). Built with a focus on deep technical explanations, gas-optimized smart contracts, and seamless modern user experiences.
 
 🌍 **Live Demo:** [nex-tech-architect-portfolio.vercel.app](https://nex-tech-architect-portfolio.vercel.app/)
 
@@ -17,7 +17,7 @@ A high-performance, interactive portfolio showcasing production-grade Smart Cont
 
 ### Web3 & Smart Contracts
 * **Solidity** (Gas-optimized, security-first)
-* **Foundry** (Testing & Deployment)
+* **Foundry & Hardhat** (Testing, Scripting & Deployment)
 * **Ethers.js / Wagmi** (Frontend integration)
 
 ### Infrastructure & Security
@@ -26,19 +26,23 @@ A high-performance, interactive portfolio showcasing production-grade Smart Cont
 
 ---
 
-## 🏗️ Featured Architectural Case Studies
+## 🏗️ Project Gallery (10 Projects)
 
-The portfolio features deep dives into complex blockchain protocols, complete with custom-built interactive visualizers:
+### 💻 Full-Stack dApps (2)
+End-to-end decentralized applications featuring robust on-chain logic paired with highly interactive, consumer-grade Next.js frontends.
+1. **Nexus Perpetuals DEX** - Full-stack decentralized perpetual exchange interface and core logic.
+2. **Web3 Application Gateway** - Interactive frontend seamlessly connected to custom EVM protocols.
 
-1. **Account Abstraction (ERC-4337)**
-   * From-scratch implementation bypassing high-level SDKs.
-   * Exposes raw UserOperation packing, EntryPoint validation, and Paymaster gas sponsorship mechanics.
-2. **Universal Upgradeable Proxy Standard (UUPS)**
-   * Production-ready implementation of EIP-1822 and EIP-1967.
-   * Demonstrates atomic state migrations, storage layout safety (preventing collisions), and zero-overhead delegation.
-3. **Merkle-712 Airdrop Protocol**
-   * Solves the "Million User Problem" using off-chain Merkle Trees for extreme data compression.
-   * Integrates on-chain EIP-712 structured signatures to prevent front-running claim bots.
+### ⚙️ Core Solidity & Architecture (8)
+Deep technical implementations of complex Ethereum standards, focusing on storage safety, gas efficiency, and cryptography.
+1. **Account Abstraction (ERC-4337)**: Custom EntryPoint validation and Paymaster gas sponsorship bypassing high-level SDKs.
+2. **UUPS Upgradeable Protocol**: Demonstrating atomic state migrations, collision-proof EIP-1967 storage, and zero-overhead delegation.
+3. **Merkle-712 Airdrop Protocol**: Gas-optimized (O(1)) distribution using off-chain trees and EIP-712 anti-front-running signatures.
+4. **Decentralized Stablecoin Engine**: Mathematically modeled, exogenous, over-collateralized stablecoin system.
+5. **Automated Provably Fair Raffle**: Decentralized gaming protocol utilizing Chainlink VRF and Automation.
+6. **Oracle Funding Protocol**: Precision price-feed integration using Chainlink Data Networks.
+7. **SISO Token Economy**: Advanced ERC-20 implementation with custom tokenomic mechanics.
+8. **CuteCat NFT & Sentinel Core**: Gas-optimized ERC-721 infrastructure with enhanced protocol security modules.
 
 ---
 
@@ -92,3 +96,5 @@ Open [http://localhost:3000](https://www.google.com/search?q=http://localhost:30
 This repository is for educational purposes and protocol exploration. The core smart contract concepts demonstrated are implemented for learning, and the code has not been formally audited. Do not deploy the contract logic to production without a thorough security review.
 
 Designed & Built by **Amit (NexTechArchitect)**.
+
+```
