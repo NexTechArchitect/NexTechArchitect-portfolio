@@ -1,5 +1,5 @@
 
-# 🚀 NexTechArchitect | Web3 Full-Stack Portfolio
+# NexTechArchitect | Web3 Full-Stack Portfolio
 
 A high-performance, interactive portfolio showcasing production-grade Smart Contracts, decentralized architectures, and modern Web3 frontends. Built with a focus on deep technical explanations, gas-optimized Solidity, and seamless user experiences.
 
