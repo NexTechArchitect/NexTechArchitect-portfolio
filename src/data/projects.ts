@@ -1,6 +1,28 @@
 export const fullStackProjects = [
-  { id: "fs1", title: "Nexus Protocol OS (ERC-4337)", description: "An institutional-grade, fully on-chain Perpetuals DEX...", tech: ["Solidity", "Foundry", "Account Abstraction", "Chainlink CCIP"], link: "https://github.com/NexTechArchitect/Nexus-Protocol-OS", liveUrl: "https://nexus-protocol-os.vercel.app/" },
-  { id: "fs2", title: "Sentinel DAO Governance", description: "A modular on-chain governance system featuring Timelock Execution...", tech: ["OpenZeppelin", "Next.js 14", "Wagmi", "Governance"], link: "https://github.com/NexTechArchitect/Web3-FullStack-Sentinal-DAO", liveUrl: "https://sentinel-dao-brown.vercel.app/" }
+  { 
+    id: "fs1", 
+    title: "Nexus Protocol OS (ERC-4337)", 
+    description: "An institutional-grade, fully on-chain Perpetuals DEX...", 
+    tech: ["Solidity", "Foundry", "Account Abstraction", "Chainlink CCIP"], 
+    link: "https://github.com/NexTechArchitect/Nexus-Protocol-OS", 
+    liveUrl: "https://nexus-protocol-os.vercel.app/" 
+  },
+  { 
+    id: "fs2", 
+    title: "Sentinel DAO Governance", 
+    description: "A modular on-chain governance system featuring Timelock Execution...", 
+    tech: ["OpenZeppelin", "Next.js 14", "Wagmi", "Governance"], 
+    link: "https://github.com/NexTechArchitect/Web3-FullStack-Sentinal-DAO", 
+    liveUrl: "https://sentinel-dao-brown.vercel.app/" 
+  },
+  { 
+    id: "fs3", 
+    title: "Nexus Perps v2 (Polkadot)", 
+    description: "Advanced perpetuals infrastructure deployed on Polkadot Hub Testnet. Features automated price keepers, 50x leverage, and cross-chain margin relay. (Hackathon Entry 🚀)", 
+    tech: ["Solidity", "Polkadot Hub", "CCIP", "Next.js 15"], 
+    link: "https://github.com/NexTechArchitect/nexus-polka-perps", 
+    liveUrl: "https://nexus-protocol-v2.vercel.app/" 
+  }
 ];
 
 export const coreProjects = [
