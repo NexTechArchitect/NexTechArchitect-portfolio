@@ -231,7 +231,7 @@ export default function NexusPolkaCaseStudy() {
         
         {/* ── HERO SECTION ── */}
         <div className="w-full px-5 sm:px-10 pt-16 pb-12 border-b border-white/40">
-          <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-10 items-center lg:items-start">
+          <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-10 items-center justify-between">
             
             <div className="flex-1 w-full text-center lg:text-left">
               <motion.div initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} className="flex flex-wrap justify-center lg:justify-start gap-2 mb-6">
@@ -269,13 +269,21 @@ export default function NexusPolkaCaseStudy() {
               </motion.div>
             </div>
 
+            {/* Optimized Smaller Video Container */}
             <motion.div initial={{ opacity:0, scale:0.95 }} animate={{ opacity:1, scale:1 }} transition={{ delay:0.15 }}
-              className="flex-1 w-full max-w-xl relative"
+              className="w-full max-w-[320px] lg:max-w-[400px] shrink-0 relative mx-auto lg:mx-0"
             >
-              <GlassCard className="p-2 aspect-video overflow-hidden group">
-                <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent pointer-events-none z-10 rounded-3xl" />
-                <video src="https://github.com/user-attachments/assets/0aa71e44-42ef-43c6-8a9a-1ffb3fe06fd4" autoPlay loop muted playsInline className="w-full h-full object-cover rounded-2xl opacity-90 group-hover:opacity-100 transition-opacity" />
+              <GlassCard className="p-1.5 md:p-2 rounded-[24px] md:rounded-[32px] overflow-hidden group border-white shadow-2xl relative z-10">
+                 {/* Inner glow specific to video frame */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-white/30 to-transparent pointer-events-none z-10" />
+                <div className="rounded-[18px] md:rounded-[24px] overflow-hidden bg-black/5 aspect-video relative">
+                  <video src="https://github.com/user-attachments/assets/0aa71e44-42ef-43c6-8a9a-1ffb3fe06fd4" autoPlay loop muted playsInline className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/40 backdrop-blur-md rounded text-[8px] text-white/80 font-mono">LIVE DEMO</div>
+                </div>
               </GlassCard>
+              {/* Outer decorative blobb for the video */}
+              <div className="absolute -top-4 -right-4 w-24 h-24 bg-cyan-300/40 blur-2xl rounded-full -z-10" />
+              <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-pink-400/30 blur-2xl rounded-full -z-10" />
             </motion.div>
 
           </div>
