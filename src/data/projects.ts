@@ -22,6 +22,14 @@ export const fullStackProjects = [
     tech: ["Solidity", "Polkadot Hub", "CCIP", "Next.js 15"], 
     link: "https://github.com/NexTechArchitect/nexus-polka-perps", 
     liveUrl: "https://nexus-protocol-v2.vercel.app/" 
+  },
+  { 
+    id: "fs4", 
+    title: "ERC-5484 On-Chain Reputation", 
+    description: "A fully on-chain reputation protocol built on ERC-5484 Soulbound Tokens. Wallet behaviour tracked on-chain. Score evolves. Medal art upgrades automatically. No IPFS dependency.", 
+    tech: ["Solidity", "ERC-5484", "UUPS Proxy", "Next.js 14"], 
+    link: "https://github.com/NexTechArchitect/RST-Reputation-Protocol", 
+    liveUrl: "https://rst-reputation-protocol.vercel.app/" 
   }
 ];
 
