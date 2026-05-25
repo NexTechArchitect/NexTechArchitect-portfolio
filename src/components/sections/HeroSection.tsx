@@ -1,30 +1,17 @@
 "use client";
 
-import { motion, animate } from "framer-motion";
-import { useEffect, useState, useRef } from "react";
-
-// ── Animated Counter ───────────────────────────────────────────────────────
-function AnimatedCounter({ target, suffix = "" }: { target: number; suffix?: string }) {
-  const [display, setDisplay] = useState(0);
-  useEffect(() => {
-    const controls = animate(0, target, {
-      duration: 2.2, delay: 1, ease: [0.16, 1, 0.3, 1],
-      onUpdate: (v) => setDisplay(Math.round(v)),
-    });
-    return controls.stop;
-  }, [target]);
-  return <span>{display}{suffix}</span>;
-}
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { useEffect, useState, useRef, MouseEvent } from "react";
 
 // ── Glitch Text ────────────────────────────────────────────────────────────
-const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$&";
 function GlitchText({ text, delay = 0 }: { text: string; delay?: number }) {
   const [out, setOut] = useState(() =>
     text.split("").map((c) => (c === " " ? " " : CHARS[Math.floor(Math.random() * CHARS.length)])).join("")
   );
   useEffect(() => {
     let f = 0;
-    const total = 22;
+    const total = 20;
     const t = setTimeout(() => {
       const iv = setInterval(() => {
         f++;
@@ -34,258 +21,413 @@ function GlitchText({ text, delay = 0 }: { text: string; delay?: number }) {
           return CHARS[Math.floor(Math.random() * CHARS.length)];
         }).join(""));
         if (f >= total) { clearInterval(iv); setOut(text); }
-      }, 48);
+      }, 45);
     }, delay);
     return () => clearTimeout(t);
   }, [text, delay]);
   return <>{out}</>;
 }
 
-// ── Footer-style 5D Particle Network — hero teal palette, ultra-light ────
-function HeroParticles() {
+// ── CONTACT ORB ─────────────────────────────────────────────────────────────
+function ContactOrb() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const tRef = useRef(0);
   const rafRef = useRef<number>(0);
-  const mouse = useRef({ x: -999, y: -999 });
+  const mouseRef = useRef({ x: 0, y: 0 });
 
+  // Canvas animation
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    let W = 0, H = 0;
+    const ctx = canvas.getContext("2d")!;
+    const W = canvas.width;
+    const H = canvas.height;
+    const cx = W / 2;
+    const cy = H / 2;
 
-    function resize() {
-      if (!canvas) return;
-      W = canvas.offsetWidth; H = canvas.offsetHeight;
-      canvas.width = W * devicePixelRatio; canvas.height = H * devicePixelRatio;
-      ctx!.scale(devicePixelRatio, devicePixelRatio);
+    function project(x: number, y: number, z: number) {
+      const fov = 300;
+      const scale = fov / (fov + z);
+      return { x: cx + x * scale, y: cy + y * scale, scale };
     }
-    resize();
-    window.addEventListener("resize", resize);
 
-    // Hero teal/sage/sky — same as site theme
-    const PALETTE: [number,number,number][] = [
-      [13, 148, 136],   // teal
-      [77, 158, 122],   // sage
-      [11, 110, 138],   // sky-teal
-    ];
-
-    type P = { x:number;y:number;z:number;t:number;f:number;ox:number;oy:number;col:number };
-    const COUNT = 90;
-    const pts: P[] = Array.from({ length: COUNT }, () => ({
-      x: Math.random()*1600, y: Math.random()*900,
-      z: Math.random(), t: Math.random()*Math.PI*2,
-      f: 0.25 + Math.random()*0.55,
-      ox: Math.random()*1600, oy: Math.random()*900,
-      col: Math.floor(Math.random()*3),
-    }));
-
-    let time = 0;
-
-    function draw() {
-      if (!canvas||!ctx||W<=0||H<=0) { rafRef.current=requestAnimationFrame(draw); return; }
-      ctx.clearRect(0,0,W,H);
-      time += 0.004;
-
-      const mx = mouse.current.x, my = mouse.current.y;
-
-      for (const p of pts) {
-        const ds = 0.4+p.z*0.6;
-        p.x = p.ox + Math.sin(time*p.f+p.t)*26*ds;
-        p.y = p.oy + Math.cos(time*p.f*0.7+p.t)*17*ds;
-        const dx=p.x-mx, dy=p.y-my, dist=Math.sqrt(dx*dx+dy*dy);
-        if (dist<100&&dist>0) { const f=(100-dist)/100*16; p.x+=dx/dist*f; p.y+=dy/dist*f; }
-        p.ox += Math.sin(time*0.09+p.t)*0.14*ds;
-        p.oy += Math.cos(time*0.07+p.t)*0.10*ds;
-        if(p.ox<-60)p.ox=W+30; if(p.ox>W+60)p.ox=-30;
-        if(p.oy<-60)p.oy=H+30; if(p.oy>H+60)p.oy=-30;
+    function drawRing(
+      radius: number, tilt: number, spin: number,
+      alpha: number, color: string
+    ) {
+      const steps = 90;
+      ctx.beginPath();
+      for (let i = 0; i <= steps; i++) {
+        const a = (i / steps) * Math.PI * 2;
+        const rx = Math.cos(a) * radius;
+        const ry = Math.sin(a) * radius;
+        const y3 = ry * Math.cos(tilt);
+        const z3 = ry * Math.sin(tilt);
+        const x3 = rx * Math.cos(spin) - z3 * Math.sin(spin);
+        const zf = rx * Math.sin(spin) + z3 * Math.cos(spin);
+        const p = project(x3, y3, zf);
+        if (i === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
       }
-
-      // Connections — very faint
-      for (let i=0;i<COUNT;i++) for (let j=i+1;j<COUNT;j++) {
-        const a=pts[i], b=pts[j];
-        const dx=a.x-b.x, dy=a.y-b.y, d=Math.sqrt(dx*dx+dy*dy);
-        if (d<105) {
-          const alpha=(1-d/105)*0.11*((a.z+b.z)/2);
-          const [r,g,bl]=PALETTE[a.col];
-          ctx.beginPath();
-          ctx.strokeStyle=`rgba(${r},${g},${bl},${alpha})`;
-          ctx.lineWidth=0.4+(a.z+b.z)*0.15;
-          ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
-        }
-      }
-
-      // Dots — barely visible
-      for (const p of pts) {
-        const r=0.8+p.z*1.8;
-        const alpha=0.12+p.z*0.28; // max ~0.40 — light but visible
-        const pulse=1+Math.sin(time*p.f*2+p.t)*0.2;
-        const [cr,cg,cb]=PALETTE[p.col];
-
-        const grd=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r*4*pulse);
-        grd.addColorStop(0,`rgba(${cr},${cg},${cb},${alpha*0.4})`);
-        grd.addColorStop(1,`rgba(${cr},${cg},${cb},0)`);
-        ctx.beginPath(); ctx.arc(p.x,p.y,r*4*pulse,0,Math.PI*2);
-        ctx.fillStyle=grd; ctx.fill();
-
-        ctx.beginPath(); ctx.arc(p.x,p.y,r*pulse,0,Math.PI*2);
-        ctx.fillStyle=`rgba(${cr},${cg},${cb},${alpha})`; ctx.fill();
-      }
-
-      rafRef.current=requestAnimationFrame(draw);
+      ctx.strokeStyle = color;
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
     }
-    draw();
 
-    const onMove = (e: globalThis.MouseEvent) => {
-      const r = canvas!.getBoundingClientRect();
-      mouse.current = { x: e.clientX-r.left, y: e.clientY-r.top };
-    };
-    const onLeave = () => { mouse.current = { x:-999, y:-999 }; };
-    canvas.parentElement?.addEventListener("mousemove", onMove);
-    canvas.parentElement?.addEventListener("mouseleave", onLeave);
+    function drawOrbiter(
+      radius: number, tilt: number, spin: number,
+      progress: number, size: number, color: string
+    ) {
+      const a = progress * Math.PI * 2;
+      const rx = Math.cos(a) * radius;
+      const ry = Math.sin(a) * radius;
+      const y3 = ry * Math.cos(tilt);
+      const z3 = ry * Math.sin(tilt);
+      const x3 = rx * Math.cos(spin) - z3 * Math.sin(spin);
+      const zf = rx * Math.sin(spin) + z3 * Math.cos(spin);
+      const p = project(x3, y3, zf);
 
-    return () => {
-      cancelAnimationFrame(rafRef.current);
-      window.removeEventListener("resize", resize);
-      canvas.parentElement?.removeEventListener("mousemove", onMove);
-      canvas.parentElement?.removeEventListener("mouseleave", onLeave);
-    };
+      // glow
+      const grd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, size * 6);
+      grd.addColorStop(0, color.replace("1)", "0.5)"));
+      grd.addColorStop(1, color.replace("1)", "0)"));
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, size * 6, 0, Math.PI * 2);
+      ctx.fillStyle = grd;
+      ctx.fill();
+
+      // dot
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, size * p.scale * 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.globalAlpha = 0.9;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      // trail
+      for (let k = 1; k <= 7; k++) {
+        const ta = a - k * 0.16;
+        const trx = Math.cos(ta) * radius;
+        const trY = Math.sin(ta) * radius;
+        const ty3 = trY * Math.cos(tilt);
+        const tz3 = trY * Math.sin(tilt);
+        const tx3 = trx * Math.cos(spin) - tz3 * Math.sin(spin);
+        const tzf = trx * Math.sin(spin) + tz3 * Math.cos(spin);
+        const tp = project(tx3, ty3, tzf);
+        ctx.beginPath();
+        ctx.arc(tp.x, tp.y, (size - k * 0.28) * tp.scale, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.globalAlpha = Math.max(0, 0.5 - k * 0.07);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    function frame() {
+      ctx.clearRect(0, 0, W, H);
+      const t = (tRef.current += 0.009);
+
+      // mouse influence — subtle tilt based on cursor
+      const mx = (mouseRef.current.x - 0.5) * 0.3;
+      const my = (mouseRef.current.y - 0.5) * 0.3;
+
+      // ring 1 — teal
+      drawRing(110, Math.PI * 0.22 + my, t * 0.5, 0.13, "rgba(13,148,136,1)");
+      // ring 2 — indigo
+      drawRing(82, Math.PI * 0.55 + mx, -t * 0.35, 0.11, "rgba(99,102,241,1)");
+      // ring 3 — slate
+      drawRing(58, Math.PI * 0.78 + my * 0.5, t * 0.68, 0.09, "rgba(100,116,139,1)");
+
+      // orbiters
+      drawOrbiter(110, Math.PI * 0.22 + my, t * 0.5, (t * 0.17) % 1, 3.5, "rgba(13,148,136,1)");
+      drawOrbiter(82, Math.PI * 0.55 + mx, -t * 0.35, (t * 0.24 + 0.5) % 1, 2.8, "rgba(99,102,241,1)");
+      drawOrbiter(58, Math.PI * 0.78 + my * 0.5, t * 0.68, (t * 0.31 + 0.3) % 1, 2.2, "rgba(100,116,139,1)");
+
+      // center core
+      const core = 0.5 + 0.5 * Math.sin(t * 1.5);
+      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 16);
+      g.addColorStop(0, `rgba(13,148,136,${0.4 * core})`);
+      g.addColorStop(1, "rgba(13,148,136,0)");
+      ctx.beginPath();
+      ctx.arc(cx, cy, 16, 0, Math.PI * 2);
+      ctx.fillStyle = g;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(13,148,136,${0.7 + 0.3 * core})`;
+      ctx.fill();
+
+      rafRef.current = requestAnimationFrame(frame);
+    }
+    frame();
+    return () => cancelAnimationFrame(rafRef.current);
   }, []);
 
+  // Mouse tracking
+  const wrapRef = useRef<HTMLDivElement>(null);
+  function handleMouseMove(e: MouseEvent<HTMLDivElement>) {
+    if (!wrapRef.current) return;
+    const r = wrapRef.current.getBoundingClientRect();
+    mouseRef.current = {
+      x: (e.clientX - r.left) / r.width,
+      y: (e.clientY - r.top) / r.height,
+    };
+  }
+  function handleMouseLeave() {
+    mouseRef.current = { x: 0.5, y: 0.5 };
+  }
+
+  const contacts = [
+    {
+      label: "Email",
+      value: "amitthapa181133@gmail.com",
+      href: "mailto:amitthapa181133@gmail.com",
+      color: "text-teal-700",
+      border: "border-teal-200 hover:border-teal-400",
+      bg: "hover:bg-teal-50",
+      icon: (
+        <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" className="text-teal-600">
+          <rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/>
+        </svg>
+      ),
+    },
+    {
+      label: "GitHub",
+      value: "NexTechArchitect",
+      href: "https://github.com/NexTechArchitect",
+      color: "text-slate-700",
+      border: "border-slate-200 hover:border-slate-400",
+      bg: "hover:bg-slate-50",
+      icon: (
+        <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24" className="text-slate-600">
+          <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+        </svg>
+      ),
+    },
+    {
+      label: "Twitter",
+      value: "@itZ_AmiT0",
+      href: "https://x.com/itZ_AmiT0",
+      color: "text-indigo-700",
+      border: "border-indigo-200 hover:border-indigo-400",
+      bg: "hover:bg-indigo-50",
+      icon: (
+        <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24" className="text-indigo-600">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.258 5.63 5.906-5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+        </svg>
+      ),
+    },
+    {
+      label: "Telegram",
+      value: "NexTechArchitect",
+      href: "https://t.me/NexTechArchitect",
+      color: "text-sky-700",
+      border: "border-sky-200 hover:border-sky-400",
+      bg: "hover:bg-sky-50",
+      icon: (
+        <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24" className="text-sky-600">
+          <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+        </svg>
+      ),
+    },
+  ];
+
   return (
-    <canvas ref={canvasRef}
-      className="absolute inset-0 w-full h-full pointer-events-none"
-      style={{ opacity: 0.8, zIndex: 0 }}
-    />
+    <div
+      ref={wrapRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      className="relative w-[340px] h-[340px] flex items-center justify-center"
+    >
+      {/* The canvas — fills the whole area */}
+      <canvas
+        ref={canvasRef}
+        width={340}
+        height={340}
+        className="absolute inset-0"
+      />
+
+      {/* Contact links floating over the canvas */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">
+        {contacts.map((c, i) => (
+          <motion.a
+            key={c.label}
+            href={c.href}
+            target={c.href.startsWith("http") ? "_blank" : undefined}
+            rel="noopener noreferrer"
+            initial={{ opacity: 0, scale: 0.88 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.6 + i * 0.1, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            whileHover={{ scale: 1.04, y: -1 }}
+            className={`
+              pointer-events-auto
+              flex items-center gap-2
+              px-3 py-1.5
+              rounded-full
+              bg-white/80 backdrop-blur-md
+              border ${c.border}
+              shadow-sm
+              transition-all duration-200
+              ${c.bg}
+              group
+            `}
+            style={{ zIndex: 10 }}
+          >
+            <span className="flex-shrink-0">{c.icon}</span>
+            <span className={`text-[10px] font-mono font-semibold tracking-wider uppercase ${c.color}`}>
+              {c.label}
+            </span>
+            <span className="text-[11px] font-mono text-slate-500 max-w-[140px] truncate">
+              {c.value}
+            </span>
+            <span className={`text-[10px] ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity ${c.color}`}>↗</span>
+          </motion.a>
+        ))}
+      </div>
+    </div>
   );
 }
 
-// ── Hero Section ───────────────────────────────────────────────────────────
+// ── Main Hero Section ──────────────────────────────────────────────────────
 export default function HeroSection() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
-  const stats = [
-    { label: "In Web3 Since",       value: "2019", isStatic: true },
-    { label: "Building Tech Since", value: "2024", isStatic: true },
-    { label: "Projects Built",      value: 15, suffix: "+" },
-    { label: "Contracts Deployed",  value: 60, suffix: "+" },
+  const corePillars = [
+    { label: "Foundation", value: "ERC20 / 721" },
+    { label: "Mid-Senior", value: "DEX & DAOs" },
+    { label: "Core Focus", value: "Protocol Security" },
+    { label: "Full-Stack", value: "Zero-Backend UX" },
   ];
 
   return (
     <section
       className="relative flex flex-col overflow-hidden"
-      style={{ 
+      style={{
         background: "linear-gradient(148deg, #dcf0eb 0%, #edf5f2 28%, #e5eff5 58%, #f0ece1 100%)",
         minHeight: "min(100svh, 1000px)",
       }}
     >
-      {/* 5D Particle network — footer-style, hero teal palette */}
-      <HeroParticles />
+      {/* Blueprint grid */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.12]"
+        style={{
+          backgroundImage: "radial-gradient(circle, #0f766e 1px, transparent 1px)",
+          backgroundSize: "32px 32px",
+        }}
+      />
 
-      {/* Existing blobs — unchanged */}
-      <div className="absolute top-[-10%] right-[-6%] w-[58vw] h-[58vw] rounded-full pointer-events-none"
-        style={{ background: "radial-gradient(circle, rgba(80,185,165,0.16) 0%, transparent 62%)", filter: "blur(72px)" }} />
-      <div className="absolute bottom-[-12%] left-[-6%] w-[52vw] h-[52vw] rounded-full pointer-events-none"
-        style={{ background: "radial-gradient(circle, rgba(195,168,95,0.12) 0%, transparent 62%)", filter: "blur(80px)" }} />
-      <div className="absolute top-[38%] right-[12%] w-[38vw] h-[38vw] rounded-full pointer-events-none"
-        style={{ background: "radial-gradient(circle, rgba(80,155,205,0.09) 0%, transparent 62%)", filter: "blur(90px)" }} />
-      <div className="absolute top-[5%] left-[8%] w-[30vw] h-[30vw] rounded-full pointer-events-none"
-        style={{ background: "radial-gradient(circle, rgba(120,205,160,0.08) 0%, transparent 62%)", filter: "blur(65px)" }} />
-      <div className="absolute inset-0 pointer-events-none opacity-60"
-        style={{ backgroundImage: "radial-gradient(circle, rgba(60,125,115,0.12) 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
+      <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 w-full relative z-10 flex flex-col lg:flex-row flex-grow justify-start sm:justify-center items-center gap-12 lg:gap-8 pt-24 pb-16 sm:py-24">
 
-      <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 w-full relative z-10 flex flex-col flex-grow justify-start sm:justify-center pt-24 pb-16 sm:py-24">
-        <div className="max-w-3xl w-full">
-
+        {/* LEFT — text */}
+        <div className="w-full lg:w-[58%] flex flex-col">
           <motion.div
             initial={{ opacity: 0, y: -14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 mb-6 sm:mb-10 rounded-full bg-white/75 border border-teal-400/70 backdrop-blur-sm shadow-sm"
+            className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 mb-6 sm:mb-10 rounded-full bg-white/50 border border-teal-400/40 backdrop-blur-md shadow-sm w-max"
           >
-            <motion.span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0"
-              animate={{ scale: [1, 1.5, 1], opacity: [1, 0.35, 1] }} transition={{ duration: 2.2, repeat: Infinity }} />
-            <span className="text-[9px] sm:text-[10px] font-mono tracking-[0.2em] text-teal-700 font-semibold uppercase select-none">
-              Open to Work · Web3 Engineer · India
+            <motion.span
+              className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0"
+              animate={{ scale: [1, 1.5, 1], opacity: [1, 0.35, 1] }}
+              transition={{ duration: 2.2, repeat: Infinity }}
+            />
+            <span className="text-[9px] sm:text-[10px] font-mono tracking-[0.2em] text-teal-800 font-bold uppercase select-none">
+              Engineering Protocols
             </span>
           </motion.div>
 
           <div className="mb-4 sm:mb-6">
             <h1 className="leading-[0.9] sm:leading-[0.88] tracking-tight" style={{ fontFamily: "'Georgia', 'Palatino', serif" }}>
-              <div className="text-[3.2rem] sm:text-[6.5rem] md:text-[8.5rem] font-black text-gray-950 mb-1 sm:mb-2">
+              <div className="text-[3.2rem] sm:text-[6.5rem] md:text-[8.5rem] font-black text-slate-900 mb-1 sm:mb-2 relative z-20">
                 {mounted ? <GlitchText text="Amit." delay={150} /> : "Amit."}
               </div>
-              <div className="text-[1.35rem] sm:text-[2.2rem] md:text-[2.8rem] font-bold whitespace-nowrap"
-                style={{ fontFamily: "'Georgia', serif" }}>
+              <div
+                className="text-[1.35rem] sm:text-[2.2rem] md:text-[2.8rem] font-bold whitespace-nowrap relative z-20"
+                style={{ fontFamily: "'Georgia', serif" }}
+              >
                 <span className="hero-title-gradient">
-                  {mounted ? <GlitchText text="Smart Contract & Web3 Dev" delay={360} /> : "Smart Contract & Web3 Dev"}
+                  {mounted ? <GlitchText text="Smart Contract Architect" delay={360} /> : "Smart Contract Architect"}
                 </span>
               </div>
             </h1>
           </div>
 
-          {/* Inline style — avoids framer-motion backgroundClip conflict */}
           <style>{`
             .hero-title-gradient {
-              background: linear-gradient(120deg, #0d6e65 0%, #0b6e8a 55%, #1a3a8f 100%);
+              background: linear-gradient(120deg, #0f766e 0%, #0369a1 55%, #4338ca 100%);
               -webkit-background-clip: text;
               -webkit-text-fill-color: transparent;
               background-clip: text;
             }
           `}</style>
 
-          <motion.p initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5, duration: 0.5 }}
-            className="text-[12px] sm:text-[13px] font-mono tracking-[0.18em] text-slate-400 uppercase mb-7 sm:mb-8">
-            Building protocols that survive the dark forest.
+          <motion.p
+            initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5, duration: 0.5 }}
+            className="text-[12px] sm:text-[13px] font-mono tracking-[0.18em] text-slate-500 uppercase mb-7 sm:mb-8 font-semibold relative z-20"
+          >
+            Building infrastructure that survives the dark forest.
           </motion.p>
 
-          <div className="w-full sm:max-w-2xl space-y-3 sm:space-y-4 mb-8 sm:mb-11 relative z-20">
-            <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+          <div className="w-full space-y-4 sm:space-y-5 mb-8 sm:mb-11 relative z-20 pr-0 lg:pr-8">
+            <motion.p
+              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.68, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              className="text-[14px] sm:text-[17.5px] text-slate-700 leading-[1.75]">
-              Been in Web3 since 2019, started as a user and got deep into how the tech actually works.
-              Since 2024 I&#39;ve been on the building side, writing Solidity contracts that focus on
-              getting the logic right, keeping gas low, and not breaking in edge cases.
+              className="text-[14px] sm:text-[16.5px] text-slate-800 leading-[1.8] font-medium"
+            >
+              I architect immutable and upgradeable (UUPS) smart contracts. Started with the fundamentals—<span className="text-teal-700 font-bold">ERC-20, ERC-721</span>, and strict access controls—and scaled up to engineering complex, mid-to-senior level Web3 systems.
             </motion.p>
-            <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+            <motion.p
+              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.84, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              className="text-[14px] sm:text-[17.5px] text-slate-700 leading-[1.75]">
-              Built across{" "}
-              <span className="text-gray-900 font-semibold">15+ projects</span>, things like a{" "}
-              <span className="text-teal-700 font-semibold">Perpetuals DEX</span>, a{" "}
-              <span className="text-teal-700 font-semibold">DAO governance system</span>, stablecoins,
-              UUPS proxies, Merkle airdrops, and more. Over{" "}
-              <span className="text-gray-900 font-semibold">60 contracts deployed</span> on EVM chains.
+              className="text-[14px] sm:text-[16.5px] text-slate-800 leading-[1.8] font-medium"
+            >
+              Today, my work revolves around building 50x <span className="text-teal-700 font-bold">Perpetual DEXs</span>, modular <span className="text-teal-700 font-bold">DAO governance</span>, decentralized <span className="text-teal-700 font-bold">Insurance Protocols</span>, and on-chain Reputation Systems.
             </motion.p>
-            <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+            <motion.p
+              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.0, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              className="text-[14px] sm:text-[17.5px] text-slate-700 leading-[1.75]">
-              Mostly focused on building full-stack DApps right now. The kind that real people can
-              actually open and use, not just contract repos sitting on GitHub. Next.js and Wagmi on
-              the frontend, solid contracts underneath. Security and clean code aren&#39;t optional.
+              className="text-[14px] sm:text-[16.5px] text-slate-800 leading-[1.8] font-medium"
+            >
+              My core focus is <span className="text-gray-950 font-bold">Protocol Security</span>. Before shipping, I stress-test architecture using stateful invariant fuzzing (Foundry) and static analysis tools like <span className="text-gray-950 font-bold">Slither</span>.<br /><br />
+              <span className="italic text-slate-600 font-normal">Rather than listing contract deployment numbers, you can explore my isolated smart contract architectures and complete full-stack dApps in the project gallery below.</span>
             </motion.p>
           </div>
 
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2 }}
-            className="grid grid-cols-4 gap-3 sm:gap-8 pt-6 sm:pt-7 border-t border-slate-300">
-            {stats.map((s, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2 }}
+            className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-8 pt-6 sm:pt-7 border-t border-slate-300/50 relative z-20 w-full"
+          >
+            {corePillars.map((s, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.25 + i * 0.08 }}
                 whileHover={{ y: -3, transition: { duration: 0.16 } }}
-                className="group flex flex-col gap-1 cursor-default">
-                <div className="text-[1.4rem] sm:text-[2.4rem] font-black leading-none tabular-nums text-gray-900 group-hover:text-teal-700 transition-colors duration-300"
-                  style={{ fontFamily: "'Georgia', serif" }}>
-                  {mounted && !s.isStatic
-                    ? <AnimatedCounter target={s.value as number} suffix={s.suffix} />
-                    : <>{s.value}{s.suffix}</>}
+                className="group flex flex-col gap-1.5 cursor-default"
+              >
+                <div
+                  className="text-[1.1rem] sm:text-[1.35rem] font-bold leading-tight text-slate-800 group-hover:text-teal-700 transition-colors duration-300"
+                  style={{ fontFamily: "'Georgia', serif" }}
+                >
+                  {s.value}
                 </div>
-                <div className="text-[9px] font-mono tracking-[0.2em] text-slate-500 uppercase leading-tight">{s.label}</div>
-                <div className="h-[2px] w-0 group-hover:w-7 rounded-full transition-all duration-500"
-                  style={{ background: "linear-gradient(90deg, #0d6e65, #0b6e8a)" }} />
+                <div className="text-[9px] font-mono tracking-[0.2em] text-slate-500 uppercase leading-tight font-bold">{s.label}</div>
+                <div
+                  className="h-[2px] w-0 group-hover:w-7 rounded-full transition-all duration-500 mt-1"
+                  style={{ background: "linear-gradient(90deg, #0f766e, #0369a1)" }}
+                />
               </motion.div>
             ))}
           </motion.div>
-
         </div>
+
+        {/* RIGHT — Orb with floating contacts */}
+        <div className="w-full lg:w-[42%] flex justify-center lg:justify-end mt-8 lg:mt-0 relative z-30">
+          <ContactOrb />
+        </div>
+
       </div>
     </section>
   );

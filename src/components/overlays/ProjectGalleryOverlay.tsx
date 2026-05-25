@@ -43,6 +43,7 @@ function ProjectCard({
     },
     [mx, my]
   );
+  
   const onLeave = useCallback(() => {
     mx.set(0);
     my.set(0);
@@ -57,7 +58,7 @@ function ProjectCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.06, type: "spring", damping: 22, stiffness: 130 }}
       style={{ perspective: 1000 }}
-      className="w-full flex justify-center" // Centered for mobile Grid
+      className="w-full flex justify-center"
     >
       <motion.div
         ref={ref}
@@ -67,14 +68,14 @@ function ProjectCard({
         onMouseLeave={onLeave}
         onClick={onClick}
         whileTap={{ scale: 0.975 }}
-        className="cursor-pointer w-full max-w-[360px] md:max-w-[400px]" // Controlled Width
+        className="cursor-pointer w-full max-w-[360px] md:max-w-[400px]"
       >
         {/* ── Card ── */}
         <div
           className="relative flex flex-col overflow-hidden h-full"
           style={{
             borderRadius: 24,
-            minHeight: 400, // Reduced slightly for mobile
+            minHeight: 400,
             background: "#ffffff",
             border: `1px solid ${hovered ? accent + "40" : "#e8e5df"}`,
             boxShadow: hovered
@@ -155,7 +156,7 @@ function ProjectCard({
 
             {/* Tech chips */}
             <div className="flex flex-wrap gap-1 mt-3 mb-4">
-              {(project.tech || []).slice(0, 3).map((t: string) => ( // Show only 3 chips on mobile
+              {(project.tech || []).slice(0, 3).map((t: string) => (
                 <span
                   key={t}
                   className="text-[8px] sm:text-[9px] font-semibold uppercase tracking-wider px-2 sm:px-2.5 py-1 rounded-lg"
@@ -257,15 +258,14 @@ export default function ProjectGalleryOverlay({
         animate={{ opacity: 1, y: "0%" }}
         exit={{ opacity: 0, y: "4%" }}
         transition={{ type: "spring", damping: 28, stiffness: 200 }}
-        className="fixed inset-0 z-[150] flex flex-col overflow-y-auto" // Changed to overflow-y-auto
+        className="fixed inset-0 z-[150] flex flex-col overflow-y-auto"
         style={{ background: "#FDFCF8" }}
       >
         {/* Subtle top ambient */}
         <div
           className="absolute top-0 left-0 right-0 h-[30vh] pointer-events-none"
           style={{
-            background:
-              "linear-gradient(to bottom, rgba(0,85,255,0.03) 0%, transparent 100%)",
+            background: "linear-gradient(to bottom, rgba(0,85,255,0.03) 0%, transparent 100%)",
           }}
         />
 
@@ -274,7 +274,7 @@ export default function ProjectGalleryOverlay({
           initial={{ opacity: 0, y: -16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05, duration: 0.4 }}
-          className="flex-shrink-0 flex items-center justify-between px-6 sm:px-10 md:px-16 py-5 sm:py-7 sticky top-0 bg-[#FDFCF8]/90 backdrop-blur-md z-20" // Sticky Header
+          className="flex-shrink-0 flex items-center justify-between px-6 sm:px-10 md:px-16 py-5 sm:py-7 sticky top-0 bg-[#FDFCF8]/90 backdrop-blur-md z-20"
           style={{ borderBottom: "1px solid #ede9e2" }}
         >
           <div>
@@ -308,9 +308,7 @@ export default function ProjectGalleryOverlay({
         </motion.div>
 
         {/* ── Grid Layout ── */}
-        <div
-          className="w-full max-w-7xl mx-auto px-4 sm:px-10 md:px-16 py-8 sm:py-12"
-        >
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-10 md:px-16 py-8 sm:py-12">
            {/* Mobile: 1 column, sm: 2 cols, lg: 3 cols */}
            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 justify-items-center">
             {projects.map((project, i) => (

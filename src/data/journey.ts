@@ -1,71 +1,41 @@
 export const journeyData = [
   {
-    id: "arch1",
-    role: "EVM & Security Researcher",
-    company: "Foundation Phase",
-    year: "2024 - 2025",
-    description: "Started with a hardcore focus on EVM internals. I didn't just learn Solidity syntax; I learned how the EVM executes bytecode, memory vs storage tradeoffs, and how to break contracts.",
-    tech: ["Solidity", "Foundry", "Yul / Assembly", "Security Patterns"],
-    accent: "#0055FF", // Blue
-    content: [
-      { 
-        heading: "Foundry Testing Mastery", 
-        text: "Moved away from Hardhat to write exhaustive Foundry test suites. Learned how to mathematically prove contract solvency using stateless and stateful invariant fuzzing." 
-      },
-      { 
-        heading: "EVM Mechanics & Gas", 
-        text: "Deep dive into storage slot packing, opcode gas costs, and unchecked math optimizations to write highly efficient smart contracts." 
-      },
-      { 
-        heading: "Attack Vectors", 
-        text: "Studied real-world exploits. Implemented strict Checks-Effects-Interactions (CEI) patterns and reentrancy guards as muscle memory." 
-      }
+    id: "exp_insurance",
+    role: "Lead Smart Contract Engineer",
+    company: "Independent Architecture / Protocol R&D",
+    date: "2026 - Present",
+    description: "Architecting zero-to-one decentralized insurance infrastructure and exploring high-performance cross-chain environments.",
+    techStack: ["Solidity", "Rust", "Foundry", "Actuarial Math", "EVM Internals"],
+    achievements: [
+      "Engineered PremiumMath, a highly gas-optimized Solidity library dedicated exclusively to decentralized insurance premium calculations.",
+      "Implementing stateful invariant fuzz testing to mathematically prove protocol solvency and secure state transitions against edge-case exploits.",
+      "Integrating Rust-based logic for high-performance, secure smart contract execution and cross-chain primitives."
     ]
   },
   {
-    id: "arch2",
-    role: "Core Smart Contract Engineer",
-    company: "Independent Architecture",
-    year: "2025 - 2026",
-    description: "Graduated from testing to building complex, standalone Solidity architectures. Focused heavily on standard EIP implementations and secure DeFi primitives.",
-    tech: ["UUPS Proxies", "Merkle Trees", "DeFi Math", "EIP-712"],
-    accent: "#7C3AED", // Purple
-    content: [
-      { 
-        heading: "Upgradeable Systems (UUPS)", 
-        text: "Mastered the ERC-1967 universal upgradeable proxy standard. Architected collision-free storage layouts allowing protocols to scale without migrating core contracts." 
-      },
-      { 
-        heading: "O(1) Gas Airdrops", 
-        text: "Generated massive Merkle Trees off-chain and verified proofs on-chain, enabling highly gas-efficient whitelists and distribution mechanisms." 
-      },
-      { 
-        heading: "Stablecoin Primitives", 
-        text: "Engineered core math for over-collateralized stablecoins, including health factor calculations and liquidation thresholds." 
-      }
-    ]
-  },
-  {
-    id: "arch3",
+    id: "exp_defi",
     role: "Full-Stack Protocol Architect",
-    company: "Solo Developer",
-    year: "Current",
-    description: "Bridged hardcore smart contract backends with seamless Next.js interfaces. Built and deployed enterprise-grade protocols like Nexus Perps and Sentinel DAO completely solo.",
-    tech: ["Nexus Perps", "Sentinel DAO", "Next.js 14", "ERC-4337 AA"],
-    accent: "#059669", // Emerald Green
-    content: [
-      { 
-        heading: "Nexus Perps (Perpetual DEX)", 
-        text: "Engineered a fully on-chain 50x leverage perpetuals exchange. Handled complex liquidation math, Chainlink CCIP cross-chain routing, and oracle staleness guards." 
-      },
-      { 
-        heading: "Sentinel DAO (Governance OS)", 
-        text: "Built a modular protocol-level governance OS using OpenZeppelin. Integrated a 48H Timelock execution and a RageQuit module for minority token-holder protection." 
-      },
-      { 
-        heading: "Account Abstraction & Frontend", 
-        text: "Deployed custom Paymasters for gasless user experiences. Connected these backends to Next.js 14 using Wagmi v2 and Viem for zero-backend, fully decentralized telemetry." 
-      }
+    company: "DeFi Ecosystems",
+    date: "2025 - 2026",
+    description: "Built and deployed enterprise-grade DeFi protocols with zero-backend interfaces, handling everything from core logic to user experience.",
+    techStack: ["Next.js 15", "Nexus Perps", "Sentinel DAO", "Chainlink CCIP", "Aave V3"],
+    achievements: [
+      "Architected Nexus Perpetuals, a fully on-chain 50x leverage perpetuals DEX featuring ERC-4337 gasless trading and Chainlink CCIP routing.",
+      "Developed Sentinel DAO, a modular protocol-level governance OS integrating Aave V3, a 48H Timelock, and a RageQuit module for minority token-holder protection.",
+      "Bridged complex smart contract backends to frontend architecture using Wagmi and Viem for instant, decentralized telemetry."
+    ]
+  },
+  {
+    id: "exp_hackathon",
+    role: "EVM Researcher & Builder",
+    company: "Polkadot Ecosystem & Core EVM",
+    date: "2024 - 2025",
+    description: "Transitioned from high-level syntax to low-level EVM mechanics, memory/storage tradeoffs, and cross-chain interoperability.",
+    techStack: ["Solidity", "Yul / Assembly", "Polkadot", "Cross-chain Routing"],
+    achievements: [
+      "Competed and built complex cross-chain logic during the Polkadot Hackathon, focusing on interoperability and secure state transfers.",
+      "Mastered storage slot packing, opcode gas costs, and unchecked math optimizations to write highly efficient smart contracts.",
+      "Implemented strict Checks-Effects-Interactions (CEI) patterns and collision-free UUPS proxy layouts as core muscle memory."
     ]
   }
 ];
