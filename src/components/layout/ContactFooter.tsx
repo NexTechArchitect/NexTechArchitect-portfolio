@@ -1,129 +1,376 @@
 "use client";
 
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { useRef, useEffect, MouseEvent } from "react";
+import {
+  motion,
+  useMotionValue,
+  useSpring,
+  useTransform,
+  AnimatePresence,
+} from "framer-motion";
+import { useRef, useState, useEffect, MouseEvent, useCallback } from "react";
+import Link from "next/link";
 
-// ── 5D Particle Field ─────────────────────────────────────────────────────
-// X, Y = position | Z = depth/size | T = time phase | F = frequency/speed
-function ParticleField() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const mouse = useRef({ x: 0, y: 0 });
-  const rafRef = useRef<number>(0);
+/* ════════════════════════════════════════════════════════════════
+   SENTINEL INSURANCE PROTOCOL — Liquid Metal Edition
+   Palette: void-black · electric-cyan · frost-white
+   Vibe: institutional dark · cinematic depth · surgical precision
+════════════════════════════════════════════════════════════════ */
+
+const CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --void:#04060e;
+  --surface:#080c18;
+  --surface2:#0c1120;
+  --cyan:#00e5ff;
+  --cyan2:#0ea5e9;
+  --frost:rgba(255,255,255,0.92);
+  --muted:rgba(148,163,184,0.7);
+  --border:rgba(255,255,255,0.06);
+  --border2:rgba(0,229,255,0.15);
+}
+.syne{font-family:'Syne',sans-serif;}
+.mono{font-family:'JetBrains Mono',monospace;}
+html,body{background:var(--void);color:#e2e8f0;overflow-x:hidden;}
+.hide-scroll::-webkit-scrollbar{display:none;}
+.hide-scroll{-ms-overflow-style:none;scrollbar-width:none;}
+
+.glass{
+  background:rgba(8,12,24,0.7);
+  backdrop-filter:blur(24px) saturate(160%);
+  -webkit-backdrop-filter:blur(24px) saturate(160%);
+  border:1px solid var(--border);
+}
+.glass-cyan{
+  background:rgba(8,12,24,0.75);
+  backdrop-filter:blur(20px);
+  border:1px solid var(--border2);
+  box-shadow:0 0 40px rgba(0,229,255,0.04),inset 0 1px 0 rgba(0,229,255,0.08);
+}
+
+.gtext{
+  background:linear-gradient(120deg,#fff 0%,var(--cyan) 50%,var(--cyan2) 100%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.gtext-sm{
+  background:linear-gradient(90deg,var(--cyan) 0%,#fff 100%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+
+@keyframes scanline{
+  0%{transform:translateY(-100%);}
+  100%{transform:translateY(100vh);}
+}
+.scanline{
+  position:fixed;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(0,229,255,0.08),transparent);
+  animation:scanline 8s linear infinite;
+  pointer-events:none;z-index:100;
+}
+
+@keyframes flicker{0%,100%{opacity:1;}92%{opacity:1;}93%{opacity:0.85;}94%{opacity:1;}}
+.flicker{animation:flicker 7s ease infinite;}
+
+.tab-btn{
+  position:relative;
+  padding:12px 20px;
+  font-size:10px;letter-spacing:0.2em;text-transform:uppercase;
+  font-family:'JetBrains Mono',monospace;font-weight:600;
+  color:rgba(148,163,184,0.6);
+  border:none;background:none;cursor:pointer;
+  transition:color 0.2s;white-space:nowrap;
+}
+.tab-btn:hover{color:rgba(255,255,255,0.8);}
+.tab-btn.active{color:#00e5ff;}
+.tab-btn::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:var(--cyan);opacity:0;transform:scaleX(0.5);
+  transition:opacity 0.2s,transform 0.2s;
+}
+.tab-btn.active::after{opacity:1;transform:scaleX(1);}
+
+.contract-row{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 16px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  background:rgba(255,255,255,0.02);
+  transition:background 0.2s,border-color 0.2s;
+}
+.contract-row:hover{background:rgba(0,229,255,0.03);border-color:var(--border2);}
+
+.pill{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:4px 12px;border-radius:20px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;font-weight:600;letter-spacing:0.14em;
+  text-transform:uppercase;
+}
+
+@media(max-width:640px){
+  .tab-btn{padding:10px 14px;font-size:9px;}
+}
+`;
+
+// ── WebGL Canvas — Liquid Metal Shield ──────────────────────────────
+function ShieldCanvas({ className = "" }: { className?: string }) {
+  const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
+    const cv = ref.current;
+    if (!cv) return;
+    const ctx = cv.getContext("2d");
     if (!ctx) return;
 
-    let W = 0, H = 0;
+    let W = (cv.width = cv.offsetWidth * window.devicePixelRatio);
+    let H = (cv.height = cv.offsetHeight * window.devicePixelRatio);
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    const w = cv.offsetWidth, h = cv.offsetHeight;
 
-    function resize() {
-      if (!canvas) return;
-      W = canvas.offsetWidth;
-      H = canvas.offsetHeight;
-      canvas.width = W * devicePixelRatio;
-      canvas.height = H * devicePixelRatio;
-      ctx!.scale(devicePixelRatio, devicePixelRatio);
+    let raf: number, t = 0;
+    const mouse = { x: w / 2, y: h / 2 };
+
+    // Particles — layered depth
+    interface P { x: number; y: number; z: number; vx: number; vy: number; size: number; tier: number; phase: number; }
+    const isMob = w < 640;
+    const count = isMob ? 60 : 120;
+    const particles: P[] = Array.from({ length: count }, () => {
+      const tier = Math.random() < 0.08 ? 0 : Math.random() < 0.25 ? 1 : 2;
+      return {
+        x: Math.random() * w, y: Math.random() * h,
+        z: Math.random(),
+        vx: (Math.random() - 0.5) * (tier === 0 ? 0.12 : 0.22),
+        vy: (Math.random() - 0.5) * (tier === 0 ? 0.08 : 0.18),
+        size: tier === 0 ? 2.5 + Math.random() * 2 : tier === 1 ? 1.2 + Math.random() : 0.5 + Math.random() * 0.6,
+        tier, phase: Math.random() * Math.PI * 2,
+      };
+    });
+
+    // Ring system
+    const rings = [
+      { r: isMob ? 70 : 110, speed: 0.28, tilt: 0.32, color: [0, 229, 255] as [number, number, number], width: 0.8, alpha: 0.18 },
+      { r: isMob ? 52 : 82,  speed: -0.42, tilt: 0.65, color: [14, 165, 233] as [number, number, number], width: 0.6, alpha: 0.14 },
+      { r: isMob ? 36 : 58,  speed: 0.6,  tilt: 0.88, color: [255, 255, 255] as [number, number, number], width: 0.5, alpha: 0.10 },
+    ];
+
+    function project(x: number, y: number, z: number) {
+      const fov = isMob ? 260 : 320;
+      // Math.max guarantees scale never goes negative
+      const s = Math.max(0.01, fov / (fov + z * 60));
+      return { x: w / 2 + x * s, y: h / 2 + y * s, s };
     }
-    resize();
-    window.addEventListener("resize", resize);
 
-    // 3 colours: blue #0055FF, teal #0ea5e9, rose-pink #f43f5e
-    const PALETTE: [number,number,number][] = [[0,85,255],[14,165,233],[244,63,94]];
-    type P = { x:number;y:number;z:number;t:number;f:number;ox:number;oy:number;col:number };
-    const COUNT = 52;
-    const particles: P[] = Array.from({ length: COUNT }, () => ({
-      x: Math.random()*1400, y: Math.random()*700,
-      z: Math.random(), t: Math.random()*Math.PI*2,
-      f: 0.3+Math.random()*0.7,
-      ox: Math.random()*1400, oy: Math.random()*700,
-      col: Math.floor(Math.random()*3),
-    }));
-
-    let time = 0;
-
-    function draw() {
-      if (!canvas||!ctx||W<=0||H<=0) { rafRef.current=requestAnimationFrame(draw); return; }
-      ctx.clearRect(0,0,W,H);
-      time += 0.005;
-      const mx=mouse.current.x, my=mouse.current.y;
-
-      for (const p of particles) {
-        const ds=0.4+p.z*0.6;
-        p.x=p.ox+Math.sin(time*p.f+p.t)*26*ds;
-        p.y=p.oy+Math.cos(time*p.f*0.7+p.t)*17*ds;
-        const dx=p.x-mx,dy=p.y-my,dist=Math.sqrt(dx*dx+dy*dy);
-        if (dist<110&&dist>0){const f=(110-dist)/110*20;p.x+=dx/dist*f;p.y+=dy/dist*f;}
-        p.ox+=Math.sin(time*0.11+p.t)*0.16*ds;
-        p.oy+=Math.cos(time*0.08+p.t)*0.11*ds;
-        if(p.ox<-80)p.ox=W+40;if(p.ox>W+80)p.ox=-40;
-        if(p.oy<-80)p.oy=H+40;if(p.oy>H+80)p.oy=-40;
+    function drawRing(ring: typeof rings[0], spin: number) {
+      if (!ctx) return; // FIX: TypeScript null check
+      const steps = 80;
+      ctx.beginPath();
+      for (let i = 0; i <= steps; i++) {
+        const a = (i / steps) * Math.PI * 2;
+        const rx = Math.cos(a) * ring.r;
+        const ry = Math.sin(a) * ring.r;
+        const y3 = ry * Math.cos(ring.tilt);
+        const z3 = ry * Math.sin(ring.tilt);
+        const x3 = rx * Math.cos(spin) - z3 * Math.sin(spin);
+        const zf = rx * Math.sin(spin) + z3 * Math.cos(spin);
+        const p = project(x3, y3, zf);
+        if (i === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
       }
+      const [r, g, b] = ring.color;
+      // depth-aware glow — closer = brighter
+      const mx2 = (mouse.x - w / 2) / (w / 2);
+      const my2 = (mouse.y - h / 2) / (h / 2);
+      const glowBoost = 1 + Math.abs(mx2) * 0.4 + Math.abs(my2) * 0.2;
+      ctx.strokeStyle = `rgba(${r},${g},${b},${ring.alpha * glowBoost})`;
+      ctx.lineWidth = ring.width;
+      ctx.stroke();
+    }
 
-      // Connections
-      for (let i=0;i<COUNT;i++) for (let j=i+1;j<COUNT;j++) {
-        const a=particles[i],b=particles[j];
-        const dx=a.x-b.x,dy=a.y-b.y,d=Math.sqrt(dx*dx+dy*dy);
-        if (d<108) {
-          const alpha=(1-d/108)*0.07*((a.z+b.z)/2);
-          const [r,g,bl]=PALETTE[a.col];
+    function drawOrbiter(ring: typeof rings[0], spin: number, progress: number, size: number) {
+      if (!ctx) return; // FIX: TypeScript null check
+      const a = progress * Math.PI * 2;
+      const rx = Math.cos(a) * ring.r;
+      const ry = Math.sin(a) * ring.r;
+      const y3 = ry * Math.cos(ring.tilt);
+      const z3 = ry * Math.sin(ring.tilt);
+      const x3 = rx * Math.cos(spin) - z3 * Math.sin(spin);
+      const zf = rx * Math.sin(spin) + z3 * Math.cos(spin);
+      const p = project(x3, y3, zf);
+      const [r, g, b] = ring.color;
+
+      // FIX: Guard against negative radii to prevent IndexSizeError
+      const haloRadius = Math.max(0.1, size * 7 * p.s);
+      const coreRadius = Math.max(0.1, size * p.s);
+
+      // glow halo
+      const grd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, haloRadius);
+      grd.addColorStop(0, `rgba(${r},${g},${b},0.55)`);
+      grd.addColorStop(1, `rgba(${r},${g},${b},0)`);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, haloRadius, 0, Math.PI * 2);
+      ctx.fillStyle = grd;
+      ctx.fill();
+
+      // core dot
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, coreRadius, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${r},${g},${b},0.95)`;
+      ctx.fill();
+
+      // trail
+      for (let k = 1; k <= 8; k++) {
+        const ta = a - k * 0.14;
+        const trx = Math.cos(ta) * ring.r, try_ = Math.sin(ta) * ring.r;
+        const ty3 = try_ * Math.cos(ring.tilt), tz3 = try_ * Math.sin(ring.tilt);
+        const tx3 = trx * Math.cos(spin) - tz3 * Math.sin(spin);
+        const tzf = trx * Math.sin(spin) + tz3 * Math.cos(spin);
+        const tp = project(tx3, ty3, tzf);
+        
+        ctx.beginPath();
+        // FIX: Guard against negative radii
+        const trailRadius = Math.max(0.1, Math.max(0.2, (size - k * 0.28)) * tp.s);
+        ctx.arc(tp.x, tp.y, trailRadius, 0, Math.PI * 2);
+        
+        ctx.fillStyle = `rgba(${r},${g},${b},${Math.max(0, 0.55 - k * 0.07)})`;
+        ctx.fill();
+      }
+    }
+
+    cv.addEventListener("mousemove", (e) => {
+      const rect = cv.getBoundingClientRect();
+      mouse.x = e.clientX - rect.left;
+      mouse.y = e.clientY - rect.top;
+    });
+
+    const draw = () => {
+      if (!ctx) return; // FIX: TypeScript null check
+      t += 0.008;
+      ctx.clearRect(0, 0, w, h);
+
+      // Deep space background gradient
+      const bgGrd = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, Math.max(w, h) * 0.7);
+      bgGrd.addColorStop(0, "rgba(4,12,28,0.3)");
+      bgGrd.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = bgGrd;
+      ctx.fillRect(0, 0, w, h);
+
+      // Mouse-reactive ambient glow at center
+      const mx = (mouse.x - w / 2) / (w / 2);
+      const my2 = (mouse.y - h / 2) / (h / 2);
+      const tiltX = my2 * 0.25;
+      const tiltY = mx * 0.25;
+
+      // rings
+      rings.forEach((ring, i) => {
+        const spin = t * ring.speed + tiltY;
+        drawRing({ ...ring, tilt: ring.tilt + tiltX }, spin);
+        drawOrbiter(
+          { ...ring, tilt: ring.tilt + tiltX },
+          spin,
+          ((t * (0.15 + i * 0.04)) % 1 + (i * 0.33)) % 1,
+          3.5 - i * 0.6
+        );
+      });
+
+      // Central core
+      const pulse = 0.5 + 0.5 * Math.sin(t * 1.8);
+      const coreR = Math.max(0.1, 10 + pulse * 4); // FIX: Guard negative radius
+      const coreGrd = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, coreR * 5);
+      coreGrd.addColorStop(0, `rgba(0,229,255,${0.7 * pulse})`);
+      coreGrd.addColorStop(0.4, `rgba(0,229,255,${0.2 * pulse})`);
+      coreGrd.addColorStop(1, "rgba(0,229,255,0)");
+      ctx.beginPath();
+      ctx.arc(w / 2, h / 2, coreR * 5, 0, Math.PI * 2);
+      ctx.fillStyle = coreGrd;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(w / 2, h / 2, 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,255,${0.8 + 0.2 * pulse})`;
+      ctx.fill();
+
+      // Floating particles
+      particles.forEach((p, i) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < -10) p.x = w + 10;
+        if (p.x > w + 10) p.x = -10;
+        if (p.y < -10) p.y = h + 10;
+        if (p.y > h + 10) p.y = -10;
+
+        const pulse2 = 0.4 + 0.6 * Math.abs(Math.sin(t * 1.4 + p.phase));
+
+        if (p.tier === 0) {
+          // Bright accent node
+          const pRadius = Math.max(0.1, p.size * 5); // FIX: Guard negative radius
+          const pRadiusInner = Math.max(0.1, p.size * 0.6); // FIX: Guard negative radius
+          
+          const grd2 = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, pRadius);
+          grd2.addColorStop(0, `rgba(0,229,255,${0.6 * pulse2})`);
+          grd2.addColorStop(1, "rgba(0,229,255,0)");
           ctx.beginPath();
-          ctx.strokeStyle=`rgba(${r},${g},${bl},${alpha})`;
-          ctx.lineWidth=0.5+(a.z+b.z)*0.28;
-          ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+          ctx.arc(p.x, p.y, pRadius, 0, Math.PI * 2);
+          ctx.fillStyle = grd2;
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, pRadiusInner, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255,255,255,${0.9 * pulse2})`;
+          ctx.fill();
+        } else if (p.tier === 1) {
+          const pRadius = Math.max(0.1, p.size);
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, pRadius, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(14,165,233,${0.35 * pulse2})`;
+          ctx.fill();
+        } else {
+          const pRadius = Math.max(0.1, p.size);
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, pRadius, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(100,116,139,${0.18 * pulse2})`;
+          ctx.fill();
         }
-      }
 
-      // Dots + glow
-      for (const p of particles) {
-        const r=1.1+p.z*2.2, alpha=0.08+p.z*0.22;
-        const pulse=1+Math.sin(time*p.f*2+p.t)*0.26;
-        const [cr,cg,cb]=PALETTE[p.col];
+        // Connect nearby tier-0/1 nodes
+        if (p.tier <= 1) {
+          for (let j = i + 1; j < particles.length; j++) {
+            const q = particles[j];
+            if (q.tier > 1) continue;
+            const dx = p.x - q.x, dy = p.y - q.y;
+            const d2 = dx * dx + dy * dy;
+            const thr = isMob ? 6000 : 10000;
+            if (d2 < thr) {
+              const alpha = (1 - d2 / thr) * 0.12;
+              ctx.beginPath();
+              ctx.moveTo(p.x, p.y);
+              ctx.lineTo(q.x, q.y);
+              ctx.strokeStyle = `rgba(0,229,255,${alpha})`;
+              ctx.lineWidth = 0.4;
+              ctx.stroke();
+            }
+          }
+        }
+      });
 
-        const grd=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r*5*pulse);
-        grd.addColorStop(0,`rgba(${cr},${cg},${cb},${alpha*0.35})`);
-        grd.addColorStop(1,`rgba(${cr},${cg},${cb},0)`);
-        ctx.beginPath();ctx.arc(p.x,p.y,r*5*pulse,0,Math.PI*2);
-        ctx.fillStyle=grd;ctx.fill();
-
-        ctx.beginPath();ctx.arc(p.x,p.y,r*pulse,0,Math.PI*2);
-        ctx.fillStyle=`rgba(${cr},${cg},${cb},${alpha})`;ctx.fill();
-      }
-
-      rafRef.current=requestAnimationFrame(draw);
-    }
-
+      raf = requestAnimationFrame(draw);
+    };
     draw();
 
-    const el = canvas.parentElement;
-    function onMove(e: globalThis.MouseEvent) {
-      const r = canvas!.getBoundingClientRect();
-      mouse.current = { x: e.clientX - r.left, y: e.clientY - r.top };
-    }
-    el?.addEventListener("mousemove", onMove);
-    const onLeave = () => { mouse.current = { x: -999, y: -999 }; };
-    el?.addEventListener("mouseleave", onLeave);
-
-    return () => {
-      cancelAnimationFrame(rafRef.current);
-      window.removeEventListener("resize", resize);
-      el?.removeEventListener("mousemove", onMove);
-      el?.removeEventListener("mouseleave", onLeave);
+    const onResize = () => {
+      if (!cv || !ctx) return; // FIX: TypeScript null check
+      W = cv.width = cv.offsetWidth * window.devicePixelRatio;
+      H = cv.height = cv.offsetHeight * window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
     };
+    window.addEventListener("resize", onResize);
+    return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", onResize); };
   }, []);
 
-  return (
-    <canvas
-      ref={canvasRef}
-      style={{
-        position: "absolute", inset: 0,
-        width: "100%", height: "100%",
-        pointerEvents: "none", zIndex: 0,
-        opacity: 0.5,
-      }}
-    />
-  );
+  return <canvas ref={ref} className={`${className} w-full h-full absolute inset-0 pointer-events-none z-0 opacity-50`} />;
 }
 
 // ── 3D tilt card ──────────────────────────────────────────────────────────
@@ -210,9 +457,9 @@ const contacts = [
   },
   {
     label: "Telegram",
-    display: "NexTechArchitect",
+    display: "NexTechDev",
     sub: "t.me",
-    href: "https://t.me/NexTechArchitect",
+    href: "https://t.me/NexTechDev",
     accent: "#0ea5e9",
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
@@ -227,7 +474,7 @@ export default function ContactFooter() {
     <footer style={{ background: "#F8F9F6", position: "relative", overflow: "hidden" }}>
 
       {/* 5D Particle canvas */}
-      <ParticleField />
+      <ShieldCanvas />
 
       {/* Aurora blobs — blue, teal, rose — 3 colour mix */}
       <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 0 }}>

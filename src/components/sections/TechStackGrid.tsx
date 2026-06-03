@@ -118,63 +118,83 @@ const techStack = [
 
 export default function TechStackGrid() {
   return (
-    <section className="py-20 sm:py-32 bg-[#FAFAFA] relative z-10">
-      <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-12">
+    <section className="pt-10 pb-20 sm:pt-16 sm:pb-32 relative z-10 overflow-hidden bg-slate-50" id="skills">
+      
+      {/* ── Background Effects (Cinematic Light Theme) ── */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        {/* Dotted Blueprint Grid */}
+        <div 
+          className="absolute inset-0 opacity-[0.15]"
+          style={{
+            backgroundImage: "radial-gradient(circle, #94a3b8 1px, transparent 1px)",
+            backgroundSize: "24px 24px"
+          }}
+        />
+        
+        {/* Subtle Floating Orbs */}
+        <div className="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-teal-400/10 blur-[100px]" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-blue-400/10 blur-[100px]" />
+        
+        {/* White fade at top to blend with previous section smoothly */}
+        <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-white to-transparent" />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-5 sm:px-10 lg:px-12 relative z-10">
         
         {/* Header Section */}
-        <div className="mb-14 sm:mb-20 text-center sm:text-left">
+        <div className="mb-10 sm:mb-16 text-center sm:text-left">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <p className="text-[10px] sm:text-xs font-mono tracking-[0.25em] text-teal-600 font-bold uppercase mb-3 sm:mb-4">
-             
+            <p className="text-[9px] sm:text-xs font-mono tracking-[0.25em] text-teal-600 font-bold uppercase mb-3 sm:mb-4">
+              Core Technologies
             </p>
             <h2 className="text-3xl sm:text-5xl md:text-6xl font-black text-slate-900 tracking-tight mb-4 sm:mb-6" style={{ fontFamily: "'Georgia', serif" }}>
-              Our Tech Stack
+              My Tech Arsenal
             </h2>
-            <p className="text-sm sm:text-lg text-slate-500 max-w-2xl leading-relaxed mx-auto sm:mx-0 font-medium">
-              We use industry-leading technologies to build fast, secure, and scalable Web3 applications. Every tool is chosen for the job, not the trend.
+            <p className="text-xs sm:text-base text-slate-500 max-w-2xl leading-relaxed mx-auto sm:mx-0 font-medium">
+              I leverage industry-standard tooling to build resilient, scalable, and secure Web3 infrastructure. From deeply optimized EVM contracts to consumer-grade Next.js frontends.
             </p>
           </motion.div>
         </div>
 
-        {/* Minimal Grid */}
+        {/* Minimal Glassmorphism Grid */}
         <motion.div 
-          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4 sm:gap-6"
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3 sm:gap-5"
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: "-50px" }}
+          viewport={{ once: true, margin: "-40px" }}
           variants={{
             hidden: {},
-            visible: { transition: { staggerChildren: 0.05 } }
+            visible: { transition: { staggerChildren: 0.04 } }
           }}
         >
-          {techStack.map((tech, index) => (
+          {techStack.map((tech) => (
             <motion.div
               key={tech.name}
               variants={{
-                hidden: { opacity: 0, y: 20 },
-                visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100, damping: 15 } }
+                hidden: { opacity: 0, y: 15 },
+                visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 120, damping: 14 } }
               }}
               whileHover={{ 
-                scale: 1.05, 
-                y: -5,
-                boxShadow: `0 15px 30px -10px ${tech.color}40`,
-                borderColor: `${tech.color}40`
+                scale: 1.04, 
+                y: -4,
+                boxShadow: `0 12px 24px -8px ${tech.color}40`,
+                borderColor: `${tech.color}50`
               }}
-              whileTap={{ scale: 0.95 }}
-              className="flex flex-col items-center justify-center p-6 sm:p-8 bg-white border border-slate-200 rounded-3xl transition-colors duration-300 select-none shadow-sm"
+              whileTap={{ scale: 0.96 }}
+              className="flex flex-col items-center justify-center p-5 sm:p-7 bg-white/80 backdrop-blur-md border border-slate-200/80 rounded-[20px] transition-colors duration-300 select-none shadow-sm group"
             >
               <div 
-                className="mb-4 transition-colors duration-300"
+                className="mb-3 sm:mb-4 transition-transform duration-300 group-hover:scale-110"
                 style={{ color: tech.color }} // Inherits the brand color
               >
                 {tech.icon}
               </div>
-              <span className="text-xs sm:text-sm font-bold text-slate-700 font-mono text-center">
+              <span className="text-[10px] sm:text-xs font-bold text-slate-700 font-mono text-center tracking-tight">
                 {tech.name}
               </span>
             </motion.div>

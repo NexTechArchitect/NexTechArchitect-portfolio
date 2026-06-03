@@ -222,8 +222,8 @@ function ContactOrb() {
     },
     {
       label: "Telegram",
-      value: "NexTechArchitect",
-      href: "https://t.me/NexTechArchitect",
+      value: "NexTechDev",
+      href: "https://t.me/NexTechDev",
       color: "text-sky-700",
       border: "border-sky-200 hover:border-sky-400",
       bg: "hover:bg-sky-50",

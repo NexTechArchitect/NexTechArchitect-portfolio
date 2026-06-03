@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import HeroSection from "@/components/sections/HeroSection";
-import ClickableSkillsGrid from "@/components/sections/ClickableSkillsGrid";
+import TechStackGrid from "@/components/sections/TechStackGrid"; // <-- Naya import
 import ProjectGatewaySection from "@/components/sections/ProjectGatewaySection";
 import StickyEducationSection from "@/components/sections/StickyEducationSection";
 import EngineeringJourneySection from "@/components/sections/EngineeringJourneySection";
@@ -10,8 +10,7 @@ import ContactFooter from "@/components/layout/ContactFooter";
 import UniversalModal from "@/components/overlays/UniversalModal";
 import ProjectGalleryOverlayWrapper from "@/components/overlays/ProjectGalleryOverlayWrapper";
 
-import { skillsData } from "@/data/skills";
-import { journeyData } from "@/data/journey";
+import { journeyData } from "@/data/journey"; 
 import { useModal } from "@/hooks/useModal";
 
 export default function Portfolio() {
@@ -37,13 +36,12 @@ export default function Portfolio() {
       <div className="relative z-10">
         <HeroSection />
         
-        <ClickableSkillsGrid data={skillsData || []} />
+        <TechStackGrid />
         
         <ProjectGatewaySection openOverlay={(type) => setOverlayType(type)} />
         
         <StickyEducationSection />
         
-        {/* 🔥 FIX: Removed openModal prop because this component now handles its own modal 🔥 */}
         <EngineeringJourneySection data={journeyData || []} />
         
         <ContactFooter />
