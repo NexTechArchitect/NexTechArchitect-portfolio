@@ -1,12 +1,54 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
-// ── 5D Particle Field — light aurora ──────────────────────────────────────
+type Lesson = {
+  id: string;
+  num: string;
+  title: string;
+  body: string;
+  accent: string;
+  rgb: string;
+};
+
+const LESSONS: Lesson[] = [
+  {
+    id: "l1",
+    num: "01",
+    title: "Security is a design decision, not a checklist.",
+    body: "Early on I treated security as something you bolt on after the logic works. Run Slither, patch the warnings, ship it. That changed when I built flash-loan resistant governance. The attack was not in any line of code I had written. It was in the architecture itself: if you use current block balances for voting weight, an attacker can borrow a billion tokens, pass a proposal, and repay the loan in a single transaction. The fix is one line. But you only write that line if you modeled the attack before you wrote the first function. I now treat threat modeling as the first step of design, not a review at the end.",
+    accent: "#2563EB",
+    rgb: "37,99,235",
+  },
+  {
+    id: "l2",
+    num: "02",
+    title: "Composability means inheriting someone else's failure modes.",
+    body: "Integrating Aave V3 into the insurance vault looked clean until I had to think through what happens when Aave pauses a reserve mid-claim. Or when a price feed goes stale during a high-volatility window. Or when a liquidation cascade drops collateral value faster than the oracle updates. None of those are my bugs. But they become my protocol's problem the moment I compose on top of Aave. I started reading every integration contract the way I read my own code: not just the happy path, but every revert path, and what my contract's state looks like after each one.",
+    accent: "#0891B2",
+    rgb: "8,145,178",
+  },
+  {
+    id: "l3",
+    num: "03",
+    title: "Unit tests prove your assumptions. Fork tests prove reality.",
+    body: "I had 95 unit tests passing on Nexus perpetuals cross-chain margin and still shipped a nonce deduplication bug. A replayed CCIP message could add margin twice to the same position. The bug was invisible in unit tests because I was mocking the cross-chain layer. It only appeared when I ran a fork test with two live-state chains and real message passing. That was the moment I understood the difference between testing your model of the system and testing the actual system. Fork tests are not optional on anything that touches an external protocol.",
+    accent: "#D97706",
+    rgb: "217,119,6",
+  },
+  {
+    id: "l4",
+    num: "04",
+    title: "Storage layout is architecture. Design it first.",
+    body: "I built the RST reputation scoring logic first, then decided mid-way to make it UUPS upgradeable. That meant stopping and auditing every storage slot for collision risk with the proxy's layout, then restructuring the contract to be upgrade-safe. It cost more time than writing the original logic. The lesson was blunt: if a contract will ever be upgraded, the storage layout is the first decision you make, not something you retrofit. V2 and V3 used explicit storage gap arrays from the first line. A constraint that is understood at the start costs nothing. The same constraint discovered after deployment is either a migration or a redeployment.",
+    accent: "#059669",
+    rgb: "5,150,105",
+  },
+];
+
 function ParticleField() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const mouse = useRef({ x: -999, y: -999 });
   const rafRef = useRef<number>(0);
 
   useEffect(() => {
@@ -16,361 +58,219 @@ function ParticleField() {
     if (!ctx) return;
     let W = 0, H = 0;
 
-    function resize() {
-      if (!canvas) return;
+    const resize = () => {
       W = canvas.offsetWidth;
       H = canvas.offsetHeight;
       canvas.width = W * devicePixelRatio;
       canvas.height = H * devicePixelRatio;
-      ctx!.scale(devicePixelRatio, devicePixelRatio);
-    }
+      ctx.scale(devicePixelRatio, devicePixelRatio);
+    };
     resize();
     window.addEventListener("resize", resize);
 
     type P = { x: number; y: number; z: number; t: number; f: number; ox: number; oy: number };
-    const COUNT = 72;
-    const particles: P[] = Array.from({ length: COUNT }, () => ({
-      x: Math.random() * 1400, y: Math.random() * 800,
+    const pts: P[] = Array.from({ length: 38 }, () => ({
+      x: Math.random() * 1400, y: Math.random() * 900,
       z: Math.random(), t: Math.random() * Math.PI * 2,
-      f: 0.3 + Math.random() * 0.7,
-      ox: Math.random() * 1400, oy: Math.random() * 800,
+      f: 0.3 + Math.random() * 0.5,
+      ox: Math.random() * 1400, oy: Math.random() * 900,
     }));
 
     let time = 0;
-
-    function draw() {
-      if (!canvas || !ctx || W <= 0 || H <= 0) { rafRef.current = requestAnimationFrame(draw); return; }
+    const draw = () => {
+      if (W <= 0 || H <= 0) { rafRef.current = requestAnimationFrame(draw); return; }
       ctx.clearRect(0, 0, W, H);
-      time += 0.005;
-
-      const mx = mouse.current.x, my = mouse.current.y;
-
-      for (const p of particles) {
+      time += 0.0025;
+      for (const p of pts) {
         const ds = 0.4 + p.z * 0.6;
-        p.x = p.ox + Math.sin(time * p.f + p.t) * 26 * ds;
-        p.y = p.oy + Math.cos(time * p.f * 0.7 + p.t) * 16 * ds;
-        const dx = p.x - mx, dy = p.y - my;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 100 && dist > 0) { const f = (100 - dist) / 100 * 18; p.x += dx / dist * f; p.y += dy / dist * f; }
-        p.ox += Math.sin(time * 0.1 + p.t) * 0.15 * ds;
-        p.oy += Math.cos(time * 0.08 + p.t) * 0.1 * ds;
-        if (p.ox < -60) p.ox = W + 30; if (p.ox > W + 60) p.ox = -30;
-        if (p.oy < -60) p.oy = H + 30; if (p.oy > H + 60) p.oy = -30;
+        p.x = p.ox + Math.sin(time * p.f + p.t) * 18 * ds;
+        p.y = p.oy + Math.cos(time * p.f * 0.7 + p.t) * 12 * ds;
+        p.ox += Math.sin(time * 0.08 + p.t) * 0.08 * ds;
+        p.oy += Math.cos(time * 0.06 + p.t) * 0.055 * ds;
+        if (p.ox < -50) p.ox = W + 20;
+        if (p.ox > W + 50) p.ox = -20;
+        if (p.oy < -50) p.oy = H + 20;
+        if (p.oy > H + 50) p.oy = -20;
       }
-
-      for (let i = 0; i < COUNT; i++) {
-        for (let j = i + 1; j < COUNT; j++) {
-          const a = particles[i], b = particles[j];
-          const dx = a.x - b.x, dy = a.y - b.y;
+      for (let i = 0; i < pts.length; i++) {
+        for (let j = i + 1; j < pts.length; j++) {
+          const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y;
           const d = Math.sqrt(dx * dx + dy * dy);
-          if (d < 105) {
-            const alpha = (1 - d / 105) * 0.13 * ((a.z + b.z) / 2);
-            const t = (a.z + b.z) / 2;
-            const r = Math.round(0 + t * 14), g = Math.round(85 + t * 80), bl = Math.round(255);
+          if (d < 80) {
             ctx.beginPath();
-            ctx.strokeStyle = `rgba(${r},${g},${bl},${alpha})`;
-            ctx.lineWidth = 0.5 + t * 0.6;
-            ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+            ctx.strokeStyle = `rgba(8,145,178,${(1 - d / 80) * 0.05 * ((pts[i].z + pts[j].z) / 2)})`;
+            ctx.lineWidth = 0.4;
+            ctx.moveTo(pts[i].x, pts[i].y);
+            ctx.lineTo(pts[j].x, pts[j].y);
             ctx.stroke();
           }
         }
       }
-
-      for (const p of particles) {
-        const r = 1.0 + p.z * 2.2;
-        const alpha = 0.18 + p.z * 0.42;
-        const pulse = 1 + Math.sin(time * p.f * 2 + p.t) * 0.25;
-        const useTeal = (p.z + p.f) % 2 > 1;
-        const col = useTeal ? `rgba(14,165,233,${alpha})` : `rgba(0,85,255,${alpha})`;
-        const glowCol = useTeal ? `rgba(14,165,233,` : `rgba(0,85,255,`;
-
-        const grd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 5 * pulse);
-        grd.addColorStop(0, glowCol + `${alpha * 0.35})`);
-        grd.addColorStop(1, glowCol + `0)`);
-        ctx.beginPath(); ctx.arc(p.x, p.y, r * 5 * pulse, 0, Math.PI * 2);
-        ctx.fillStyle = grd; ctx.fill();
-
-        ctx.beginPath(); ctx.arc(p.x, p.y, r * pulse, 0, Math.PI * 2);
-        ctx.fillStyle = col; ctx.fill();
+      for (const p of pts) {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 0.5 + p.z * 1.4, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(8,145,178,${0.06 + p.z * 0.18})`;
+        ctx.fill();
       }
-
       rafRef.current = requestAnimationFrame(draw);
-    }
-    draw();
-
-    const parent = canvas.parentElement;
-    function onMove(e: globalThis.MouseEvent) {
-      const rect = canvas!.getBoundingClientRect();
-      mouse.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    }
-    function onLeave() { mouse.current = { x: -999, y: -999 }; }
-    parent?.addEventListener("mousemove", onMove);
-    parent?.addEventListener("mouseleave", onLeave);
-
-    return () => {
-      cancelAnimationFrame(rafRef.current);
-      window.removeEventListener("resize", resize);
-      parent?.removeEventListener("mousemove", onMove);
-      parent?.removeEventListener("mouseleave", onLeave);
     };
+    draw();
+    return () => { cancelAnimationFrame(rafRef.current); window.removeEventListener("resize", resize); };
   }, []);
 
   return (
-    <canvas ref={canvasRef} style={{
-      position: "absolute", inset: 0, width: "100%", height: "100%",
-      pointerEvents: "none", zIndex: 0, opacity: 0.55,
-    }} />
+    <canvas
+      ref={canvasRef}
+      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 0, opacity: 0.28 }}
+    />
   );
 }
 
-// ── Bulletproof Types ──────────────────────────────────────────────────────
-type JourneyItem = {
-  id: string;
-  role: string;
-  company: string;
-  year?: string;
-  date?: string; // Handling new data
-  description: string;
-  tech?: string[];
-  techStack?: string[]; // Handling new data
-  content?: any[];
-  achievements?: string[]; // Handling new data
-  accent?: string;
-};
-
-// Fallback colors for professional look if 'accent' is missing in data
-const FALLBACK_ACCENTS = ["#FF4500", "#059669", "#0055FF", "#7C3AED"];
-
-function JourneyModal({ item, onClose }: { item: JourneyItem; onClose: () => void }) {
-  useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    document.addEventListener("keydown", handleEsc);
-    document.body.style.overflow = "hidden";
-    return () => { document.removeEventListener("keydown", handleEsc); document.body.style.overflow = ""; };
-  }, [onClose]);
-
-  // Safely grab properties whether they are from old or new data
-  const displayYear = item.date || item.year || "Present";
-  const displayTech = item.techStack || item.tech || [];
-  const displayContent = item.achievements || item.content || [];
-  const accentColor = item.accent || "#0ea5e9"; // Default teal
+function LessonCard({ lesson, index }: { lesson: Lesson; index: number }) {
+  const [open, setOpen] = useState(false);
+  const [hov, setHov] = useState(false);
 
   return (
     <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      onClick={onClose}
-      className="fixed inset-0 z-[1000] flex items-end sm:items-center justify-center sm:p-6"
-      style={{ background: "rgba(9,9,11,0.5)", backdropFilter: "blur(10px)" }}
+      initial={{ opacity: 0, y: 18 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-30px" }}
+      transition={{ delay: index * 0.08, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
     >
-      <motion.div
-        initial={{ y: 48, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 32, opacity: 0 }}
-        transition={{ type: "spring", stiffness: 340, damping: 36 }}
-        onClick={e => e.stopPropagation()}
-        className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-t-[24px] sm:rounded-[24px]"
-        style={{ boxShadow: "0 32px 80px rgba(0,0,0,0.18)", borderTop: `3px solid ${accentColor}` }}
+      <motion.button
+        onHoverStart={() => setHov(true)}
+        onHoverEnd={() => setHov(false)}
+        onClick={() => setOpen(!open)}
+        whileTap={{ scale: 0.999 }}
+        className="w-full text-left rounded-2xl bg-white relative overflow-hidden"
+        style={{
+          border: `1px solid ${hov || open ? `rgba(${lesson.rgb},0.2)` : "rgba(0,0,0,0.06)"}`,
+          boxShadow: open
+            ? `0 14px 40px rgba(${lesson.rgb},0.1)`
+            : hov
+            ? `0 6px 24px rgba(${lesson.rgb},0.07)`
+            : "0 2px 8px rgba(0,0,0,0.03)",
+          transition: "border-color 0.25s, box-shadow 0.25s",
+        }}
       >
-        <div className="flex justify-center pt-3 sm:hidden">
-          <div className="w-8 h-1 rounded-full bg-gray-200" />
-        </div>
+        {/* Left accent bar */}
+        <motion.div
+          className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-2xl"
+          animate={{ opacity: hov || open ? 1 : 0, scaleY: hov || open ? 1 : 0.2 }}
+          style={{ background: lesson.accent, transformOrigin: "center" }}
+          transition={{ duration: 0.2 }}
+        />
 
-        <div className="p-7 sm:p-9">
-          <div className="flex items-start justify-between gap-4 mb-6">
-            <div>
+        <div className="p-5 sm:p-7 pl-6 sm:pl-8">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 min-w-0">
               <span
-                className="text-[9px] font-black uppercase tracking-[0.22em] px-2.5 py-1 rounded-full inline-block mb-3"
-                style={{ color: accentColor, background: accentColor + "12", fontFamily: "ui-monospace, monospace" }}
+                className="font-black select-none leading-none block mb-3"
+                style={{ color: `rgba(${lesson.rgb},0.09)`, fontSize: "2.6rem", fontFamily: "monospace" }}
               >
-                {displayYear}
+                {lesson.num}
               </span>
-              <h2 className="text-2xl sm:text-[1.75rem] font-black tracking-tight text-gray-950 leading-tight"
-                style={{ fontFamily: "'Georgia', 'Playfair Display', serif" }}>
-                {item.role}
-              </h2>
-              <p className="text-[10px] font-mono text-gray-400 uppercase tracking-widest mt-1">{item.company}</p>
+              <h3
+                className="text-base sm:text-lg font-black text-zinc-900 tracking-tight leading-snug transition-colors duration-200"
+                style={{ color: hov || open ? lesson.accent : undefined }}
+              >
+                {lesson.title}
+              </h3>
             </div>
-            <button onClick={onClose}
-              className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-400 flex items-center justify-center text-xs transition-colors flex-shrink-0 mt-1">
-              ✕
-            </button>
+
+            <motion.div
+              className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center border mt-1 text-xs font-bold"
+              animate={{
+                borderColor: hov || open ? lesson.accent : "rgba(0,0,0,0.1)",
+                color: hov || open ? lesson.accent : "rgba(0,0,0,0.2)",
+                rotate: open ? 90 : 0,
+              }}
+              transition={{ duration: 0.22 }}
+            >
+              {">"}
+            </motion.div>
           </div>
 
-          <div className="rounded-xl p-5 mb-6 border-l-[3px]"
-            style={{ borderColor: accentColor, background: accentColor + "06" }}>
-            <p className="text-[13.5px] leading-relaxed text-gray-700">{item.description}</p>
-          </div>
-
-          <p className="text-[9px] font-black uppercase tracking-[0.26em] text-gray-400 mb-4"
-            style={{ fontFamily: "ui-monospace, monospace" }}>
-            Execution & Impact
-          </p>
-
-          {/* Map through achievements OR old content safely */}
-          <div className="space-y-4 mb-7">
-            {displayContent.map((block, idx) => {
-              const isString = typeof block === 'string';
-              return (
-                <motion.div key={idx}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.06 + idx * 0.06 }}
-                  className="flex gap-3">
-                  <div className="w-[3px] rounded-full flex-shrink-0 mt-1.5"
-                    style={{ background: accentColor + "60", alignSelf: "stretch", minHeight: 8 }} />
-                  <div>
-                    {!isString && block.heading && (
-                      <p className="text-[12.5px] font-bold text-gray-900 mb-0.5" style={{ fontFamily: "'Georgia', serif" }}>
-                        {block.heading}
-                      </p>
-                    )}
-                    <p className="text-[13px] text-gray-600 leading-relaxed">
-                      {isString ? block : block.text}
-                    </p>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-
-          {/* Map through techStack OR old tech safely */}
-          <div className="flex flex-wrap gap-1.5 pt-5 border-t border-gray-100">
-            {displayTech.map((t, idx) => (
-              <span key={idx}
-                className="text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg"
-                style={{ color: accentColor, background: accentColor + "10", border: `1px solid ${accentColor}20`, fontFamily: "ui-monospace, monospace" }}>
-                {t}
-              </span>
-            ))}
-          </div>
+          <AnimatePresence initial={false}>
+            {open && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                className="overflow-hidden"
+              >
+                <p className="text-[13px] sm:text-[14px] text-zinc-500 leading-[1.95] mt-5 pt-5 border-t border-zinc-100 font-medium">
+                  {lesson.body}
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-      </motion.div>
+      </motion.button>
     </motion.div>
   );
 }
 
-export default function EngineeringJourneySection({
-  data = [],
-}: {
-  data?: any[];
-}) {
-  const displayData = Array.isArray(data) && data.length > 0 ? data : [];
-  const [activeItem, setActiveItem] = useState<JourneyItem | null>(null);
-
-  if (displayData.length === 0) return null;
-
+export default function EngineeringJourneySection() {
   return (
-    <section style={{ background: "#FDFCF8", position: "relative", overflow: "hidden" }}>
+    <section className="relative overflow-hidden" style={{ background: "#FDFCF8", borderTop: "1px solid #ede9e2" }}>
       <ParticleField />
-      
-      <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0 }}>
+
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <motion.div
-          animate={{ scale: [1, 1.14, 1], x: [0, 22, 0], y: [0, -14, 0] }}
-          transition={{ duration: 13, repeat: Infinity, ease: "easeInOut" }}
-          style={{ position: "absolute", top: "-10%", left: "-5%", width: "48vw", height: "48vw", borderRadius: "50%", background: "radial-gradient(circle, rgba(0,85,255,0.065) 0%, transparent 68%)", filter: "blur(64px)" }}
+          animate={{ scale: [1, 1.08, 1], x: [0, 20, 0] }}
+          transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-[-10%] right-[-8%] w-[45vw] h-[45vw] rounded-full"
+          style={{ background: "radial-gradient(circle, rgba(8,145,178,0.05) 0%, transparent 70%)", filter: "blur(70px)" }}
         />
         <motion.div
-          animate={{ scale: [1, 1.2, 1], x: [0, -18, 0], y: [0, 16, 0] }}
-          transition={{ duration: 17, repeat: Infinity, ease: "easeInOut", delay: 5 }}
-          style={{ position: "absolute", bottom: "-8%", right: "-4%", width: "40vw", height: "40vw", borderRadius: "50%", background: "radial-gradient(circle, rgba(14,165,233,0.065) 0%, transparent 68%)", filter: "blur(72px)" }}
+          animate={{ scale: [1, 1.06, 1], x: [0, -14, 0] }}
+          transition={{ duration: 28, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute bottom-[-10%] left-[-5%] w-[40vw] h-[40vw] rounded-full"
+          style={{ background: "radial-gradient(circle, rgba(5,150,105,0.04) 0%, transparent 70%)", filter: "blur(80px)" }}
         />
       </div>
 
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "clamp(32px,4vw,56px) clamp(20px,5vw,56px)", position: "relative", zIndex: 1 }}>
+      <div className="relative z-10 max-w-2xl mx-auto px-5 sm:px-8 py-20 sm:py-28">
+
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 18 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.4 }}
-          style={{ borderTop: "1px solid #ede9e2", paddingTop: "clamp(28px,4vw,48px)", marginBottom: "clamp(28px,4vw,44px)" }}
+          transition={{ duration: 0.5 }}
+          className="mb-12 sm:mb-16"
         >
-          <h2 style={{ fontFamily: "'Georgia', 'Playfair Display', serif", fontSize: "clamp(2rem,4vw,3rem)", fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 1.05, color: "#09090B", marginBottom: 10 }}>
-            Engineering{" "}
-            <span style={{ background: "linear-gradient(120deg, #0055FF, #059669)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-              Work.
+          <h2 className="text-4xl sm:text-5xl font-black text-zinc-900 tracking-tight leading-tight mb-4" style={{ fontFamily: "'Georgia', serif" }}>
+            What building{" "}
+            <span style={{
+              background: "linear-gradient(100deg, #2563EB 0%, #0891B2 55%, #059669 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}>
+              taught me.
             </span>
           </h2>
-          <p style={{ fontSize: 14, color: "#71717a", lineHeight: 1.65, maxWidth: 400 }}>
-            Everything built solo. Click any phase to see what went into it.
-          </p>
+         
         </motion.div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {displayData.map((job: JourneyItem, i: number) => {
-            // Safely map data keys
-            const displayYear = job.date || job.year || "Present";
-            const displayTech = job.techStack || job.tech || [];
-            const accentColor = job.accent || FALLBACK_ACCENTS[i % FALLBACK_ACCENTS.length];
-
-            return (
-              <motion.div
-                key={job.id || i}
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.1 }}
-                transition={{ delay: i * 0.08, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              >
-                <motion.button
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.998 }}
-                  onClick={() => setActiveItem({...job, accent: accentColor})}
-                  transition={{ duration: 0.18 }}
-                  style={{
-                    width: "100%", textAlign: "left", background: "#ffffff", border: "1px solid #ede9e2",
-                    borderRadius: 16, padding: "clamp(18px,2.5vw,28px)", cursor: "pointer",
-                    position: "relative", overflow: "hidden", boxShadow: "0 1px 6px rgba(0,0,0,0.04)"
-                  }}
-                >
-                  <motion.div
-                    initial={{ scaleY: 0, opacity: 0 }}
-                    whileHover={{ scaleY: 1, opacity: 1 }}
-                    transition={{ duration: 0.2 }}
-                    style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: accentColor, transformOrigin: "top", borderRadius: "16px 0 0 16px" }}
-                  />
-                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", flexWrap: "wrap" as const, alignItems: "center", gap: 8, marginBottom: 8 }}>
-                        <span style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase" as const, letterSpacing: "0.22em", padding: "3px 10px", borderRadius: 20, color: accentColor, background: accentColor + "12", fontFamily: "ui-monospace, monospace" }}>
-                          {displayYear}
-                        </span>
-                        <span style={{ fontSize: 10, color: "#a1a1aa", fontFamily: "ui-monospace, monospace" }}>
-                          {job.company}
-                        </span>
-                      </div>
-                      <h3 style={{ fontFamily: "'Georgia', 'Playfair Display', serif", fontSize: "clamp(1.1rem,2vw,1.3rem)", fontWeight: 800, color: "#09090B", letterSpacing: "-0.02em", lineHeight: 1.2, marginBottom: 8 }}>
-                        {job.role}
-                      </h3>
-                      <p style={{ fontSize: 13, color: "#71717a", lineHeight: 1.7, maxWidth: 560, marginBottom: 14 }}>
-                        {job.description}
-                      </p>
-                      <div style={{ display: "flex", flexWrap: "wrap" as const, gap: 6 }}>
-                        {displayTech.map((t: string) => (
-                          <span key={t} style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.14em", padding: "4px 10px", borderRadius: 6, color: accentColor, background: accentColor + "0e", border: `1px solid ${accentColor}22`, fontFamily: "ui-monospace, monospace" }}>
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <motion.div
-                      whileHover={{ x: 3 }}
-                      transition={{ duration: 0.15 }}
-                      style={{ flexShrink: 0, width: 32, height: 32, borderRadius: "50%", border: `1px solid ${accentColor}35`, color: accentColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, marginTop: 2 }}
-                    >
-                      →
-                    </motion.div>
-                  </div>
-                </motion.button>
-              </motion.div>
-            );
-          })}
+        <div className="space-y-3 sm:space-y-4">
+          {LESSONS.map((lesson, i) => (
+            <LessonCard key={lesson.id} lesson={lesson} index={i} />
+          ))}
         </div>
-      </div>
 
-      <AnimatePresence>
-        {activeItem && (
-          <JourneyModal item={activeItem} onClose={() => setActiveItem(null)} />
-        )}
-      </AnimatePresence>
+        <motion.p
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.4 }}
+          className="font-mono text-[9px] text-zinc-300 text-center mt-14 tracking-[0.22em] uppercase"
+        >
+          Every lesson came from a mistake first
+        </motion.p>
+      </div>
     </section>
   );
 }

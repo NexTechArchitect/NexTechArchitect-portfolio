@@ -10,7 +10,7 @@ import ContactFooter from "@/components/layout/ContactFooter";
 import UniversalModal from "@/components/overlays/UniversalModal";
 import ProjectGalleryOverlayWrapper from "@/components/overlays/ProjectGalleryOverlayWrapper";
 
-import { journeyData } from "@/data/journey"; 
+
 import { useModal } from "@/hooks/useModal";
 
 export default function Portfolio() {
@@ -42,7 +42,7 @@ export default function Portfolio() {
         
         <StickyEducationSection />
         
-        <EngineeringJourneySection data={journeyData || []} />
+      <EngineeringJourneySection />
         
         <ContactFooter />
       </div>

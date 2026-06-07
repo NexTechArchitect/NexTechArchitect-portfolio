@@ -7,7 +7,7 @@ export const fullStackProjects = [
     link: "https://github.com/NexTechArchitect/Sentinel-Insurance-Protocol", 
     liveUrl: "https://sentinel-insurance-protocol.vercel.app/",
     icon: "🛡️",
-    accentColor: "#2563EB" // Premium Blue
+    accentColor: "#2563EB" 
   },
   { 
     id: "fs1", 

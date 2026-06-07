@@ -14,7 +14,7 @@ import SISOTokenCaseStudy from "../projects/SISOTokenCaseStudy";
 import OracleFundingCaseStudy from "../projects/OracleFundingCaseStudy";
 import NexusPolkaCaseStudy from "../projects/NexusPolkaCaseStudy"; 
 import ReputationCaseStudy from "../projects/ReputationCaseStudy"; 
-import InsuranceProtocol from "../projects/InsuranceProtocol"; // <-- NEW PROJECT IMPORTED
+import InsuranceProtocol from "../projects/InsuranceProtocol"; 
 
 export default function UniversalModal({ selectedItem, activeType, closeModal }: any) {
   if (!selectedItem) return null;

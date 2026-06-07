@@ -1,376 +1,385 @@
 "use client";
 
-import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring } from "framer-motion";
-import { useRef, useState, useEffect, useCallback } from "react";
-import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
 
-/* ═══════════════════════════════════════════════════════════════════
-   SENTINEL INSURANCE PROTOCOL — Pearl Cosmos Edition
-   Aesthetic: Deep Space Luxury · Cinematic 5D · True Light Theme
-   Palette: Pearl White · Soft Azure · Lavender Sheen
-   FIXED: Mobile Optimized (No Empty Bottom Space in Modal)
-═══════════════════════════════════════════════════════════════════ */
+// ── TYPES ────────────────────────────────────────────────────────────────────
+type Lesson = { heading: string; text: string };
+type LessonItem = {
+  id: string;
+  project: string;
+  year: string;
+  accent: string;
+  rgb: string;
+  tagline: string;
+  lessons: Lesson[];
+};
 
-const STYLES = `
-  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
-  
-  .l-root { 
-    font-family: 'Inter', sans-serif; 
-    background-color: #FAFAFA; 
-    color: #1E293B; 
-    overflow-x: hidden; 
-  }
-  .l-serif { font-family: 'Cinzel', serif; }
-  .l-mono { font-family: 'JetBrains Mono', monospace; }
-  
-  .hide-scroll::-webkit-scrollbar { display: none; }
-  .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
-  
-  /* Fixed from fixed to absolute to fit perfectly inside the Modal */
-  .mesh-bg {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    z-index: 0;
-    pointer-events: none;
-    background-color: #f8fafc;
-    background-image: 
-      radial-gradient(circle at 15% 50%, rgba(200, 215, 255, 0.4), transparent 50%),
-      radial-gradient(circle at 85% 30%, rgba(230, 215, 255, 0.3), transparent 50%),
-      radial-gradient(circle at 50% 80%, rgba(190, 240, 255, 0.3), transparent 50%);
-    animation: pulseBg 15s ease-in-out infinite alternate;
-  }
+// ── DATA — real engineering lessons from each project ─────────────────────────
+const ITEMS: LessonItem[] = [
+  {
+    id: "l1",
+    project: "Sentinel Insurance Protocol",
+    year: "2026",
+    accent: "#2563EB",
+    rgb: "37,99,235",
+    tagline: "Composing on top of Aave taught me how protocol trust actually works.",
+    lessons: [
+      {
+        heading: "Idle capital is a protocol design problem, not a user problem",
+        text: "When I first thought about insurance vaults, I assumed capital sitting unused was just the cost of coverage. Integrating ERC-4626 with Aave V3 changed that — idle USDC can earn yield continuously without touching policyholder collateral. The vault isolation means a yield failure cannot cascade into a claims failure. Designing two separate failure domains in one protocol was the hardest architectural decision.",
+      },
+      {
+        heading: "Flash-loan governance attacks are not theoretical",
+        text: "I initially used current block balances for voting. Then I ran through the attack: borrow $10M of governance tokens, vote yes on a fraudulent claim, repay — all in one transaction. The fix is one line: getPastVotes(addr, block.number - 1). But understanding why it works required me to actually map out what the EVM can and cannot do within a single block. That mental model stuck.",
+      },
+      {
+        heading: "Slither medium findings are worth reading carefully",
+        text: "Two medium findings came back on PolicyEngine.buyPolicy flagged as 'complex code'. My first instinct was to refactor. But the complexity was intentional — risk check, collateral lock, and NFT mint must happen atomically or a front-runner can buy coverage on a protocol right after it's blacklisted. The finding taught me to distinguish between complexity that can be simplified and complexity that encodes a security guarantee.",
+      },
+    ],
+  },
+  {
+    id: "l2",
+    project: "Nexus Perpetuals DEX",
+    year: "2026",
+    accent: "#7C3AED",
+    rgb: "124,58,237",
+    tagline: "Building a perpetuals engine forced me to think about protocol solvency as a mathematical property, not a policy.",
+    lessons: [
+      {
+        heading: "ERC-4337 changes the mental model of who pays for what",
+        text: "Before building the paymaster, I thought of gas as the user's problem. ERC-4337 separates the signer from the fee payer — the bundler submits on-chain, the paymaster covers fees, and the user just signs a UserOperation. Implementing the verifying paymaster from scratch (not a library wrapper) made me understand exactly what the EntryPoint validates and where the trust boundary actually is.",
+      },
+      {
+        heading: "MINIMUM_LIQUIDITY burn is not just a Uniswap convention",
+        text: "On first deposit, if you mint LP shares proportional to assets, an attacker can donate a tiny amount first, then watch subsequent depositors get minted near-zero shares due to rounding. Burning MINIMUM_LIQUIDITY to address(0) permanently anchors the share price baseline. I only understood why this matters after simulating the inflation attack path step by step.",
+      },
+      {
+        heading: "Cross-chain introduces new failure modes that unit tests cannot catch",
+        text: "CCIP cross-chain margin looked simple in isolation — send message, receive on the other side. The problem was nonce deduplication. Without it, a replayed CCIP message could add margin twice. Fork tests across two simulated chains was the only way to actually observe this. It changed how I think about testing: unit tests prove correctness, fork tests prove it in the real environment.",
+      },
+    ],
+  },
+  {
+    id: "l3",
+    project: "Sentinel DAO",
+    year: "2025",
+    accent: "#D97706",
+    rgb: "217,119,6",
+    tagline: "Governance is harder than the contracts. The threat model is human, not computational.",
+    lessons: [
+      {
+        heading: "A timelock is not a security feature unless minorities can exit",
+        text: "48H TimelockController slows down execution. But if a majority passes a proposal that harms token holders, slowing it down does nothing without an exit mechanism. The rage-quit design — burn tokens, receive proportional treasury share before the proposal executes — is what makes the timelock meaningful. I spent more time on the exit math than on the timelock itself.",
+      },
+      {
+        heading: "Treasury yield introduces a new attack surface",
+        text: "Routing idle treasury into Aave V3 seemed straightforward. The problem I didn't anticipate: a malicious proposal could drain the Aave position first, then execute the actual attack with the treasury empty. ProposalGuard checks post-execution treasury solvency before any withdrawal is finalized. I added it after mapping out the exact sequence of a treasury-drain attack on a whiteboard.",
+      },
+      {
+        heading: "Gasless voting via ERC-4337 is a participation problem, not a UX problem",
+        text: "Low governance participation in DeFi is usually blamed on apathy. But for small holders, gas cost relative to voting power is genuinely irrational. Removing gas via ERC-4337 paymaster changed the participation calculus. It also introduced a new question: if the paymaster covers all votes, can it be drained by spam? Rate-limiting the paymaster per address per epoch was the answer.",
+      },
+    ],
+  },
+  {
+    id: "l4",
+    project: "RST Reputation Protocol",
+    year: "2026",
+    accent: "#059669",
+    rgb: "5,150,105",
+    tagline: "On-chain identity is a different design space than on-chain finance.",
+    lessons: [
+      {
+        heading: "Soulbound means the enforcement has to be in the standard, not the application",
+        text: "ERC-721 transfer hooks can be overridden. If I had just set a flag to block transfers, a sufficiently motivated caller could find a path around it. ERC-5484 puts the non-transferability in the burn authority model — only the issuer, owner, or both (configurable) can burn, and transfer is removed at the standard level. Learning the difference between enforced-by-application and enforced-by-standard changed how I think about token design.",
+      },
+      {
+        heading: "UUPS proxies require thinking about storage before writing a single line",
+        text: "I wrote the V1 scoring logic first, then decided to add upgrades. Moving to UUPS mid-development meant auditing every storage slot for collision risk. The lesson: upgradeable contracts need storage layout designed before implementation, not retrofitted. V2 and V3 used a structured layout from the start with explicit gap arrays for future variables.",
+      },
+      {
+        heading: "Dynamic SVG fully on-chain is a data encoding problem",
+        text: "Storing SVG on-chain sounds simple until you hit the 24KB contract size limit. The medal art for five tiers needed to be split, base64-encoded, and assembled in tokenURI. Getting the encoding right so metadata renders correctly on OpenSea without IPFS took more debugging than the scoring logic itself. The payoff: the metadata is permanent, uncensorable, and owned entirely by the contract.",
+      },
+    ],
+  },
+];
 
-  @keyframes pulseBg {
-    0% { transform: scale(1); opacity: 0.8; }
-    50% { transform: scale(1.05); opacity: 1; }
-    100% { transform: scale(1); opacity: 0.8; }
-  }
+// ── PARTICLE FIELD ────────────────────────────────────────────────────────────
+function ParticleField() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rafRef = useRef<number>(0);
 
-  .grain-overlay {
-    position: absolute; inset: -50%; width: 200%; height: 200%;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-    opacity: 0.04;
-    pointer-events: none;
-    z-index: 1;
-    animation: grainMove 8s steps(10) infinite;
-  }
-  
-  @keyframes grainMove {
-    0%, 100% { transform: translate(0, 0); }
-    10% { transform: translate(-5%, -10%); }
-    30% { transform: translate(5%, -15%); }
-    50% { transform: translate(-10%, 5%); }
-    70% { transform: translate(15%, 10%); }
-    90% { transform: translate(-5%, 5%); }
-  }
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-  .glass-card {
-    background: rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(40px) saturate(180%);
-    -webkit-backdrop-filter: blur(40px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.9);
-    box-shadow: 
-      0 30px 60px -15px rgba(0,0,0,0.05), 
-      inset 0 1px 0 rgba(255,255,255,1),
-      inset 0 0 30px rgba(255,255,255,0.4);
-    border-radius: 24px;
-  }
-  
-  .azure-text {
-    background: linear-gradient(135deg, #2563EB 0%, #38BDF8 50%, #4F46E5 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-  
-  .lavender-text {
-    background: linear-gradient(135deg, #7C3AED 0%, #A78BFA 50%, #8B5CF6 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-  
-  .emerald-text {
-    background: linear-gradient(135deg, #059669 0%, #34D399 50%, #10B981 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
+    let W = 0, H = 0;
+    const resize = () => {
+      W = canvas.offsetWidth;
+      H = canvas.offsetHeight;
+      canvas.width = W * devicePixelRatio;
+      canvas.height = H * devicePixelRatio;
+      ctx.scale(devicePixelRatio, devicePixelRatio);
+    };
+    resize();
+    window.addEventListener("resize", resize);
 
-  .orb {
-    position: absolute; border-radius: 50%; filter: blur(60px); pointer-events: none; mix-blend-mode: multiply; opacity: 0.5;
-  }
-`;
+    type P = { x: number; y: number; z: number; t: number; f: number; ox: number; oy: number };
+    const COUNT = 50;
+    const particles: P[] = Array.from({ length: COUNT }, () => ({
+      x: Math.random() * 1400, y: Math.random() * 900,
+      z: Math.random(), t: Math.random() * Math.PI * 2,
+      f: 0.3 + Math.random() * 0.6,
+      ox: Math.random() * 1400, oy: Math.random() * 900,
+    }));
 
-// ── Background Orbs ──────────────────────────────────────────────
-function BackgroundOrbs() {
+    let time = 0;
+    const draw = () => {
+      if (W <= 0 || H <= 0) { rafRef.current = requestAnimationFrame(draw); return; }
+      ctx.clearRect(0, 0, W, H);
+      time += 0.003;
+
+      for (const p of particles) {
+        const ds = 0.4 + p.z * 0.6;
+        p.x = p.ox + Math.sin(time * p.f + p.t) * 20 * ds;
+        p.y = p.oy + Math.cos(time * p.f * 0.7 + p.t) * 13 * ds;
+        p.ox += Math.sin(time * 0.08 + p.t) * 0.1 * ds;
+        p.oy += Math.cos(time * 0.06 + p.t) * 0.07 * ds;
+        if (p.ox < -50) p.ox = W + 20;
+        if (p.ox > W + 50) p.ox = -20;
+        if (p.oy < -50) p.oy = H + 20;
+        if (p.oy > H + 50) p.oy = -20;
+      }
+
+      for (let i = 0; i < COUNT; i++) {
+        for (let j = i + 1; j < COUNT; j++) {
+          const a = particles[i], b = particles[j];
+          const dx = a.x - b.x, dy = a.y - b.y;
+          const d = Math.sqrt(dx * dx + dy * dy);
+          if (d < 90) {
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(100,120,200,${(1 - d / 90) * 0.07 * ((a.z + b.z) / 2)})`;
+            ctx.lineWidth = 0.4;
+            ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      for (const p of particles) {
+        const radius = 0.6 + p.z * 1.6;
+        const alpha = 0.08 + p.z * 0.25;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(80,100,220,${alpha})`;
+        ctx.fill();
+      }
+
+      rafRef.current = requestAnimationFrame(draw);
+    };
+    draw();
+
+    return () => { cancelAnimationFrame(rafRef.current); window.removeEventListener("resize", resize); };
+  }, []);
+
   return (
-    <div className="absolute inset-0 overflow-hidden z-0">
-       <motion.div className="orb bg-blue-200 w-[50vw] h-[50vw] top-[-10%] left-[-10%]" 
-         animate={{ x: [0, 50, 0], y: [0, 30, 0], scale: [1, 1.1, 1] }} 
-         transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }} />
-       <motion.div className="orb bg-indigo-200 w-[60vw] h-[60vw] bottom-[-20%] right-[-10%]" 
-         animate={{ x: [0, -40, 0], y: [0, -40, 0], scale: [1, 1.2, 1] }} 
-         transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }} />
-       <motion.div className="orb bg-cyan-100 w-[40vw] h-[40vw] top-[40%] left-[30%]" 
-         animate={{ x: [0, 30, 0], y: [0, -30, 0], scale: [1, 1.1, 1] }} 
-         transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }} />
-    </div>
+    <canvas ref={canvasRef} style={{
+      position: "absolute", inset: 0, width: "100%", height: "100%",
+      pointerEvents: "none", zIndex: 0, opacity: 0.35,
+    }} />
   );
 }
 
-// ── 3D Tilt Card ─────────────────────────────────────────────────
-function TiltCard({ children, className = "", depth = 15 }: { children: React.ReactNode; className?: string; depth?: number }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const mx = useMotionValue(0), my = useMotionValue(0);
-  const rX = useSpring(useTransform(my, [-0.5, 0.5], [depth, -depth]), { stiffness: 200, damping: 25 });
-  const rY = useSpring(useTransform(mx, [-0.5, 0.5], [-depth, depth]), { stiffness: 200, damping: 25 });
-
-  const onMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!ref.current) return;
-    const r = ref.current.getBoundingClientRect();
-    mx.set((e.clientX - r.left) / r.width - 0.5);
-    my.set((e.clientY - r.top) / r.height - 0.5);
-  }, [mx, my]);
-
-  const onLeave = useCallback(() => { mx.set(0); my.set(0); }, [mx, my]);
+// ── MODAL ────────────────────────────────────────────────────────────────────
+function LessonModal({ item, onClose }: { item: LessonItem; onClose: () => void }) {
+  useEffect(() => {
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", esc);
+    document.body.style.overflow = "hidden";
+    return () => { document.removeEventListener("keydown", esc); document.body.style.overflow = ""; };
+  }, [onClose]);
 
   return (
-    <motion.div ref={ref} onMouseMove={onMove} onMouseLeave={onLeave}
-      style={{ rotateX: rX, rotateY: rY, transformStyle: "preserve-3d", perspective: 1200 }}
-      className={`glass-card transition-transform duration-300 hover:scale-[1.01] ${className}`}>
-      {children}
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      onClick={onClose}
+      className="fixed inset-0 z-[1000] flex items-end sm:items-center justify-center sm:p-6"
+      style={{ background: "rgba(0,0,0,0.3)", backdropFilter: "blur(18px)" }}
+    >
+      <motion.div
+        initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-xl max-h-[90vh] overflow-y-auto bg-white rounded-t-[24px] sm:rounded-[20px]"
+        style={{ borderTop: `3px solid ${item.accent}`, boxShadow: "0 40px 80px rgba(0,0,0,0.15)" }}
+      >
+        {/* Drag pill mobile */}
+        <div className="flex justify-center pt-3 sm:hidden">
+          <div className="w-8 h-1 rounded-full bg-zinc-200" />
+        </div>
+
+        <div className="p-7 sm:p-9 pb-12">
+          <div className="flex items-start justify-between gap-4 mb-6">
+            <div>
+              <span className="font-mono text-[9px] font-black tracking-[0.25em] uppercase mb-2 block" style={{ color: item.accent }}>{item.year}</span>
+              <h2 className="text-2xl sm:text-3xl font-black text-zinc-900 tracking-tight leading-tight mb-2">{item.project}</h2>
+              <p className="text-[13px] text-zinc-400 leading-relaxed italic">{item.tagline}</p>
+            </div>
+            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl text-zinc-400 hover:text-zinc-700 flex-shrink-0 text-sm transition-colors" style={{ background: "rgba(0,0,0,0.04)" }}>✕</button>
+          </div>
+
+          <div className="space-y-5">
+            {item.lessons.map((lesson, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.05 + i * 0.07 }}
+                className="py-4 px-1"
+                style={{ borderBottom: "1px solid rgba(0,0,0,0.04)" }}
+              >
+                <p className="text-[13px] font-bold text-zinc-900 mb-2 leading-snug">{lesson.heading}</p>
+                <p className="text-[13px] text-zinc-500 leading-[1.85]">{lesson.text}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </motion.div>
     </motion.div>
   );
 }
 
-// ── Smooth Cinematic Reveal ───────────────────────────────────────
-function Reveal({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
-  return (
-    <motion.div 
-      initial={{ opacity: 0, y: 30, filter: "blur(8px)" }} 
-      whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-      viewport={{ once: true, margin: "-40px" }} 
-      transition={{ duration: 1, delay, ease: [0.16, 1, 0.3, 1] }} 
-      className={className}>
-      {children}
-    </motion.div>
-  );
-}
-
-// ── Address Chip ──────────────────────────────────────────────────
-function AddressChip({ label, address }: { label: string; address: string; }) {
-  const [copied, setCopied] = useState(false);
-  const copy = () => { navigator.clipboard.writeText(address); setCopied(true); setTimeout(() => setCopied(false), 2000); };
-  const short = address.slice(0, 6) + "…" + address.slice(-4);
+// ── LESSON ROW ────────────────────────────────────────────────────────────────
+function LessonRow({ item, index, onClick }: { item: LessonItem; index: number; onClick: () => void }) {
+  const [hov, setHov] = useState(false);
 
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 bg-white/70 border border-white rounded-xl hover:border-blue-200 hover:bg-white shadow-sm transition-all group">
-      <div className="flex flex-col mb-2 sm:mb-0">
-        <span className="text-[9px] sm:text-[10px] text-slate-500 l-mono uppercase tracking-widest">{label}</span>
-        <span className="text-[11px] sm:text-[13px] text-slate-800 l-mono mt-0.5 font-bold group-hover:text-blue-600 transition-colors">{short}</span>
-      </div>
-      <div className="flex gap-2 w-full sm:w-auto">
-        <button onClick={copy} className="flex-1 sm:flex-none py-2 px-3 rounded-lg bg-slate-100 text-slate-600 hover:text-white hover:bg-slate-800 transition-colors text-[9px] font-bold uppercase tracking-widest shadow-sm">
-          {copied ? "Copied" : "Copy"}
-        </button>
-        <Link href={`https://sepolia.etherscan.io/address/${address}`} target="_blank" className="flex-1 sm:flex-none py-2 px-3 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors text-[9px] font-bold uppercase tracking-widest text-center shadow-sm">
-          Etherscan ↗
-        </Link>
-      </div>
-    </div>
-  );
-}
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-30px" }}
+      transition={{ delay: index * 0.07, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+    >
+      <motion.button
+        onHoverStart={() => setHov(true)}
+        onHoverEnd={() => setHov(false)}
+        onClick={onClick}
+        whileHover={{ y: -2 }}
+        whileTap={{ scale: 0.997 }}
+        className="w-full text-left rounded-2xl bg-white relative overflow-hidden"
+        style={{
+          border: `1px solid ${hov ? `rgba(${item.rgb},0.2)` : "rgba(0,0,0,0.06)"}`,
+          boxShadow: hov ? `0 8px 32px rgba(${item.rgb},0.09)` : "0 2px 8px rgba(0,0,0,0.03)",
+          transition: "border-color 0.25s, box-shadow 0.25s",
+        }}
+      >
+        {/* Left accent */}
+        <motion.div
+          className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-2xl"
+          animate={{ opacity: hov ? 1 : 0, scaleY: hov ? 1 : 0.3 }}
+          style={{ background: item.accent, transformOrigin: "center" }}
+          transition={{ duration: 0.22 }}
+        />
 
-// ═══════════════════════════════════════════════════════════════
-export default function InsuranceProtocol() {
-  const [tab, setTab] = useState<"architecture" | "contracts" | "security" | "deployment">("architecture");
+        <div className="p-5 sm:p-6 pl-6 sm:pl-7">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2.5 mb-3">
+                <span className="font-mono text-[9px] font-black tracking-[0.22em] uppercase px-2.5 py-1 rounded-full"
+                  style={{ color: item.accent, background: `rgba(${item.rgb},0.08)` }}>
+                  {item.year}
+                </span>
+              </div>
 
-  const TABS = [
-    { id: "architecture", label: "Architecture" },
-    { id: "contracts",    label: "Contracts"    },
-    { id: "security",     label: "Security"     },
-    { id: "deployment",   label: "Deployed"     },
-  ] as const;
+              <h3 className="text-base sm:text-lg font-black text-zinc-900 tracking-tight mb-1.5 transition-colors duration-200"
+                style={{ color: hov ? item.accent : undefined }}>
+                {item.project}
+              </h3>
+              <p className="text-[13px] text-zinc-400 leading-relaxed italic mb-4 max-w-lg">{item.tagline}</p>
 
-  return (
-    <div className="l-root relative h-full flex flex-col">
-      <style>{STYLES}</style>
-      
-      {/* 5D Background Layers (Now Absolute to fit modal) */}
-      <div className="mesh-bg" />
-      <div className="grain-overlay" />
-      <BackgroundOrbs />
+              {/* Preview of first lesson heading */}
+              <div className="flex items-start gap-2">
+                <span className="w-[5px] h-[5px] rounded-full mt-[5px] flex-shrink-0" style={{ background: item.accent, opacity: 0.5 }} />
+                <span className="text-[12px] text-zinc-400 font-medium leading-snug">{item.lessons[0].heading}</span>
+              </div>
+              <p className="text-[10px] text-zinc-300 font-mono pl-[17px] mt-1.5">+{item.lessons.length - 1} more</p>
+            </div>
 
-      {/* ══ HERO SECTION ══ */}
-      {/* Fixed: Reduced pt and pb for mobile */}
-      <section className="relative z-10 w-full px-4 sm:px-10 pt-8 sm:pt-24 pb-6 sm:pb-16 flex flex-col items-center justify-center text-center">
-        <Reveal>
-          <div className="flex flex-wrap justify-center gap-2 mb-4 sm:mb-6">
-            <span className="px-3 py-1 text-[8px] sm:text-[10px] font-bold tracking-widest uppercase border border-blue-200 bg-blue-50/80 text-blue-700 rounded-full shadow-sm backdrop-blur-sm">
-              🛡️ DeFi Insurance
-            </span>
-            <span className="px-3 py-1 text-[8px] sm:text-[10px] font-bold tracking-widest uppercase border border-indigo-200 bg-indigo-50/80 text-indigo-700 rounded-full shadow-sm backdrop-blur-sm">
-              ERC-4626 Yield Routing
-            </span>
-          </div>
-        </Reveal>
-        
-        <Reveal delay={0.1}>
-          <h1 className="l-serif text-[32px] sm:text-6xl md:text-[80px] font-bold tracking-tight text-slate-900 leading-[1.05] mb-4 sm:mb-6">
-            Sentinel Insurance <br/>
-            <span className="azure-text">Infrastructure.</span>
-          </h1>
-        </Reveal>
-        
-        <Reveal delay={0.2}>
-          <p className="text-[12px] sm:text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto font-medium mb-6 sm:mb-10 px-2">
-            A highly modular, security-first DeFi insurance architecture. Token-weighted consensus adjudication, automated capital optimization via Aave V3, and flash-loan resistant governance voting.
-          </p>
-        </Reveal>
-        
-        <Reveal delay={0.3}>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center w-full px-4 sm:px-0">
-            <Link href="https://sentinel-insurance-protocol.vercel.app/" target="_blank"
-              className="w-full sm:w-auto px-6 py-3.5 sm:px-8 sm:py-4 text-[10px] sm:text-xs font-black uppercase tracking-widest rounded-xl sm:rounded-2xl bg-blue-600 text-white hover:bg-blue-700 hover:shadow-[0_15px_40px_rgba(37,99,235,0.4)] hover:-translate-y-1 transition-all text-center">
-              Launch App ↗
-            </Link>
-            <Link href="https://github.com/NexTechArchitect/Sentinel-Insurance-Protocol" target="_blank"
-              className="w-full sm:w-auto px-6 py-3.5 sm:px-8 sm:py-4 text-[10px] sm:text-xs font-black uppercase tracking-widest rounded-xl sm:rounded-2xl border border-slate-300 text-slate-700 bg-white/80 hover:border-blue-400 hover:text-blue-600 transition-all shadow-sm text-center">
-              Source Code
-            </Link>
-          </div>
-        </Reveal>
-      </section>
-
-      {/* ══ TABS BAR ══ */}
-      {/* Fixed: Adjusted height and padding for mobile */}
-      <div className="sticky top-0 z-40 bg-white/70 backdrop-blur-xl border-y border-slate-200/60 shadow-sm mt-2">
-        <div className="max-w-6xl mx-auto px-2 sm:px-4 flex gap-1 sm:gap-6 overflow-x-auto hide-scroll items-center h-12 sm:h-16">
-          {TABS.map((t) => (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              className={`shrink-0 relative px-3 py-3 sm:px-4 sm:py-4 text-[9px] sm:text-[11px] font-black uppercase tracking-widest transition-all ${
-                tab === t.id ? 'text-blue-600' : 'text-slate-500 hover:text-slate-800'
-              }`}
+            <motion.div
+              className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm border transition-colors duration-200"
+              animate={{
+                borderColor: hov ? item.accent : "rgba(0,0,0,0.1)",
+                color: hov ? item.accent : "rgba(0,0,0,0.2)",
+                x: hov ? 3 : 0,
+              }}
             >
-              {t.label}
-              {tab === t.id && <motion.div layoutId="l-tab" className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-600" />}
-            </button>
+              →
+            </motion.div>
+          </div>
+        </div>
+      </motion.button>
+    </motion.div>
+  );
+}
+
+// ── MAIN ──────────────────────────────────────────────────────────────────────
+export default function EngineeringJourneySection() {
+  const [active, setActive] = useState<LessonItem | null>(null);
+
+  return (
+    <section className="relative overflow-hidden" style={{ background: "#FDFCF8", borderTop: "1px solid #ede9e2" }}>
+      <ParticleField />
+
+      {/* Ambient */}
+      <div className="absolute inset-0 pointer-events-none">
+        <motion.div
+          animate={{ scale: [1, 1.1, 1], x: [0, 18, 0] }}
+          transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-[-8%] right-[-5%] w-[40vw] h-[40vw] rounded-full"
+          style={{ background: "radial-gradient(circle, rgba(124,58,237,0.04) 0%, transparent 70%)", filter: "blur(60px)" }}
+        />
+      </div>
+
+      <div className="relative z-10 max-w-3xl mx-auto px-5 sm:px-8 lg:px-12 py-20 sm:py-28">
+
+        {/* Header */}
+        <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }} className="mb-12 sm:mb-16">
+          <span className="font-mono text-[9px] text-zinc-300 tracking-[0.32em] uppercase mb-4 block">Lessons</span>
+          <h2 className="text-4xl sm:text-5xl font-black text-zinc-900 tracking-tight leading-tight mb-4">
+            What building{" "}
+            <span style={{
+              background: "linear-gradient(100deg, #2563EB 0%, #7C3AED 50%, #059669 100%)",
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+            }}>
+              taught me.
+            </span>
+          </h2>
+          <p className="text-zinc-400 text-sm max-w-sm leading-relaxed">
+            Not what I built. What I actually learned from building it.
+          </p>
+        </motion.div>
+
+        <div className="space-y-4">
+          {ITEMS.map((item, i) => (
+            <LessonRow key={item.id} item={item} index={i} onClick={() => setActive(item)} />
           ))}
         </div>
+
+        <motion.p
+          initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: 0.4 }}
+          className="font-mono text-[9px] text-zinc-200 text-center mt-14 tracking-[0.22em] uppercase"
+        >
+          Every lesson came from a mistake first
+        </motion.p>
       </div>
 
-      {/* ══ CONTENT AREA ══ */}
-      {/* Fixed: Reduced pb-24 to pb-10 so no empty space is left at the bottom */}
-      <div className="w-full max-w-6xl mx-auto px-4 sm:px-10 py-6 sm:py-12 pb-10 sm:pb-16 relative z-10 flex-1">
-        <AnimatePresence mode="wait">
-
-          {/* ─ ARCHITECTURE ─ */}
-          {tab === "architecture" && (
-            <motion.div key="arch" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.3 }} className="space-y-6">
-              
-              {/* Fixed: Reduced padding on mobile */}
-              <TiltCard className="p-6 sm:p-12">
-                <h3 className="azure-text text-[9px] sm:text-[11px] font-black uppercase tracking-widest mb-3">The Tri-Layer Design</h3>
-                <h2 className="l-serif text-2xl sm:text-5xl font-bold text-slate-900 mb-4 sm:mb-6 leading-tight">Solving Idle Capital & Centralization.</h2>
-                <p className="text-[12px] sm:text-[16px] text-slate-600 leading-relaxed font-medium mb-6 sm:mb-10 max-w-3xl">
-                  Most decentralized insurance protocols suffer from idle capital inefficiency and centralized claim adjudication. SentinelShield isolates execution across three layers: a Policy Engine, an ERC-4626 Capital Vault connected to Aave V3, and a Snapshot-based Claims Governor.
-                </p>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-                  {[
-                    { icon: "📈", t: "Capital Efficiency", d: "CoveragePool implements ERC-4626, routing idle USDC collateral natively into Aave V3 for continuous APY." },
-                    { icon: "🛡️", t: "Flash-Loan Resistant", d: "ClaimsGovernor enforces historical checkpoint tracking (block.number - 1) to neutralize voting attacks." },
-                    { icon: "🖼️", t: "Dynamic NFTs", d: "Policies are minted as ERC-721 receipts with 100% on-chain SVG art reflecting live policy states." }
-                  ].map((item, i) => (
-                    <div key={i} className="p-5 sm:p-6 bg-white/70 border border-white rounded-xl sm:rounded-2xl shadow-sm">
-                      <span className="text-2xl sm:text-3xl mb-3 block drop-shadow-sm">{item.icon}</span>
-                      <h4 className="text-[10px] sm:text-[12px] font-black text-slate-800 mb-2 uppercase tracking-widest">{item.t}</h4>
-                      <p className="text-[10px] sm:text-[13px] text-slate-500 leading-relaxed">{item.d}</p>
-                    </div>
-                  ))}
-                </div>
-              </TiltCard>
-
-            </motion.div>
-          )}
-
-          {/* ─ CONTRACTS ─ */}
-          {tab === "contracts" && (
-            <motion.div key="con" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.3 }} className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                {[
-                  { c: "azure", domain: "ROUTING & ISSUANCE",      title: "PolicyEngine.sol",     desc: "Central hub for policy origination. Validates risk thresholds via RiskRegistry, locks premiums, and triggers PolicyNFT minting." },
-                  { c: "lavender", domain: "CAPITAL VAULT (4626)", title: "CoveragePool.sol",   desc: "Ensures capital efficiency by sweeping surplus USDC into Aave V3 lending pools to accrue yield for Liquidity Providers." },
-                  { c: "emerald", domain: "DAO ADJUDICATION", title: "ClaimsGovernor.sol", desc: "Handles the entire lifecycle of an insurance claim. Features strict block-snapshot queries to neutralize flash-loan attacks." },
-                  { c: "rose", domain: "EMERGENCY SAFEGUARD",     title: "VetoCouncil.sol",     desc: "Multi-signature threshold contract acting as a final fail-safe mechanism to void maliciously approved claims." },
-                ].map((item, i) => (
-                  <TiltCard key={i} className="p-6 sm:p-8">
-                    <h3 className={`${item.c}-text text-[9px] sm:text-[10px] font-black uppercase tracking-widest mb-2`}>{item.domain}</h3>
-                    <h2 className="l-serif text-xl sm:text-3xl font-bold text-slate-900 mb-3">{item.title}</h2>
-                    <p className="text-[11px] sm:text-[13px] text-slate-600 leading-relaxed font-medium">{item.desc}</p>
-                  </TiltCard>
-                ))}
-            </motion.div>
-          )}
-
-          {/* ─ SECURITY ─ */}
-          {tab === "security" && (
-            <motion.div key="sec" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.3 }} className="space-y-6 sm:space-y-8">
-              <TiltCard className="p-6 sm:p-12">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-10 gap-3 border-b border-slate-200/60 pb-6 sm:pb-8">
-                  <div>
-                    <h3 className="azure-text text-[9px] sm:text-[11px] font-black uppercase tracking-widest mb-1 sm:mb-2">Slither Static Analysis</h3>
-                    <h2 className="l-serif text-2xl sm:text-5xl font-bold text-slate-900">Audit Profile.</h2>
-                  </div>
-                  <span className="px-3 py-1.5 sm:px-4 sm:py-2 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg sm:rounded-xl text-[8px] sm:text-[10px] font-black uppercase tracking-widest shadow-sm">
-                    ✅ Production Cleared
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-10">
-                  {[
-                    { n: "0",  l: "High Risk", c: "text-slate-300" },
-                    { n: "2",  l: "Medium (False Pos)", c: "text-amber-500" },
-                    { n: "11", l: "Low (ERC Std)", c: "text-blue-500" },
-                    { n: "16", l: "Info (NatSpec)", c: "text-emerald-500" },
-                  ].map((s, i) => (
-                    <div key={i} className="p-4 sm:p-6 bg-white/70 rounded-xl sm:rounded-2xl border border-white text-center shadow-sm">
-                      <p className={`text-3xl sm:text-5xl font-black mb-1 sm:mb-2 ${s.c}`}>{s.n}</p>
-                      <p className="text-[8px] sm:text-[10px] font-black text-slate-500 uppercase tracking-widest">{s.l}</p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="p-4 sm:p-6 bg-blue-50/50 rounded-xl sm:rounded-2xl border border-blue-100 flex items-start gap-3 sm:gap-4">
-                  <span className="text-xl sm:text-2xl">🛡️</span>
-                  <p className="text-[10px] sm:text-[12px] text-slate-600 leading-relaxed font-medium">
-                    <strong className="text-blue-700 font-bold">Defense Validation:</strong> Static scanning confirms zero structural data-leakage vectors, non-reentrant state transitions, and absolute mathematical precision across internal processing paths.
-                  </p>
-                </div>
-              </TiltCard>
-            </motion.div>
-          )}
-
-          {/* ─ DEPLOYMENT ─ */}
-          {tab === "deployment" && (
-            <motion.div key="dep" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.3 }} className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-                
-                <div className="space-y-4 sm:space-y-6">
-                  <h3 className="azure-text text-[9px] sm:text-[11px] font-black uppercase tracking-widest ml-1">Core Engines (Sepolia)</h3>
-                  <AddressChip label="PolicyEngine" address="0xa373BD4d832E34C960A7bF6BBf6190c939932b40" />
-                  <AddressChip label="CoveragePool" address="0x2bC42ae97A20b4f06F35C42e2Fb82A0550fAAf18" />
-                  <AddressChip label="RiskRegistry"  address="0xE94a55ac7678013ff68B8c26A3337A0DCe7a5210" />
-                </div>
-                
-                <div className="space-y-4 sm:space-y-6">
-                  <h3 className="lavender-text text-[9px] sm:text-[11px] font-black uppercase tracking-widest ml-1">Governance (Sepolia)</h3>
-                  <AddressChip label="ClaimsGovernor" address="0xDc89D29Dc89178bE772EAf6E3587eB863Df6Ae8a" />
-                  <AddressChip label="VetoCouncil"    address="0x00493Da33899ea9FB9Fe5401dDa9EcE7F92319Ab" />
-                  <AddressChip label="PayoutExecutor" address="0x004FF5Ce04AcC4106100C283edf2A69Fb879BdCb" />
-                </div>
-
-            </motion.div>
-          )}
-
-        </AnimatePresence>
-      </div>
-    </div>
+      <AnimatePresence>
+        {active && <LessonModal item={active} onClose={() => setActive(null)} />}
+      </AnimatePresence>
+    </section>
   );
 }
