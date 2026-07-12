@@ -1,5 +1,15 @@
 export const fullStackProjects = [
   { 
+    id: "onchain-automation", 
+    title: "On-Chain Automation Protocol", 
+    description: "A decentralized, high-performance execution engine leveraging off-chain computation triggers for trustless smart contract state automation.", 
+    tech: ["Solidity", "Chainlink Keepers", "Next.js 14", "Base Mainnet"], 
+    link: "https://github.com/NexTechArchitect/OnChain-Automation-Protocol", 
+    liveUrl: "https://on-chain-automation-protocol.vercel.app/",
+    icon: "⚙️",
+    accentColor: "#06B6D4" 
+  },
+  { 
     id: "sentinel-insurance", 
     title: "Sentinel Insurance Protocol", 
     description: "A decentralized DeFi insurance architecture featuring ERC-4626 yield routing via Aave V3, flash-loan resistant DAO adjudication, and an immutable Next.js 3D interface.", 

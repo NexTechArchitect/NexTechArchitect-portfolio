@@ -16,6 +16,8 @@ import NexusPolkaCaseStudy from "../projects/NexusPolkaCaseStudy";
 import ReputationCaseStudy from "../projects/ReputationCaseStudy"; 
 import InsuranceProtocol from "../projects/InsuranceProtocol"; 
 
+import AutomationProtocolCaseStudy from "../projects/AutomationProtocolCaseStudy";
+
 export default function UniversalModal({ selectedItem, activeType, closeModal }: any) {
   if (!selectedItem) return null;
 
@@ -37,9 +39,9 @@ export default function UniversalModal({ selectedItem, activeType, closeModal }:
 
     const id = selectedItem.id;
     
-    // <-- NAYA PROJECT YAHAN MAP KIYA HAI -->
-    if (id === "sentinel-insurance") return <InsuranceProtocol />; 
+    if (id === "onchain-automation") return <AutomationProtocolCaseStudy />;
     
+    if (id === "sentinel-insurance") return <InsuranceProtocol />; 
     if (id === "fs4") return <ReputationCaseStudy />; 
     if (id === "fs3") return <NexusPolkaCaseStudy />; 
     if (id === "fs1") return <NexusCaseStudy />;
