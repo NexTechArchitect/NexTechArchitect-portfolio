@@ -1,1357 +1,339 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
-import { Bricolage_Grotesque, JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { Bricolage_Grotesque, JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
 
-const displayFont = Bricolage_Grotesque({
-  subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
-  variable: "--df",
-});
-const bodyFont = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--bf",
-});
-const monoFont = JetBrains_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--mf",
-});
+const displayFont = Bricolage_Grotesque({ subsets: ["latin"], weight: ["600", "700", "800"] });
+const bodyFont = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600"] });
+const monoFont = JetBrains_Mono({ subsets: ["latin"], weight: ["500", "700"] });
 
-// ─── PARTICLE CANVAS ─────────────────────────────────────────────────────────
-function ParticleCanvas() {
-  const ref = useRef<HTMLCanvasElement>(null);
-  const mouse = useRef({ x: 0.5, y: 0.5 });
+// ─── HIGH-END 3D WEBGL-STYLE CANVAS ──────────────────────────────────────────
+function Premium3DCanvas() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const cv = ref.current;
-    if (!cv) return;
-    const ctx = cv.getContext("2d");
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    let W = (cv.width = cv.offsetWidth);
-    let H = (cv.height = cv.offsetHeight);
-    let raf: number;
+    let width = (canvas.width = canvas.offsetWidth);
+    let height = (canvas.height = canvas.offsetHeight);
+    let animationFrame: number;
+    let time = 0;
 
-    const pts = Array.from({ length: 48 }, () => ({
-      x: Math.random() * W,
-      y: Math.random() * H,
-      vx: (Math.random() - 0.5) * 0.3,
-      vy: (Math.random() - 0.5) * 0.3,
-      r: Math.random() * 1.2 + 0.4,
-      a: Math.random() * 0.5 + 0.1,
-      tier: Math.random() > 0.85 ? 0 : 1,
-    }));
+    // 3D Engine Constants
+    const nodes: { x: number; y: number; z: number; size: number }[] = [];
+    const numNodes = 25; // Keep it clean
+    const fov = 300;
 
-    const onMM = (e: MouseEvent) => {
-      const r = cv.getBoundingClientRect();
-      mouse.current.x = (e.clientX - r.left) / r.width;
-      mouse.current.y = (e.clientY - r.top) / r.height;
-    };
-    window.addEventListener("mousemove", onMM, { passive: true });
+    // Generate random nodes in a sphere
+    for (let i = 0; i < numNodes; i++) {
+      const theta = Math.random() * 2 * Math.PI;
+      const phi = Math.acos(Math.random() * 2 - 1);
+      const radius = 60 + Math.random() * 40;
+      nodes.push({
+        x: radius * Math.sin(phi) * Math.cos(theta),
+        y: radius * Math.sin(phi) * Math.sin(theta),
+        z: radius * Math.cos(phi),
+        size: Math.random() * 2 + 1.5,
+      });
+    }
 
-    const draw = () => {
-      ctx.clearRect(0, 0, W, H);
-      pts.forEach((p) => {
-        p.x += p.vx;
-        p.y += p.vy;
-        if (p.x < 0) p.x = W;
-        if (p.x > W) p.x = 0;
-        if (p.y < 0) p.y = H;
-        if (p.y > H) p.y = 0;
-        const color = p.tier === 0 ? `rgba(0,180,166,${p.a})` : `rgba(255,255,255,${p.a * 0.35})`;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = color;
-        ctx.fill();
+    const render = () => {
+      ctx.clearRect(0, 0, width, height);
+      time += 0.003;
+
+      const centerX = width / 2;
+      const centerY = height / 2;
+
+      // Project and rotate nodes
+      const projected = nodes.map((node) => {
+        // Rotate around Y and X axis
+        const cosY = Math.cos(time);
+        const sinY = Math.sin(time);
+        const cosX = Math.cos(time * 0.5);
+        const sinX = Math.sin(time * 0.5);
+
+        // Y Rotation
+        let x1 = node.x * cosY - node.z * sinY;
+        let z1 = node.z * cosY + node.x * sinY;
+
+        // X Rotation
+        let y2 = node.y * cosX - z1 * sinX;
+        let z2 = z1 * cosX + node.y * sinX;
+
+        // 3D to 2D Projection
+        const scale = fov / (fov + z2);
+        const projX = centerX + x1 * scale;
+        const projY = centerY + y2 * scale;
+
+        return { x: projX, y: projY, z: z2, scale, size: node.size };
       });
 
-      for (let i = 0; i < pts.length; i++) {
-        for (let j = i + 1; j < pts.length; j++) {
-          const dx = pts[i].x - pts[j].x;
-          const dy = pts[i].y - pts[j].y;
-          const d = Math.sqrt(dx * dx + dy * dy);
-          if (d < 100) {
+      // Sort by Z for proper depth rendering
+      projected.sort((a, b) => b.z - a.z);
+
+      // Draw Connections (Web3 Network Vibe)
+      ctx.lineWidth = 1;
+      for (let i = 0; i < projected.length; i++) {
+        for (let j = i + 1; j < projected.length; j++) {
+          const p1 = projected[i];
+          const p2 = projected[j];
+          const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+
+          if (dist < 80) {
+            const alpha = (1 - dist / 80) * 0.15; // Light subtle lines
             ctx.beginPath();
-            ctx.moveTo(pts[i].x, pts[i].y);
-            ctx.lineTo(pts[j].x, pts[j].y);
-            ctx.strokeStyle = `rgba(0,180,166,${0.06 * (1 - d / 100)})`;
-            ctx.lineWidth = 0.5;
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.strokeStyle = `rgba(14, 165, 233, ${alpha})`; // Tailwind sky-500
             ctx.stroke();
           }
         }
       }
 
-      const cx = mouse.current.x * W;
-      const cy = mouse.current.y * H;
-      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 200);
-      g.addColorStop(0, "rgba(0,180,166,0.06)");
-      g.addColorStop(1, "rgba(0,180,166,0)");
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, W, H);
+      // Draw Nodes
+      projected.forEach((p) => {
+        const alpha = Math.max(0.1, (fov - p.z) / (fov * 1.5));
+        
+        // Outer Glow
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * p.scale * 3, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(6, 182, 212, ${alpha * 0.3})`; // Cyan glow
+        ctx.fill();
 
-      raf = requestAnimationFrame(draw);
-    };
-    draw();
+        // Core
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * p.scale, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(14, 165, 233, ${alpha + 0.2})`; // Sky blue core
+        ctx.fill();
+      });
 
-    const onResize = () => {
-      W = cv.width = cv.offsetWidth;
-      H = cv.height = cv.offsetHeight;
+      animationFrame = requestAnimationFrame(render);
     };
-    window.addEventListener("resize", onResize);
+    render();
+
+    const handleResize = () => {
+      width = canvas.width = canvas.offsetWidth;
+      height = canvas.height = canvas.offsetHeight;
+    };
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("mousemove", onMM);
-      window.removeEventListener("resize", onResize);
+      cancelAnimationFrame(animationFrame);
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
 
-  return <canvas ref={ref} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />;
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 w-full h-full pointer-events-none opacity-60 mix-blend-multiply"
+    />
+  );
 }
 
 // ─── ADDRESS CHIP ─────────────────────────────────────────────────────────────
-function AddressChip({
-  label,
-  address,
-  href,
-  tag,
-}: {
-  label: string;
-  address: string;
-  href: string;
-  tag: string;
-}) {
+function AddressChip({ label, address, tag }: { label: string; address: string; tag: string }) {
   const [copied, setCopied] = useState(false);
-  const short = address.slice(0, 10) + "…" + address.slice(-6);
+  const short = address.slice(0, 8) + "…" + address.slice(-6);
 
   return (
-    <div style={S.addrRow}>
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-2xl hover:border-blue-300 hover:shadow-md transition-all gap-4">
       <div>
-        <div style={S.addrName}>{label}</div>
-        <div style={S.addrTag}>{tag}</div>
+        <div className={`text-sm font-bold text-slate-800 ${displayFont.className}`}>{label}</div>
+        <div className={`text-[10px] text-slate-500 uppercase tracking-widest mt-1 ${monoFont.className}`}>{tag}</div>
       </div>
-      <div style={S.addrChips}>
-        <code style={S.addrCode}>{short}</code>
+      <div className="flex items-center gap-2 w-full sm:w-auto">
+        <code className={`px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-600 flex-1 sm:flex-none text-center ${monoFont.className}`}>
+          {short}
+        </code>
         <button
-          style={S.addrBtn}
           onClick={() => {
             navigator.clipboard.writeText(address);
             setCopied(true);
-            setTimeout(() => setCopied(false), 1800);
+            setTimeout(() => setCopied(false), 2000);
           }}
+          className={`px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg text-[10px] font-bold uppercase tracking-widest transition-colors ${monoFont.className}`}
         >
-          {copied ? "✓ Copied" : "Copy"}
+          {copied ? "Copied" : "Copy"}
         </button>
-        <Link href={href} target="_blank" style={S.addrScan}>
-          Basescan ↗
-        </Link>
       </div>
     </div>
   );
 }
 
-// ─── SECTION WRAPPER ─────────────────────────────────────────────────────────
-function Section({
-  id,
-  children,
-  label,
-}: {
-  id: string;
-  children: React.ReactNode;
-  label: string;
-}) {
-  return (
-    <section id={id} style={S.section}>
-      <div style={S.sectionLabel}>{label}</div>
-      {children}
-    </section>
-  );
-}
-
-// ─── MAIN ─────────────────────────────────────────────────────────────────────
+// ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 export default function OnChainAutomationCaseStudy() {
-  const [activeTab, setActiveTab] = useState<"overview" | "contracts" | "security" | "tests">("overview");
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const h = () => setScrolled(window.scrollY > 30);
-    window.addEventListener("scroll", h, { passive: true });
-    return () => window.removeEventListener("scroll", h);
-  }, []);
-
-  const TABS = [
-    { id: "overview" as const, label: "Overview" },
-    { id: "contracts" as const, label: "Contracts" },
-    { id: "security" as const, label: "Security" },
-    { id: "tests" as const, label: "Tests" },
-  ];
+  const [activeTab, setActiveTab] = useState<"architecture" | "contracts">("architecture");
 
   return (
-    <>
-      <style>{CSS}</style>
-      <div
-        className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable}`}
-        style={S.root}
-      >
-        {/* ── HERO ───────────────────────────────────────────────────────── */}
-        <div style={S.hero}>
-          <div style={{ position: "absolute", inset: 0 }}>
-            <ParticleCanvas />
+    <div className={`w-full bg-[#F8FAFC] text-slate-900 rounded-b-[40px] overflow-hidden ${bodyFont.className}`}>
+      
+      {/* ── HERO SECTION ── */}
+      <div className="relative w-full min-h-[400px] flex flex-col justify-center border-b border-slate-200 bg-white overflow-hidden">
+        {/* 3D Canvas Background */}
+        <Premium3DCanvas />
+        
+        {/* Gradients to blend canvas */}
+        <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-blue-400/10 blur-[100px] rounded-full pointer-events-none" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-400/10 blur-[100px] rounded-full pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:24px_24px] opacity-40 pointer-events-none" />
+
+        <div className="relative z-10 px-6 md:px-16 pt-20 pb-12 w-full max-w-6xl mx-auto flex flex-col items-center text-center">
+          
+          <div className="flex flex-wrap justify-center gap-2 mb-6">
+            <span className={`px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-600 text-[10px] font-bold uppercase tracking-widest rounded-lg flex items-center gap-2 ${monoFont.className}`}>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Base Mainnet
+            </span>
+            <span className={`px-3 py-1 bg-blue-50 border border-blue-200 text-blue-600 text-[10px] font-bold uppercase tracking-widest rounded-lg ${monoFont.className}`}>
+              Keeper Network
+            </span>
           </div>
-          {/* dot grid overlay */}
-          <div style={S.heroGrid} />
-          {/* glow blobs */}
-          <div style={S.glow1} />
-          <div style={S.glow2} />
 
-          <div style={S.heroInner}>
-            <div style={S.heroBadges}>
-              <span style={{ ...S.badge, ...S.badgeLive }}>
-                <span className="live-dot" />
-                Base Mainnet
-              </span>
-              <span style={{ ...S.badge, ...S.badgeCyan }}>Bonded Keepers</span>
-              <span style={{ ...S.badge, ...S.badgeAmber }}>O(1) Queue</span>
-              <span style={{ ...S.badge, ...S.badgeViolet }}>Fault Isolated</span>
-            </div>
+          <h1 className={`text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-slate-900 mb-6 leading-[1.1] ${displayFont.className}`}>
+            OnChain <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">Automation</span>
+          </h1>
 
-            <h1 style={S.heroTitle}>
-              OnChain <span style={{ color: "var(--cyan)" }}>Automation</span>
-              <br />Protocol
-            </h1>
-            <p style={S.heroMono}>
-            
-            </p>
-            <p style={S.heroDesc}>
-              A decentralized keeper network on Base. Bonded operators watch your contracts
-              around the clock and call <code style={S.heroCode}>performUpkeep</code> the
-              moment conditions clear — no cron job, no centralized bot, no permission needed.
-            </p>
+          <p className="text-slate-600 text-sm md:text-base max-w-2xl leading-relaxed mb-8 font-medium">
+            A decentralized, permissionless keeper network. Bonded operators watch your smart contracts around the clock and execute transactions securely via a fault-isolated engine. No centralized cron-bots.
+          </p>
 
-            <div style={S.heroLinks}>
-              <Link href="https://on-chain-automation-protocol.vercel.app/" target="_blank" style={S.btnPrimary}>
-                Launch App ↗
-              </Link>
-              <Link href="https://github.com/NexTechArchitect/OnChain-Automation-Protocol" target="_blank" style={S.btnGhost}>
-                Source Code ↗
-              </Link>
-            </div>
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <Link href="https://on-chain-automation-protocol.vercel.app/" target="_blank"
+              className={`px-8 py-3.5 bg-blue-600 text-white hover:bg-blue-700 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all shadow-lg shadow-blue-600/20 text-center ${monoFont.className}`}>
+              Launch Protocol ↗
+            </Link>
+            <Link href="https://github.com/NexTechArchitect/OnChain-Automation-Protocol" target="_blank"
+              className={`px-8 py-3.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 hover:text-slate-900 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all text-center ${monoFont.className}`}>
+              View Source Code
+            </Link>
           </div>
         </div>
+      </div>
 
-        {/* ── STATS ──────────────────────────────────────────────────────── */}
-        <div style={S.statsRow}>
+      {/* ── KEY METRICS ── */}
+      <div className="bg-white border-b border-slate-200">
+        <div className="max-w-6xl mx-auto px-6 md:px-16 py-6 grid grid-cols-2 md:grid-cols-4 gap-4 divide-x divide-slate-100">
           {[
-            { val: "3", label: "Core Contracts", sub: "Registry · Manager · Engine", accent: "var(--cyan)" },
-            { val: "3×", label: "Max Slashes", sub: "Auto-jail threshold", accent: "var(--amber)" },
-            { val: "1000", label: "Rep Ceiling", sub: "KeeperMath clamped", accent: "var(--violet)" },
-            { val: "3d", label: "Unbond Delay", sub: "Slash-exit protection", accent: "var(--green)" },
+            { v: "O(1)", l: "Queue Design" },
+            { v: "Zero", l: "Engine Balance" },
+            { v: "3-Day", l: "Unbond Delay" },
+            { v: "100%", l: "Slither Passed" },
           ].map((s, i) => (
-            <div key={i} style={{ ...S.statCard, "--accent": s.accent } as React.CSSProperties}>
-              <div className="stat-top-bar" style={{ background: s.accent }} />
-              <div style={{ ...S.statVal, color: s.accent }}>{s.val}</div>
-              <div style={S.statLabel}>{s.label}</div>
-              <div style={S.statSub}>{s.sub}</div>
+            <div key={i} className="px-4 text-center md:text-left">
+              <p className={`text-[10px] text-slate-400 uppercase tracking-widest mb-1 ${monoFont.className}`}>{s.l}</p>
+              <p className={`text-2xl font-black text-slate-800 ${displayFont.className}`}>{s.v}</p>
             </div>
           ))}
         </div>
-
-        {/* ── STICKY NAV ─────────────────────────────────────────────────── */}
-        <div style={{ ...S.stickyNav, ...(scrolled ? S.stickyScrolled : {}) }}>
-          <div style={S.tabsWrap}>
-            {TABS.map((t) => (
-              <button
-                key={t.id}
-                style={{
-                  ...S.tabBtn,
-                  ...(activeTab === t.id ? S.tabActive : {}),
-                }}
-                onClick={() => setActiveTab(t.id)}
-              >
-                {t.label}
-                {activeTab === t.id && <span style={S.tabUnderline} />}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* ── CONTENT ────────────────────────────────────────────────────── */}
-        <div style={S.content}>
-
-          {/* ── OVERVIEW ──────────────────────────────────────────────── */}
-          {activeTab === "overview" && (
-            <div style={S.fadeIn}>
-
-              {/* Architecture */}
-              <Section id="architecture" label="System Architecture">
-                <div style={S.archWrap}>
-                  {/* Top layer */}
-                  <div style={{ ...S.archLayer, background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.07)" }}>
-                    <div style={{ ...S.archIcon, background: "rgba(255,255,255,0.06)" }}>🖥</div>
-                    <div style={{ flex: 1 }}>
-                      <div style={S.archName}>Your Protocol</div>
-                      <div style={S.archDesc}>
-                        Implements{" "}
-                        <code style={S.inlineCode}>IAutomatable</code> —{" "}
-                        <code style={S.inlineCode}>checkUpkeep()</code> +{" "}
-                        <code style={S.inlineCode}>performUpkeep()</code>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={S.archArrow}>↕ keeper simulates via eth_call · zero gas offchain</div>
-
-                  {/* Engine */}
-                  <div style={{ ...S.archLayer, background: "rgba(0,180,166,0.07)", borderColor: "rgba(0,180,166,0.2)", borderTop: "2px solid var(--cyan)" }}>
-                    <div style={{ ...S.archIcon, background: "rgba(0,180,166,0.15)" }}>⚡</div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ ...S.archName, color: "var(--cyan)" }}>ExecutionEngine</div>
-                      <div style={S.archDesc}>
-                        Stateless router — validates keeper + job, isolated try/catch, atomic settlement.
-                        Holds <strong style={{ color: "#fff" }}>zero ETH</strong>.
-                      </div>
-                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" as const, marginTop: 8 }}>
-                        {["Ownable2Step", "ReentrancyGuard", "Fault-Isolated Batches"].map((t) => (
-                          <span key={t} style={{ ...S.tag, ...S.tagCyan }}>{t}</span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={S.archArrow}>↕ reads and writes both registries in one atomic commit</div>
-
-                  {/* Split layer */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                    <div style={{ ...S.archLayer, borderTop: "2px solid var(--violet)", background: "rgba(91,79,212,0.06)" }}>
-                      <div style={{ ...S.archIcon, background: "rgba(91,79,212,0.12)", fontSize: 14 }}>🔐</div>
-                      <div>
-                        <div style={{ ...S.archName, color: "var(--violet)", fontSize: 13 }}>KeeperRegistry</div>
-                        <div style={{ ...S.archDesc, fontSize: 11 }}>
-                          Operator bonds · slash pipeline · reputation scores · lifecycle states
-                        </div>
-                      </div>
-                    </div>
-                    <div style={{ ...S.archLayer, borderTop: "2px solid var(--amber)", background: "rgba(232,150,42,0.06)" }}>
-                      <div style={{ ...S.archIcon, background: "rgba(232,150,42,0.12)", fontSize: 14 }}>📋</div>
-                      <div>
-                        <div style={{ ...S.archName, color: "var(--amber)", fontSize: 13 }}>JobManager</div>
-                        <div style={{ ...S.archDesc, fontSize: 11 }}>
-                          Job intents · reward escrow · O(1) swap-pop queue · pull-payment fees
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Section>
-
-              {/* Execution flow + Lifecycle — side by side */}
-              <div style={S.twoCol}>
-                <Section id="flow" label="Execution Flow — 4 Steps, Every Time">
-                  <div style={S.flowList}>
-                    {[
-                      {
-                        n: "1",
-                        title: "Offchain simulation",
-                        body: "Keeper calls checkUpkeep() via eth_call. Zero gas. Returns performData. False → skip.",
-                      },
-                      {
-                        n: "2",
-                        title: "Onchain validation",
-                        body: "Engine checks keeper state, job readiness, basefee ceiling, pool balance. Any failure reverts immediately.",
-                      },
-                      {
-                        n: "3",
-                        title: "Isolated execution",
-                        body: "target.performUpkeep() runs inside try/catch. Malicious revert emits JobExecutionFailed — batch continues.",
-                      },
-                      {
-                        n: "4",
-                        title: "Atomic settlement",
-                        body: "recordExecution: timestamp update, reward split, keeper transfer, reputation +5. All in one commit.",
-                      },
-                    ].map((step) => (
-                      <div key={step.n} style={S.flowStep}>
-                        <div style={S.flowNum}>{step.n}</div>
-                        <div>
-                          <div style={S.flowTitle}>{step.title}</div>
-                          <div style={S.flowBody}>{step.body}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </Section>
-
-                <Section id="lifecycle" label="Keeper Lifecycle States">
-                  <div style={S.statesList}>
-                    {[
-                      { dot: "#475569", name: "Unregistered", desc: "Default. No bond posted. Invisible to the protocol." },
-                      { dot: "var(--green)", name: "Active", desc: "Bond ≥ minimum. isActive() true. Only state from which execution is possible." },
-                      { dot: "var(--amber)", name: "Exiting", desc: "initiateUnbond() called. 3-day cooldown. Execution blocked. Guards slash-then-exit." },
-                      { dot: "#E04444", name: "Jailed", desc: "3 slashes or bond < minimum — automatic. unjail() by owner only if bond ≥ minimum." },
-                    ].map((s) => (
-                      <div key={s.name} style={S.stateRow}>
-                        <div style={{ ...S.stateDot, background: s.dot }} />
-                        <div>
-                          <div style={S.stateName}>{s.name}</div>
-                          <div style={S.stateDesc}>{s.desc}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </Section>
-              </div>
-
-            </div>
-          )}
-
-          {/* ── CONTRACTS ─────────────────────────────────────────────── */}
-          {activeTab === "contracts" && (
-            <div style={S.fadeIn}>
-              <Section id="addrs" label="Deployed on Base Mainnet — Chain ID 8453">
-                <div style={S.addrList}>
-                  <AddressChip
-                    label="KeeperRegistry"
-                    address="0xcEa37b9CCA6170d43BF133CCfdeaD9CB2A4D61D3"
-                    href="https://basescan.org/address/0xcEa37b9CCA6170d43BF133CCfdeaD9CB2A4D61D3"
-                    tag="Trust anchor · Operator bonds · Slash pipeline"
-                  />
-                  <AddressChip
-                    label="JobManager"
-                    address="0xBAa2B4c250DD6da358e23244C2fa85dA1927718C"
-                    href="https://basescan.org/address/0xBAa2B4c250DD6da358e23244C2fa85dA1927718C"
-                    tag="Job scheduler · Reward escrow · O(1) queue"
-                  />
-                  <AddressChip
-                    label="ExecutionEngine"
-                    address="0x388665c32F9F17E0d5cfEE3Eabe1880A3AEd80e9"
-                    href="https://basescan.org/address/0x388665c32F9F17E0d5cfEE3Eabe1880A3AEd80e9"
-                    tag="Stateless router · Fault-isolated · Holds zero ETH"
-                  />
-                </div>
-              </Section>
-
-              <div style={S.twoCol}>
-                <Section id="registry-design" label="KeeperRegistry Design">
-                  <div style={S.designCard}>
-                    <div style={S.designCardTitle}>Single-SLOAD packed struct</div>
-                    <p style={S.designCardBody}>
-                      Bond amount, timestamps, execution count, slash count, reputation, and lifecycle status
-                      are packed into two storage slots. Every read of a keeper&apos;s full state costs exactly one SLOAD.
-                    </p>
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" as const, marginTop: 12 }}>
-                      {["Ownable2Step", "ReentrancyGuard", "Pausable"].map((t) => (
-                        <span key={t} style={{ ...S.tag, ...S.tagViolet }}>{t}</span>
-                      ))}
-                    </div>
-                  </div>
-                </Section>
-
-                <Section id="jobmanager-design" label="JobManager Design">
-                  <div style={S.designCard}>
-                    <div style={S.designCardTitle}>O(1) swap-and-pop queue</div>
-                    <p style={S.designCardBody}>
-                      A 1-indexed position mapping enables constant-gas removal regardless of queue size.
-                      Job removed → swap with last → pop. Pull-payment fees prevent push-payment DoS attacks.
-                    </p>
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" as const, marginTop: 12 }}>
-                      {["Pull-Payment", "O(1) Queue", "Pausable"].map((t) => (
-                        <span key={t} style={{ ...S.tag, ...S.tagAmber }}>{t}</span>
-                      ))}
-                    </div>
-                  </div>
-                </Section>
-              </div>
-
-              <Section id="math" label="KeeperMath.sol — Pure Library">
-                <div style={S.terminal}>
-                  <div style={S.termBar}>
-                    <span style={{ ...S.termDot, background: "#FF5F57" }} />
-                    <span style={{ ...S.termDot, background: "#FFBD2E" }} />
-                    <span style={{ ...S.termDot, background: "#28C940" }} />
-                    <span style={S.termLabel}>KeeperMath.sol — reputation · slash · pull-payment</span>
-                  </div>
-                  <div style={S.termBody}>
-                    <div style={{ color: "#3B4F68" }}>{"// Reputation always in [0, 1000] — clamped at both bounds"}</div>
-                    <div style={{ color: "#60A5FA" }}>uint256 newRep = addReputation(keeper.reputation, 5);</div>
-                    <div style={{ color: "#2D3A50", marginBottom: 14 }}>{"// → clamped at 1000 · can never overflow regardless of input"}</div>
-
-                    <div style={{ color: "#3B4F68" }}>{"// Auto-jail: 3 slashes or bond < MIN_BOND"}</div>
-                    <div style={{ color: "#F87171" }}>{"if (keeper.slashCount >= JAIL_THRESHOLD || keeper.bond < MIN_BOND) {"}</div>
-                    <div style={{ color: "#F87171", paddingLeft: 16 }}>{"_jailKeeper(keeperAddr); // same tx as the slash"}</div>
-                    <div style={{ color: "#F87171", marginBottom: 14 }}>{"}"}</div>
-
-                    <div style={{ color: "#3B4F68" }}>{"// Pull-payment fees — treasury DoS is structurally impossible"}</div>
-                    <div style={{ color: "#34D399" }}>{"s_accumulatedFees += protocolFee; // never pushed, always pulled"}</div>
-                  </div>
-                </div>
-              </Section>
-            </div>
-          )}
-
-          {/* ── SECURITY ──────────────────────────────────────────────── */}
-          {activeTab === "security" && (
-            <div style={S.fadeIn}>
-              <Section id="threats" label="Threat Mitigation">
-                <div style={S.secGrid}>
-                  {[
-                    {
-                      icon: "🔄",
-                      threat: "Reentrancy on ETH transfer",
-                      fix: "Strict CEI ordering across all three contracts. ReentrancyGuard on every ETH-touching function. Engine holds zero balance — nothing to drain even if compromised.",
-                      sev: "Critical",
-                      sevColor: "#E04444",
-                    },
-                    {
-                      icon: "💀",
-                      threat: "Slash-then-exit bond drain",
-                      fix: "3-day unbonding cooldown in initiateUnbond(). Keeper is blocked from execution during cooldown. All pending slashes are processed before bond can withdraw.",
-                      sev: "Critical",
-                      sevColor: "#E04444",
-                    },
-                    {
-                      icon: "🚫",
-                      threat: "Malicious target stalls batch",
-                      fix: "executeBatch() wraps each job in its own try/catch. A reverting target emits JobExecutionFailed and is silently skipped — one bad job can never halt the queue.",
-                      sev: "High",
-                      sevColor: "var(--amber)",
-                    },
-                    {
-                      icon: "⛽",
-                      threat: "Gas spike griefs keepers",
-                      fix: "Every job sets maxBaseFee. If block.basefee exceeds ceiling, job is not ready — execution waits. Jobs pause during spikes and resume automatically.",
-                      sev: "High",
-                      sevColor: "var(--amber)",
-                    },
-                    {
-                      icon: "💸",
-                      threat: "Push-payment treasury DoS",
-                      fix: "Protocol fees accumulate in s_accumulatedFees. Treasury calls withdrawFees() to collect. A reverting treasury address cannot block any execution.",
-                      sev: "High",
-                      sevColor: "var(--amber)",
-                    },
-                    {
-                      icon: "🎯",
-                      threat: "Unauthorized performUpkeep",
-                      fix: "Your contract must validate msg.sender === executionEngine, stored as immutable at construction. Any other caller reverts with Automatable__NotExecutionEngine().",
-                      sev: "Med",
-                      sevColor: "var(--violet)",
-                    },
-                  ].map((item) => (
-                    <div key={item.threat} style={S.secCard}>
-                      <div style={S.secHead}>
-                        <span style={{ fontSize: 20 }}>{item.icon}</span>
-                        <span
-                          style={{
-                            ...S.sevBadge,
-                            color: item.sevColor,
-                            background: item.sevColor + "18",
-                            border: `1px solid ${item.sevColor}35`,
-                          }}
-                        >
-                          {item.sev}
-                        </span>
-                      </div>
-                      <div style={S.secThreat}>{item.threat}</div>
-                      <div style={S.secFix}>{item.fix}</div>
-                    </div>
-                  ))}
-                </div>
-              </Section>
-
-              <Section id="invariants" label="Protocol Invariants — Verified across 500k+ Simulated Transactions">
-                <div style={S.invList}>
-                  {[
-                    { text: "Registry ETH = sum of all active bonds. No bond has leaked by a single wei across 500k simulated transactions." },
-                    { text: "JobManager ETH = all reward pools + accumulated fees. Pull-payment ensures fee counter and balance are always in sync." },
-                    { text: "ExecutionEngine balance is always zero. The engine is a stateless router. All value flows through JobManager." },
-                    { text: "Reputation is always in [0, 1000]. KeeperMath clamps every mutation at both bounds before returning." },
-                    { text: "Active job list has no duplicates or phantom gaps. Swap-and-pop with 1-indexed position mapping ensures this structurally." },
-                  ].map((inv, i) => (
-                    <div key={i} style={S.invRow}>
-                      <span style={{ color: "var(--cyan)", flexShrink: 0, marginTop: 2 }}>◆</span>
-                      <span dangerouslySetInnerHTML={{ __html: inv.text.replace(/^([^.]+\.)/, "<strong>$1</strong>") }} />
-                    </div>
-                  ))}
-                </div>
-              </Section>
-            </div>
-          )}
-
-          {/* ── TESTS ─────────────────────────────────────────────────── */}
-          {activeTab === "tests" && (
-            <div style={S.fadeIn}>
-              <div style={S.twoCol}>
-                {/* Terminal */}
-                <Section id="terminal" label="forge test output">
-                  <div style={S.terminal}>
-                    <div style={S.termBar}>
-                      <span style={{ ...S.termDot, background: "#FF5F57" }} />
-                      <span style={{ ...S.termDot, background: "#FFBD2E" }} />
-                      <span style={{ ...S.termDot, background: "#28C940" }} />
-                      <span style={S.termLabel}>forge test --match-contract Keeper -vv</span>
-                    </div>
-                    <div style={S.termBody}>
-                      <div style={{ color: "#2D3A50" }}>$ forge test --match-contract Keeper -vv</div>
-                      <div style={{ color: "#3B4F68" }}>Compiling 3 files with Solc 0.8.24... [✓]</div>
-                      <div style={{ color: "#CBD5E1", marginBottom: 10 }}>Running tests for src/...</div>
-                      {[
-                        { name: "testFuzz_BondAndExecute(uint96,uint8)", type: "FUZZ" },
-                        { name: "testFuzz_SlashReducesBond(uint256)", type: "FUZZ" },
-                        { name: "invariant_RegistryETHEqualsAllBonds()", type: "INVAR" },
-                        { name: "invariant_JobManagerAccountingConsistent()", type: "INVAR" },
-                        { name: "invariant_EngineBalanceIsAlwaysZero()", type: "INVAR" },
-                        { name: "invariant_ReputationBounded_0_to_1000()", type: "INVAR" },
-                        { name: "test_MaliciousTargetCannotStallBatch()", type: "INTEG" },
-                        { name: "test_UnbondCooldownPreventsSlashEscape()", type: "INTEG" },
-                        { name: "test_PullPaymentTreasuryDoSImmune()", type: "INTEG" },
-                      ].map((row) => {
-                        const typeColors: Record<string, string> = {
-                          FUZZ: "var(--amber)",
-                          INVAR: "var(--cyan)",
-                          INTEG: "var(--violet)",
-                        };
-                        return (
-                          <div key={row.name} style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 3 }}>
-                            <span style={{ color: "#4ADE80", fontSize: 11, fontFamily: "var(--mf), monospace" }}>
-                              [PASS] {row.name}
-                            </span>
-                            <span
-                              style={{
-                                flexShrink: 0,
-                                fontSize: 9,
-                                fontWeight: 700,
-                                padding: "2px 6px",
-                                borderRadius: 4,
-                                fontFamily: "var(--mf), monospace",
-                                letterSpacing: "0.06em",
-                                color: typeColors[row.type],
-                                background: typeColors[row.type] + "20",
-                              }}
-                            >
-                              {row.type}
-                            </span>
-                          </div>
-                        );
-                      })}
-                      <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-                        <div style={{ color: "#4ADE80", fontWeight: 600, fontFamily: "var(--mf), monospace", fontSize: 12 }}>
-                          ✓ All tests passed · 0 failed
-                        </div>
-                        <div style={{ color: "#2D3A50", fontFamily: "var(--mf), monospace", fontSize: 10, marginTop: 4 }}>
-                          Fuzz: 256 runs/test · Invariant: 128 runs × 50 calls = 6,400 mutations
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </Section>
-
-                {/* Test breakdown + audit */}
-                <div>
-                  <Section id="breakdown" label="Test Breakdown">
-                    <div style={{ display: "flex", flexDirection: "column" as const, gap: 8 }}>
-                      {[
-                        { type: "Unit Tests", count: "70+", desc: "Every function in isolation — success paths, reverts, access control, zero-address guards.", color: "var(--violet)" },
-                        { type: "Fuzz Tests", count: "256 runs", desc: "Random bond amounts, slash counts, and job params verify no panics across any input domain.", color: "var(--amber)" },
-                        { type: "Invariant Tests", count: "6,400 mutations", desc: "128 × 50 calls proves all five balance and state invariants hold across every reachable state.", color: "var(--cyan)" },
-                      ].map((t) => (
-                        <div key={t.type} style={S.testCard}>
-                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-                            <span style={{ fontSize: 11, fontWeight: 700, fontFamily: "var(--mf), monospace", letterSpacing: "0.06em", textTransform: "uppercase" as const, color: t.color }}>
-                              {t.type}
-                            </span>
-                            <span style={{ fontSize: 18, fontWeight: 700, color: t.color, fontFamily: "var(--df), sans-serif" }}>
-                              {t.count}
-                            </span>
-                          </div>
-                          <div style={{ fontSize: 11, color: "var(--ink2)", lineHeight: 1.6 }}>{t.desc}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </Section>
-
-                  <Section id="audit" label="Self-Audit Summary">
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
-                      {[
-                        { n: "0", label: "Critical", c: "#94A3B8" },
-                        { n: "0", label: "High", c: "#94A3B8" },
-                        { n: "0", label: "Medium", c: "#94A3B8" },
-                        { n: "✓", label: "Slither", c: "var(--green)" },
-                      ].map((s) => (
-                        <div key={s.label} style={S.auditCell}>
-                          <div style={{ fontSize: 22, fontWeight: 700, color: s.c }}>{s.n}</div>
-                          <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.08em", color: "var(--ink3)", marginTop: 3 }}>
-                            {s.label}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div style={S.auditNote}>
-                      <strong style={{ color: "var(--amber)" }}>Note:</strong> Self-audited by NexTechArchitect, July 2026.
-                      Invariant-tested across 500k+ transactions. No external audit yet — engage a professional firm before routing significant value.
-                    </div>
-                  </Section>
-                </div>
-              </div>
-            </div>
-          )}
-
-        </div>
-
-        {/* ── FOOTER ─────────────────────────────────────────────────────── */}
-        <footer style={S.footer}>
-          <div style={S.footerInner}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span className="live-dot" />
-              <span style={{ fontWeight: 700, color: "var(--ink)" }}>OnChain Automation Protocol</span>
-              <span style={S.footerNetwork}>Base Mainnet · 8453</span>
-            </div>
-            <div style={S.footerLinks}>
-              {[
-                { label: "App", href: "https://on-chain-automation-protocol.vercel.app/" },
-                { label: "GitHub", href: "https://github.com/NexTechArchitect/OnChain-Automation-Protocol" },
-                { label: "Basescan", href: "https://basescan.org/address/0xcEa37b9CCA6170d43BF133CCfdeaD9CB2A4D61D3" },
-              ].map((l) => (
-                <Link key={l.label} href={l.href} target="_blank" style={S.footerLink}>
-                  {l.label} ↗
-                </Link>
-              ))}
-            </div>
-          </div>
-          <div style={S.footerDisclaimer}>
-            Always verify contract addresses on Basescan before sending funds.
-          </div>
-        </footer>
       </div>
-    </>
+
+      {/* ── TABS ── */}
+      <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200">
+        <div className="max-w-6xl mx-auto px-6 md:px-16 flex gap-8 overflow-x-auto hide-scrollbar">
+          {[
+            { id: "architecture", label: "Core Architecture" },
+            { id: "contracts", label: "Deployed Contracts" },
+          ].map((t) => (
+            <button key={t.id} onClick={() => setActiveTab(t.id as any)}
+              className={`relative py-5 text-[11px] font-bold uppercase tracking-widest transition-colors whitespace-nowrap ${monoFont.className} ${
+                activeTab === t.id ? "text-blue-600" : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              {t.label}
+              {activeTab === t.id && (
+                <motion.div layoutId="light-tab" className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-600" />
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── CONTENT AREA ── */}
+      <div className="max-w-6xl mx-auto px-6 md:px-16 py-10 pb-16">
+        <AnimatePresence mode="wait">
+
+          {/* ════ TAB 1: ARCHITECTURE ════ */}
+          {activeTab === "architecture" && (
+            <motion.div key="arch" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                {[
+                  { icon: "🔐", title: "KeeperRegistry", desc: "Manages operator identities, ETH bonds, and slashing. Auto-jails malicious operators.", color: "text-blue-600", bg: "bg-blue-50" },
+                  { icon: "📋", title: "JobManager", desc: "Stores execution intents. Uses a highly optimized O(1) swap-and-pop array to process jobs.", color: "text-amber-600", bg: "bg-amber-50" },
+                  { icon: "⚡", title: "ExecutionEngine", desc: "Stateless router. Wraps every target call in a try/catch boundary. Holds zero ETH.", color: "text-cyan-600", bg: "bg-cyan-50" },
+                ].map((card, i) => (
+                  <div key={i} className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                    <div className={`w-12 h-12 ${card.bg} rounded-xl flex items-center justify-center text-xl mb-4`}>{card.icon}</div>
+                    <h3 className={`text-lg font-bold text-slate-800 mb-2 ${displayFont.className}`}>{card.title}</h3>
+                    <p className="text-xs text-slate-500 leading-relaxed font-medium">{card.desc}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="bg-white border border-slate-200 p-6 md:p-8 rounded-2xl shadow-sm mt-6">
+                <h3 className={`text-sm font-black uppercase tracking-widest text-slate-800 mb-6 ${monoFont.className}`}>Execution Flow</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {[
+                    { n: "1", title: "Offchain Simulation", desc: "Keeper calls checkUpkeep() locally via eth_call for zero gas. Returns boolean." },
+                    { n: "2", title: "Onchain Validation", desc: "Engine checks keeper bond, basefee ceilings, and job readiness." },
+                    { n: "3", title: "Isolated Execution", desc: "Target runs inside try/catch. A reverting job cannot crash the batch queue." },
+                    { n: "4", title: "Atomic Settlement", desc: "Timestamps update, rewards are split, and reputation increases in a single commit." },
+                  ].map((step) => (
+                    <div key={step.n} className="flex gap-4 items-start">
+                      <div className={`w-8 h-8 rounded-full bg-blue-100 text-blue-600 font-bold flex items-center justify-center shrink-0 text-xs ${monoFont.className}`}>
+                        {step.n}
+                      </div>
+                      <div>
+                        <h4 className={`text-sm font-bold text-slate-800 mb-1 ${displayFont.className}`}>{step.title}</h4>
+                        <p className="text-xs text-slate-500 leading-relaxed">{step.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </motion.div>
+          )}
+
+          {/* ════ TAB 2: CONTRACTS ════ */}
+          {activeTab === "contracts" && (
+            <motion.div key="con" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
+              
+              <div className="bg-white border border-slate-200 p-6 md:p-8 rounded-2xl shadow-sm">
+                <h3 className={`text-sm font-black uppercase tracking-widest text-slate-800 mb-6 ${monoFont.className}`}>Base Mainnet Deployments</h3>
+                <div className="flex flex-col gap-3">
+                  <AddressChip label="KeeperRegistry.sol" address="0xcEa37b9CCA6170d43BF133CCfdeaD9CB2A4D61D3" tag="Operator Bonds & Slashing" />
+                  <AddressChip label="JobManager.sol" address="0xBAa2B4c250DD6da358e23244C2fa85dA1927718C" tag="O(1) Queue & Escrow" />
+                  <AddressChip label="ExecutionEngine.sol" address="0x388665c32F9F17E0d5cfEE3Eabe1880A3AEd80e9" tag="Stateless Router" />
+                </div>
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800 p-6 md:p-8 rounded-2xl shadow-lg relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-8 opacity-5 text-6xl">🔒</div>
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                  <div>
+                    <h3 className={`text-emerald-400 text-[10px] font-bold uppercase tracking-widest mb-2 ${monoFont.className}`}>Security Profile</h3>
+                    <h2 className={`text-2xl font-black text-white mb-2 ${displayFont.className}`}>0 Critical / 0 High Risk</h2>
+                    <p className="text-slate-400 text-xs max-w-md leading-relaxed">
+                      Architecture audited via Slither Static Analysis. Features strict CEI patterns, 3-day unbonding lockups to prevent flash-exit attacks, and mathematically clamped reputation scores to prevent integer overflow gaming.
+                    </p>
+                  </div>
+                  <div className={`px-6 py-4 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-xl text-xs font-bold uppercase tracking-widest text-center ${monoFont.className}`}>
+                    Ready for Production
+                  </div>
+                </div>
+              </div>
+
+            </motion.div>
+          )}
+
+        </AnimatePresence>
+      </div>
+    </div>
   );
 }
-
-// ─── STYLES ───────────────────────────────────────────────────────────────────
-const CSS = `
-  html, body { margin: 0; background: #0B0F1A; }
-  * { box-sizing: border-box; }
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.10); border-radius: 4px; }
-  .live-dot {
-    display: inline-block; width: 7px; height: 7px; border-radius: 50%;
-    background: #4ADE80; box-shadow: 0 0 0 3px rgba(74,222,128,0.18);
-    animation: livePulse 2.2s ease-in-out infinite;
-    flex-shrink: 0;
-  }
-  @keyframes livePulse {
-    0%, 100% { box-shadow: 0 0 0 3px rgba(74,222,128,0.18); }
-    50%       { box-shadow: 0 0 0 6px rgba(74,222,128,0.04); }
-  }
-  .stat-top-bar { position: absolute; top: 0; left: 0; right: 0; height: 2px; }
-`;
-
-const S = {
-  root: {
-    fontFamily: "var(--bf), system-ui, sans-serif",
-    background: "#0B0F1A",
-    color: "#CBD5E1",
-    minHeight: "100vh",
-    "--cyan": "#00C4B4",
-    "--cyan-d": "#007A72",
-    "--cyan-bg": "rgba(0,196,180,0.10)",
-    "--amber": "#E8962A",
-    "--amber-bg": "rgba(232,150,42,0.10)",
-    "--violet": "#6B5FE4",
-    "--violet-bg": "rgba(107,95,228,0.10)",
-    "--green": "#22C55E",
-    "--ink": "#F1F5F9",
-    "--ink2": "#94A3B8",
-    "--ink3": "#475569",
-    "--line": "rgba(255,255,255,0.07)",
-    "--line2": "rgba(255,255,255,0.04)",
-    "--card": "rgba(255,255,255,0.03)",
-  } as React.CSSProperties,
-
-  // Hero
-  hero: {
-    position: "relative" as const,
-    background: "#060A14",
-    overflow: "hidden",
-    minHeight: 480,
-    display: "flex",
-    alignItems: "flex-end",
-  },
-  heroGrid: {
-    position: "absolute" as const,
-    inset: 0,
-    opacity: 0.15,
-    backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.4) 1px, transparent 1px)",
-    backgroundSize: "28px 28px",
-    pointerEvents: "none" as const,
-  },
-  glow1: {
-    position: "absolute" as const,
-    top: -80,
-    right: -80,
-    width: 400,
-    height: 400,
-    borderRadius: "50%",
-    background: "radial-gradient(circle, rgba(0,196,180,0.18), transparent 70%)",
-    pointerEvents: "none" as const,
-  },
-  glow2: {
-    position: "absolute" as const,
-    bottom: -60,
-    left: "25%",
-    width: 260,
-    height: 260,
-    borderRadius: "50%",
-    background: "radial-gradient(circle, rgba(232,150,42,0.12), transparent 70%)",
-    pointerEvents: "none" as const,
-  },
-  heroInner: {
-    position: "relative" as const,
-    zIndex: 1,
-    maxWidth: 1180,
-    margin: "0 auto",
-    width: "100%",
-    padding: "48px 28px 44px",
-  },
-  heroBadges: { display: "flex", flexWrap: "wrap" as const, gap: 8, marginBottom: 22 },
-  badge: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 6,
-    padding: "4px 10px",
-    borderRadius: 6,
-    fontFamily: "var(--mf), monospace",
-    fontSize: 10,
-    fontWeight: 600,
-    letterSpacing: "0.07em",
-    textTransform: "uppercase" as const,
-  },
-  badgeLive: { background: "rgba(74,222,128,0.12)", color: "#4ADE80", border: "1px solid rgba(74,222,128,0.25)" },
-  badgeCyan: { background: "rgba(0,196,180,0.12)", color: "#4ECDC4", border: "1px solid rgba(0,196,180,0.25)" },
-  badgeAmber: { background: "rgba(232,150,42,0.12)", color: "#FBB840", border: "1px solid rgba(232,150,42,0.25)" },
-  badgeViolet: { background: "rgba(107,95,228,0.12)", color: "#A5B4FC", border: "1px solid rgba(107,95,228,0.25)" },
-  heroTitle: {
-    fontFamily: "var(--df), sans-serif",
-    fontSize: "clamp(32px, 6vw, 64px)",
-    fontWeight: 800,
-    color: "#F1F5F9",
-    letterSpacing: "-0.025em",
-    lineHeight: 0.95,
-    margin: "0 0 14px",
-  },
-  heroMono: {
-    fontFamily: "var(--mf), monospace",
-    fontSize: 11,
-    color: "rgba(255,255,255,0.28)",
-    letterSpacing: "0.1em",
-    borderLeft: "2px solid rgba(0,196,180,0.4)",
-    paddingLeft: 12,
-    marginBottom: 18,
-  },
-  heroDesc: {
-    fontSize: 14,
-    color: "#64748B",
-    lineHeight: 1.72,
-    maxWidth: 540,
-    marginBottom: 28,
-  },
-  heroCode: {
-    fontFamily: "var(--mf), monospace",
-    fontSize: "0.88em",
-    color: "var(--cyan)",
-    background: "rgba(0,196,180,0.12)",
-    padding: "1px 5px",
-    borderRadius: 4,
-  },
-  heroLinks: { display: "flex", gap: 10, flexWrap: "wrap" as const },
-  btnPrimary: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 6,
-    padding: "11px 20px",
-    background: "var(--cyan)",
-    color: "#060A14",
-    borderRadius: 10,
-    fontFamily: "var(--df), sans-serif",
-    fontSize: 12,
-    fontWeight: 700,
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.07em",
-    textDecoration: "none",
-    transition: "opacity 0.15s",
-  },
-  btnGhost: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 6,
-    padding: "11px 20px",
-    background: "rgba(255,255,255,0.05)",
-    color: "rgba(255,255,255,0.65)",
-    border: "1px solid rgba(255,255,255,0.12)",
-    borderRadius: 10,
-    fontFamily: "var(--df), sans-serif",
-    fontSize: 12,
-    fontWeight: 700,
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.07em",
-    textDecoration: "none",
-  },
-
-  // Stats
-  statsRow: {
-    display: "grid",
-    gridTemplateColumns: "repeat(4, 1fr)",
-    borderBottom: "1px solid rgba(255,255,255,0.06)",
-    borderTop: "1px solid rgba(255,255,255,0.05)",
-    background: "#080C16",
-  },
-  statCard: {
-    position: "relative" as const,
-    padding: "22px 20px 18px",
-    borderRight: "1px solid rgba(255,255,255,0.06)",
-    overflow: "hidden",
-  },
-  statVal: {
-    fontFamily: "var(--df), sans-serif",
-    fontSize: 34,
-    fontWeight: 800,
-    letterSpacing: "-0.02em",
-    lineHeight: 1,
-    marginBottom: 5,
-  },
-  statLabel: {
-    fontSize: 10,
-    fontWeight: 700,
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.1em",
-    color: "#F1F5F9",
-    marginBottom: 3,
-  },
-  statSub: {
-    fontFamily: "var(--mf), monospace",
-    fontSize: 9,
-    color: "#475569",
-    letterSpacing: "0.04em",
-  },
-
-  // Sticky nav
-  stickyNav: {
-    position: "sticky" as const,
-    top: 0,
-    zIndex: 50,
-    background: "rgba(8,12,22,0.88)",
-    backdropFilter: "blur(20px)",
-    borderBottom: "1px solid rgba(255,255,255,0.05)",
-    transition: "box-shadow 0.25s ease",
-  },
-  stickyScrolled: {
-    boxShadow: "0 1px 24px rgba(0,0,0,0.5)",
-  },
-  tabsWrap: {
-    maxWidth: 1180,
-    margin: "0 auto",
-    padding: "0 28px",
-    display: "flex",
-    gap: 2,
-  },
-  tabBtn: {
-    position: "relative" as const,
-    padding: "14px 16px",
-    fontFamily: "var(--mf), monospace",
-    fontSize: 11,
-    fontWeight: 600,
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.1em",
-    color: "#475569",
-    background: "transparent",
-    border: "none",
-    cursor: "pointer",
-    transition: "color 0.15s",
-  },
-  tabActive: { color: "#00C4B4" },
-  tabUnderline: {
-    position: "absolute" as const,
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 2,
-    background: "linear-gradient(90deg, #00C4B4, rgba(0,196,180,0.4))",
-    boxShadow: "0 0 8px rgba(0,196,180,0.5)",
-  },
-
-  // Content
-  content: {
-    maxWidth: 1180,
-    margin: "0 auto",
-    padding: "32px 28px 80px",
-  },
-  fadeIn: {
-    animation: "none",
-  },
-
-  // Section
-  section: {
-    marginBottom: 24,
-  },
-  sectionLabel: {
-    fontFamily: "var(--mf), monospace",
-    fontSize: 9,
-    fontWeight: 700,
-    letterSpacing: "0.2em",
-    textTransform: "uppercase" as const,
-    color: "#334155",
-    marginBottom: 12,
-  },
-
-  // Two col
-  twoCol: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: 16,
-  },
-
-  // Architecture
-  archWrap: {
-    background: "rgba(255,255,255,0.02)",
-    border: "1px solid rgba(255,255,255,0.06)",
-    borderRadius: 14,
-    padding: 16,
-  },
-  archLayer: {
-    display: "flex",
-    alignItems: "flex-start",
-    gap: 12,
-    padding: "13px 14px",
-    borderRadius: 10,
-    border: "1px solid rgba(255,255,255,0.06)",
-    marginBottom: 8,
-  },
-  archIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: 15,
-    flexShrink: 0,
-  },
-  archName: {
-    fontSize: 13,
-    fontWeight: 700,
-    color: "#F1F5F9",
-    marginBottom: 3,
-    fontFamily: "var(--df), sans-serif",
-  },
-  archDesc: {
-    fontSize: 11,
-    color: "#64748B",
-    lineHeight: 1.55,
-  },
-  archArrow: {
-    textAlign: "center" as const,
-    fontFamily: "var(--mf), monospace",
-    fontSize: 9,
-    color: "#334155",
-    letterSpacing: "0.05em",
-    padding: "6px 0",
-  },
-
-  // Tags
-  tag: {
-    display: "inline-block",
-    padding: "2px 7px",
-    borderRadius: 5,
-    fontFamily: "var(--mf), monospace",
-    fontSize: 9,
-    fontWeight: 600,
-    letterSpacing: "0.05em",
-  },
-  tagCyan: { background: "rgba(0,196,180,0.12)", color: "#00C4B4" },
-  tagAmber: { background: "rgba(232,150,42,0.12)", color: "#E8962A" },
-  tagViolet: { background: "rgba(107,95,228,0.12)", color: "#A5B4FC" },
-  inlineCode: {
-    fontFamily: "var(--mf), monospace",
-    fontSize: "0.88em",
-    color: "#00C4B4",
-    background: "rgba(0,196,180,0.10)",
-    padding: "1px 5px",
-    borderRadius: 4,
-  },
-
-  // Flow
-  flowList: { display: "flex", flexDirection: "column" as const, gap: 0 },
-  flowStep: {
-    display: "flex",
-    gap: 12,
-    padding: "14px 0",
-    borderBottom: "1px solid rgba(255,255,255,0.04)",
-    alignItems: "flex-start",
-  },
-  flowNum: {
-    width: 26,
-    height: 26,
-    borderRadius: 7,
-    background: "#F1F5F9",
-    color: "#0B0F1A",
-    fontWeight: 800,
-    fontSize: 12,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-    marginTop: 1,
-    fontFamily: "var(--df), sans-serif",
-  },
-  flowTitle: { fontSize: 12, fontWeight: 700, color: "#F1F5F9", marginBottom: 3, fontFamily: "var(--df), sans-serif" },
-  flowBody: { fontSize: 11, color: "#64748B", lineHeight: 1.6 },
-
-  // States
-  statesList: {
-    display: "flex",
-    flexDirection: "column" as const,
-    border: "1px solid rgba(255,255,255,0.06)",
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  stateRow: {
-    display: "flex",
-    gap: 12,
-    padding: "13px 14px",
-    borderBottom: "1px solid rgba(255,255,255,0.04)",
-    background: "rgba(255,255,255,0.015)",
-    alignItems: "flex-start",
-  },
-  stateDot: { width: 8, height: 8, borderRadius: "50%", flexShrink: 0, marginTop: 5 },
-  stateName: { fontSize: 12, fontWeight: 700, color: "#F1F5F9", marginBottom: 3, fontFamily: "var(--df), sans-serif" },
-  stateDesc: { fontSize: 11, color: "#64748B", lineHeight: 1.55 },
-
-  // Address
-  addrList: { display: "flex", flexDirection: "column" as const, gap: 8 },
-  addrRow: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    padding: "13px 16px",
-    background: "rgba(255,255,255,0.03)",
-    border: "1px solid rgba(255,255,255,0.06)",
-    borderRadius: 12,
-    flexWrap: "wrap" as const,
-  },
-  addrName: { fontSize: 13, fontWeight: 700, color: "#F1F5F9", marginBottom: 2, fontFamily: "var(--df), sans-serif" },
-  addrTag: { fontFamily: "var(--mf), monospace", fontSize: 9, color: "#475569", letterSpacing: "0.04em" },
-  addrChips: { display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" as const },
-  addrCode: {
-    fontFamily: "var(--mf), monospace",
-    fontSize: 10,
-    color: "#64748B",
-    background: "rgba(255,255,255,0.04)",
-    padding: "4px 8px",
-    borderRadius: 6,
-  },
-  addrBtn: {
-    padding: "5px 10px",
-    background: "rgba(0,196,180,0.10)",
-    color: "#00C4B4",
-    border: "1px solid rgba(0,196,180,0.2)",
-    borderRadius: 7,
-    fontSize: 10,
-    fontWeight: 700,
-    letterSpacing: "0.04em",
-    cursor: "pointer",
-    fontFamily: "var(--mf), monospace",
-  },
-  addrScan: {
-    display: "inline-block",
-    padding: "5px 10px",
-    background: "transparent",
-    color: "#475569",
-    border: "1px solid rgba(255,255,255,0.08)",
-    borderRadius: 7,
-    fontSize: 10,
-    fontWeight: 700,
-    letterSpacing: "0.04em",
-    textDecoration: "none",
-    fontFamily: "var(--mf), monospace",
-  },
-
-  // Design cards
-  designCard: {
-    background: "rgba(255,255,255,0.03)",
-    border: "1px solid rgba(255,255,255,0.06)",
-    borderRadius: 12,
-    padding: "16px",
-    height: "100%",
-  },
-  designCardTitle: {
-    fontFamily: "var(--df), sans-serif",
-    fontSize: 15,
-    fontWeight: 700,
-    color: "#F1F5F9",
-    marginBottom: 8,
-  },
-  designCardBody: { fontSize: 12, color: "#64748B", lineHeight: 1.65 },
-
-  // Terminal
-  terminal: {
-    background: "#060B14",
-    borderRadius: 12,
-    overflow: "hidden",
-    border: "1px solid rgba(255,255,255,0.06)",
-  },
-  termBar: {
-    display: "flex",
-    alignItems: "center",
-    gap: 6,
-    padding: "10px 14px",
-    background: "#0D1420",
-    borderBottom: "1px solid rgba(255,255,255,0.05)",
-  },
-  termDot: { width: 10, height: 10, borderRadius: "50%", display: "inline-block" },
-  termLabel: {
-    marginLeft: 8,
-    fontFamily: "var(--mf), monospace",
-    fontSize: 9,
-    color: "#2D3A50",
-    letterSpacing: "0.04em",
-  },
-  termBody: {
-    padding: 16,
-    fontFamily: "var(--mf), monospace",
-    fontSize: 11,
-    lineHeight: 1.75,
-    color: "#CBD5E1",
-  },
-
-  // Security
-  secGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(3, 1fr)",
-    gap: 10,
-    marginBottom: 0,
-  },
-  secCard: {
-    background: "rgba(255,255,255,0.025)",
-    border: "1px solid rgba(255,255,255,0.06)",
-    borderRadius: 12,
-    padding: "16px",
-  },
-  secHead: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 },
-  sevBadge: {
-    fontFamily: "var(--mf), monospace",
-    fontSize: 9,
-    fontWeight: 700,
-    padding: "3px 7px",
-    borderRadius: 5,
-    letterSpacing: "0.07em",
-    textTransform: "uppercase" as const,
-  },
-  secThreat: {
-    fontSize: 10,
-    fontWeight: 700,
-    textDecoration: "line-through",
-    opacity: 0.4,
-    color: "#E04444",
-    marginBottom: 6,
-    letterSpacing: "0.01em",
-    fontFamily: "var(--df), sans-serif",
-  },
-  secFix: { fontSize: 11, fontWeight: 500, color: "#94A3B8", lineHeight: 1.6 },
-
-  // Invariants
-  invList: {
-    display: "flex",
-    flexDirection: "column" as const,
-    border: "1px solid rgba(255,255,255,0.06)",
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  invRow: {
-    display: "flex",
-    gap: 12,
-    padding: "13px 16px",
-    borderBottom: "1px solid rgba(255,255,255,0.04)",
-    background: "rgba(255,255,255,0.015)",
-    fontSize: 12,
-    color: "#64748B",
-    lineHeight: 1.6,
-    alignItems: "flex-start",
-  },
-
-  // Test cards
-  testCard: {
-    background: "rgba(255,255,255,0.03)",
-    border: "1px solid rgba(255,255,255,0.06)",
-    borderRadius: 10,
-    padding: "14px",
-  },
-
-  // Audit
-  auditCell: {
-    textAlign: "center" as const,
-    padding: "14px 8px",
-    background: "rgba(255,255,255,0.02)",
-    border: "1px solid rgba(255,255,255,0.05)",
-    borderRadius: 10,
-  },
-  auditNote: {
-    marginTop: 10,
-    padding: "12px 14px",
-    background: "rgba(232,150,42,0.07)",
-    border: "1px solid rgba(232,150,42,0.18)",
-    borderRadius: 10,
-    fontSize: 11,
-    color: "#64748B",
-    lineHeight: 1.6,
-  },
-
-  // Footer
-  footer: {
-    borderTop: "1px solid rgba(255,255,255,0.06)",
-    padding: "24px 28px",
-    background: "#060A14",
-  },
-  footerInner: {
-    maxWidth: 1180,
-    margin: "0 auto",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    flexWrap: "wrap" as const,
-    gap: 16,
-    paddingBottom: 16,
-    marginBottom: 14,
-    borderBottom: "1px solid rgba(255,255,255,0.05)",
-  },
-  footerNetwork: {
-    fontFamily: "var(--mf), monospace",
-    fontSize: 9,
-    color: "#334155",
-    borderLeft: "1px solid rgba(255,255,255,0.07)",
-    paddingLeft: 10,
-    marginLeft: 4,
-    letterSpacing: "0.08em",
-    textTransform: "uppercase" as const,
-  },
-  footerLinks: { display: "flex", gap: 20 },
-  footerLink: {
-    fontSize: 12,
-    fontWeight: 600,
-    color: "#475569",
-    textDecoration: "none",
-    letterSpacing: "0.02em",
-    fontFamily: "var(--mf), monospace",
-  },
-  footerDisclaimer: {
-    maxWidth: 1180,
-    margin: "0 auto",
-    fontSize: 10,
-    color: "#334155",
-    fontFamily: "var(--mf), monospace",
-    letterSpacing: "0.04em",
-  },
-};

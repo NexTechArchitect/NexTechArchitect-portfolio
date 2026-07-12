@@ -12,8 +12,7 @@ import Link from "next/link";
 
 /* ═══════════════════════════════════════════════════════════════
    CUTECAT NFT — Vaporwave / Cyber-Neon Mobile Optimized
-   Palette: Deep Void (#0A011E), Hot Pink (#FF007F), Cyber Cyan (#00E5FF)
-   Fixes: TypeScript prop errors fixed, Mobile Height, Fast Canvas
+   Fixes: Removed huge top gap, removed min-heights, added rounded bounds
 ═══════════════════════════════════════════════════════════════ */
 
 const CSS = `
@@ -101,13 +100,13 @@ function IPFSCanvas() {
   return <canvas ref={ref} className="absolute inset-0 w-full h-full pointer-events-none mix-blend-screen opacity-50" />;
 }
 
-// ── Ultra-Premium Tilt Card (TS Errors Fixed) ─────────────────────
+// ── Ultra-Premium Tilt Card ─────────────────────
 function HoloCard({ 
   children, 
   className = "", 
   glowColor = "rgba(0,229,255,0.08)",
-  intensity = 5,       // Re-added to fix TS Error
-  sheenOpacity = 0.1   // Re-added to fix TS Error
+  intensity = 5,       
+  sheenOpacity = 0.1   
 }: { 
   children: React.ReactNode; 
   className?: string; 
@@ -140,7 +139,7 @@ function HoloCard({
     >
       <motion.div className="absolute inset-0 z-0 pointer-events-none mix-blend-screen"
         style={{ 
-          opacity: sheenOpacity > 0.1 ? sheenOpacity : 1, // Fallback to prevent unused variable warning
+          opacity: sheenOpacity > 0.1 ? sheenOpacity : 1, 
           background: useTransform(() => `radial-gradient(400px circle at ${shineX.get()} ${shineY.get()}, ${glowColor}, transparent 50%)`) 
         }}
       />
@@ -231,19 +230,22 @@ export default function CuteCatNFTCaseStudy() {
   ] as const;
 
   return (
-    <div className="w-full bg-[#0A011E] text-[#F0EAFF] overflow-x-hidden cat-root selection:bg-[#FF007F]/30 selection:text-[#00E5FF]">
+    // FIX 3: Added rounded-[40px] and overflow-hidden to root so the dark background fully respects the modal shape
+    <div className="w-full bg-[#0A011E] text-[#F0EAFF] cat-root selection:bg-[#FF007F]/30 selection:text-[#00E5FF] rounded-[40px] overflow-hidden">
       <style>{CSS}</style>
 
       {/* ── HERO SECTION ── */}
-      <div className="relative w-full min-h-[35vh] md:min-h-[50vh] border-b border-[#FF007F]/20 flex flex-col justify-end pt-12 md:pt-0">
+      {/* FIX 1: Removed min-h-[35vh] and justify-end that caused the huge empty top gap */}
+      <div className="relative w-full border-b border-[#FF007F]/20 flex flex-col justify-center">
         
         <IPFSCanvas />
         
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0A011E] via-[#0A011E]/60 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0A011E] via-[#0A011E]/80 to-transparent pointer-events-none" />
         <div className="absolute -top-16 right-[8%] w-48 h-48 md:w-80 md:h-80 rounded-full bg-[#FF007F]/10 blur-[80px] pointer-events-none" />
         <div className="absolute -bottom-16 left-[5%] w-48 h-48 md:w-80 md:h-80 rounded-full bg-[#00E5FF]/10 blur-[80px] pointer-events-none" />
 
-        <div className="relative z-10 px-5 md:px-16 pt-16 md:pt-32 pb-8 md:pb-12 w-full max-w-7xl mx-auto flex flex-col md:flex-row md:items-end justify-between gap-6 md:gap-8">
+        {/* FIX 2: Fixed padding-top (pt-12 instead of pt-16/32) and centered items */}
+        <div className="relative z-10 px-5 md:px-16 pt-12 md:pt-24 pb-8 md:pb-12 w-full max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6 md:gap-8">
           
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="max-w-xl">
             
@@ -307,7 +309,7 @@ export default function CuteCatNFTCaseStudy() {
         </div>
       </div>
 
-      {/* ── NAVIGATION TABS (TS Error Fixed) ── */}
+      {/* ── NAVIGATION TABS ── */}
       <div className="sticky top-0 z-50 bg-[#0A011E]/90 backdrop-blur-xl border-b border-[#FF007F]/20">
         <div className="max-w-7xl mx-auto px-4 md:px-16 flex overflow-x-auto cat-scroll gap-2 md:gap-4">
           {TABS.map((t) => (
@@ -326,7 +328,8 @@ export default function CuteCatNFTCaseStudy() {
       </div>
 
       {/* ── CONTENT AREA ── */}
-      <div className="max-w-7xl mx-auto px-5 md:px-16 py-8 md:py-16 min-h-[50vh]">
+      {/* FIX 4: Removed min-h-[50vh] from here as well so it sizes naturally */}
+      <div className="max-w-7xl mx-auto px-5 md:px-16 py-8 md:py-12">
         <AnimatePresence mode="wait">
 
           {/* ════ TAB 1: ARCHITECTURE ════ */}

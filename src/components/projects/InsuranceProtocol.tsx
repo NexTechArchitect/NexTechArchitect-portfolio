@@ -7,7 +7,7 @@ import Link from "next/link";
 // ── 1. PREMIUM AURA BACKGROUND ───────────────────────────────────────────────
 function AmbientAura() {
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none z-0 bg-[#FAFAFA]">
+    <div className="absolute inset-0 overflow-hidden pointer-events-none z-0 bg-[#FAFAFA] rounded-b-[40px]">
       <motion.div
         animate={{ x: ["-5%", "10%", "-5%"], y: ["-5%", "15%", "-5%"], scale: [1, 1.1, 1] }}
         transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
@@ -28,7 +28,6 @@ function AmbientAura() {
 }
 
 // ── 2. NEXT-LEVEL CANVAS VISUALIZER (WebGL Alternative) ──────────────────────
-// This creates a glowing node-based protocol flow that looks extremely premium.
 function Web3ProtocolCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -41,7 +40,6 @@ function Web3ProtocolCanvas() {
     let animationFrameId: number;
     let time = 0;
 
-    // Fix DPI for Retina Displays (Makes it ultra-crisp like Apple UI)
     const resizeCanvas = () => {
       const parent = canvas.parentElement;
       if (!parent) return;
@@ -56,7 +54,6 @@ function Web3ProtocolCanvas() {
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
 
-    // Nodes Definition
     const nodes = [
       { id: "User", x: 0.15, y: 0.5, color: "#3B82F6" },         // Blue
       { id: "Engine", x: 0.45, y: 0.35, color: "#8B5CF6" },      // Indigo
@@ -65,7 +62,6 @@ function Web3ProtocolCanvas() {
       { id: "DAO", x: 0.45, y: 0.75, color: "#64748B" }          // Slate
     ];
 
-    // Connections (Paths for particles)
     const links = [
       { from: 0, to: 1, flow: true }, // User -> Engine
       { from: 1, to: 2, flow: true }, // Engine -> Vault
@@ -79,7 +75,6 @@ function Web3ProtocolCanvas() {
       const h = canvas.offsetHeight;
       ctx.clearRect(0, 0, w, h);
 
-      // Draw Lines
       links.forEach(link => {
         const n1 = nodes[link.from];
         const n2 = nodes[link.to];
@@ -93,9 +88,8 @@ function Web3ProtocolCanvas() {
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // Draw Flowing Particles (WebGL-like effect)
         if (link.flow) {
-          const t = (time * 1.5 + link.from) % 1; // Particle progress
+          const t = (time * 1.5 + link.from) % 1;
           const px = x1 + (x2 - x1) * t;
           const py = y1 + (y2 - y1) * t;
           
@@ -105,29 +99,25 @@ function Web3ProtocolCanvas() {
           ctx.shadowColor = n1.color;
           ctx.shadowBlur = 15;
           ctx.fill();
-          ctx.shadowBlur = 0; // Reset
+          ctx.shadowBlur = 0; 
         }
       });
 
-      // Draw Nodes
       nodes.forEach(node => {
         const nx = node.x * w;
         const ny = node.y * h;
         const pulse = Math.sin(time * 2 + node.x * 10) * 4;
 
-        // Outer Glow
         ctx.beginPath();
         ctx.arc(nx, ny, 16 + pulse, 0, Math.PI * 2);
-        ctx.fillStyle = `${node.color}33`; // 20% opacity
+        ctx.fillStyle = `${node.color}33`; 
         ctx.fill();
 
-        // Inner Core
         ctx.beginPath();
         ctx.arc(nx, ny, 8, 0, Math.PI * 2);
         ctx.fillStyle = node.color;
         ctx.fill();
 
-        // Label
         ctx.font = "bold 11px 'JetBrains Mono', monospace";
         ctx.fillStyle = "#475569";
         ctx.textAlign = "center";
@@ -146,10 +136,10 @@ function Web3ProtocolCanvas() {
 
   return (
     <div className="w-full h-[250px] sm:h-[350px] relative bg-white/40 border border-white/80 rounded-3xl shadow-[inset_0_2px_20px_rgba(255,255,255,0.9)] overflow-hidden">
-      <div className="absolute top-4 left-5">
+      <div className="absolute top-4 left-5 z-10">
         <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 bg-slate-100/50 px-2 py-1 rounded-md">Live Protocol Trace</span>
       </div>
-      <canvas ref={canvasRef} className="block w-full h-full" />
+      <canvas ref={canvasRef} className="block w-full h-full relative z-0" />
     </div>
   );
 }
@@ -190,7 +180,8 @@ export default function SentinelCaseStudy() {
   ] as const;
 
   return (
-    <div className="relative w-full min-h-screen flex flex-col bg-[#FAFAFA] font-sans selection:bg-blue-200">
+    // FIX 1: Removed min-h-screen to let it hug the content height inside the modal
+    <div className="relative w-full flex flex-col bg-[#FAFAFA] font-sans selection:bg-blue-200 rounded-b-[40px] overflow-hidden">
       <AmbientAura />
 
       {/* ══ HERO SECTION ══ */}
@@ -245,7 +236,8 @@ export default function SentinelCaseStudy() {
       </div>
 
       {/* ══ CONTENT AREA ══ */}
-      <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pb-20 relative z-10 flex-1">
+      {/* FIX 2: Removed flex-1 and adjusted pb-20 to pb-12 so it doesn't stretch artificially */}
+      <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12 relative z-10">
         <AnimatePresence mode="wait">
 
           {/* ─ ARCHITECTURE ─ */}
