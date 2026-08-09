@@ -15,8 +15,9 @@ import OracleFundingCaseStudy from "../projects/OracleFundingCaseStudy";
 import NexusPolkaCaseStudy from "../projects/NexusPolkaCaseStudy"; 
 import ReputationCaseStudy from "../projects/ReputationCaseStudy"; 
 import InsuranceProtocol from "../projects/InsuranceProtocol"; 
-
 import AutomationProtocolCaseStudy from "../projects/AutomationProtocolCaseStudy";
+
+import NexusRWACaseStudy from "../projects/NexusRWACaseStudy";
 
 export default function UniversalModal({ selectedItem, activeType, closeModal }: any) {
   if (!selectedItem) return null;
@@ -39,8 +40,9 @@ export default function UniversalModal({ selectedItem, activeType, closeModal }:
 
     const id = selectedItem.id;
     
-    if (id === "onchain-automation") return <AutomationProtocolCaseStudy />;
+    if (id === "nexus-rwa") return <NexusRWACaseStudy />;
     
+    if (id === "onchain-automation") return <AutomationProtocolCaseStudy />;
     if (id === "sentinel-insurance") return <InsuranceProtocol />; 
     if (id === "fs4") return <ReputationCaseStudy />; 
     if (id === "fs3") return <NexusPolkaCaseStudy />; 

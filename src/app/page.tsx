@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import HeroSection from "@/components/sections/HeroSection";
 import TechStackGrid from "@/components/sections/TechStackGrid"; // <-- Naya import
 import ProjectGatewaySection from "@/components/sections/ProjectGatewaySection";
-import StickyEducationSection from "@/components/sections/StickyEducationSection";
 import EngineeringJourneySection from "@/components/sections/EngineeringJourneySection";
 import ContactFooter from "@/components/layout/ContactFooter";
 import UniversalModal from "@/components/overlays/UniversalModal";
@@ -39,8 +38,6 @@ export default function Portfolio() {
         <TechStackGrid />
         
         <ProjectGatewaySection openOverlay={(type) => setOverlayType(type)} />
-        
-        <StickyEducationSection />
         
       <EngineeringJourneySection />
         

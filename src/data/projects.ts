@@ -58,6 +58,16 @@ export const fullStackProjects = [
     liveUrl: "https://rst-reputation-protocol.vercel.app/",
     icon: "🥇",
     accentColor: "#8B5CF6"
+  },
+  { 
+    id: "nexus-rwa", 
+    title: "Nexus RWA Protocol", 
+    description: "Institutional-grade real-world asset tokenization engine with embedded KYC, compliance, and automated yield.", 
+    tech: ["Solidity", "Chainlink", "Foundry", "Base Mainnet"], 
+    link: "https://github.com/NexTechArchitect/Nexus-RWA-Protocol/", 
+    liveUrl: "https://nexus-rwa-protocol.vercel.app/",
+    icon: "🏢",
+    accentColor: "#0052FF" // Base Network Blue
   }
 ];
 

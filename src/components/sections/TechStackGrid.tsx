@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 
+// ─── SVG ICONS (Minimal & Clean) ──────────────────────────────────────────
 const Icons = {
   Solidity: () => (
     <svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor">
@@ -62,22 +63,19 @@ const Icons = {
       <line x1="3" y1="9" x2="21" y2="9" /><line x1="3" y1="15" x2="21" y2="15" />
     </svg>
   ),
-  React: () => (
-    <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="2">
-      <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(30 12 12)" />
-      <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(150 12 12)" />
-      <circle cx="12" cy="12" r="2" fill="currentColor" />
+  Aave: () => (
+    <svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor">
+      <path d="M12 2L2 22h5.5l1.5-3h6l1.5 3H22L12 2zm0 5.5l2 4.5h-4l2-4.5z" />
+    </svg>
+  ),
+  Base: () => (
+    <svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor">
+      <path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm0-4.5a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11z"/>
     </svg>
   ),
   Tailwind: () => (
     <svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor">
       <path d="M12.001,4.8c-3.208,0-5.604,1.603-7.206,4.809c1.201-1.603,2.802-2.404,4.804-2.404c1.554,0,2.666,0.763,3.882,1.96c1.189,1.171,2.545,2.507,5.726,2.507c3.208,0,5.604-1.603,7.206-4.809c-1.201,1.603-2.802,2.404-4.804,2.404c-1.554,0-2.666-0.763-3.882-1.96C16.538,6.136,15.183,4.8,12.001,4.8z M4.795,14.42c-3.208,0-5.604,1.603-7.206,4.809c1.201-1.603,2.802-2.404,4.804-2.404c1.554,0,2.666,0.763,3.882,1.96c1.189,1.171,2.545,2.507,5.726,2.507c3.208,0,5.604-1.603,7.206-4.809c-1.201,1.603-2.802,2.404-4.804,2.404c-1.554,0-2.666-0.763-3.882-1.96C11.332,15.755,9.977,14.42,4.795,14.42z" />
-    </svg>
-  ),
-  Git: () => (
-    <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="6" cy="18" r="3" /><circle cx="6" cy="6" r="3" /><circle cx="18" cy="18" r="3" />
-      <line x1="6" y1="9" x2="6" y2="15" /><path d="M18 15v-2a3 3 0 0 0-3-3H9" />
     </svg>
   ),
   IPFS: () => (
@@ -92,18 +90,18 @@ const Icons = {
 const techStack = [
   { name: "Solidity",      icon: <Icons.Solidity />,     color: "#475569" },
   { name: "Foundry",       icon: <Icons.Foundry />,      color: "#D97706" },
-  { name: "Next.js",       icon: <Icons.Nextjs />,       color: "#0f172a" },
-  { name: "TypeScript",    icon: <Icons.TypeScript />,   color: "#3B82F6" },
-  { name: "Chainlink",     icon: <Icons.Chainlink />,    color: "#2563EB" },
-  { name: "Wagmi / Viem",  icon: <Icons.Wagmi />,        color: "#0f766e" },
-  { name: "ERC-4337",      icon: <Icons.ERC4337 />,      color: "#0891B2" },
-  { name: "OpenZeppelin",  icon: <Icons.OpenZeppelin />, color: "#059669" },
   { name: "EVM / Yul",     icon: <Icons.EVM />,          color: "#64748b" },
-  { name: "Slither",       icon: <Icons.Slither />,      color: "#EF4444" },
-  { name: "IPFS",          icon: <Icons.IPFS />,         color: "#06B6D4" },
-  { name: "React",         icon: <Icons.React />,        color: "#0EA5E9" },
-  { name: "Tailwind",      icon: <Icons.Tailwind />,     color: "#14B8A6" },
-  { name: "Git",           icon: <Icons.Git />,          color: "#F97316" },
+  { name: "Slither & Fuzz",icon: <Icons.Slither />,      color: "#EF4444" },
+  { name: "Chainlink",     icon: <Icons.Chainlink />,    color: "#2563EB" },
+  { name: "Aave V3 DeFi",  icon: <Icons.Aave />,         color: "#0EA5E9" },
+  { name: "ERC-4337 (AA)", icon: <Icons.ERC4337 />,      color: "#0891B2" },
+  { name: "OpenZeppelin",  icon: <Icons.OpenZeppelin />, color: "#059669" },
+  { name: "Base Mainnet",  icon: <Icons.Base />,         color: "#0052FF" },
+  { name: "IPFS / Pinata", icon: <Icons.IPFS />,         color: "#06B6D4" },
+  { name: "Next.js 14/15", icon: <Icons.Nextjs />,       color: "#0f172a" },
+  { name: "Wagmi / Viem",  icon: <Icons.Wagmi />,        color: "#0f766e" },
+  { name: "TypeScript",    icon: <Icons.TypeScript />,   color: "#3B82F6" },
+  { name: "Tailwind CSS",  icon: <Icons.Tailwind />,     color: "#14B8A6" },
 ];
 
 export default function TechStackGrid() {
@@ -129,11 +127,15 @@ export default function TechStackGrid() {
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-           
+            <p className="text-[10px] sm:text-xs font-mono tracking-[0.25em] text-blue-600 font-bold uppercase mb-3 sm:mb-4">
+              Architecture & Security
+            </p>
             <h2 className="text-3xl sm:text-5xl md:text-6xl font-black text-slate-900 tracking-tight mb-4 sm:mb-6" style={{ fontFamily: "'Georgia', serif" }}>
               My Tech Arsenal
             </h2>
-           
+            <p className="text-sm sm:text-base text-slate-500 max-w-3xl leading-relaxed mx-auto sm:mx-0 font-medium">
+              Focusing on threat-modeled security, invariant-proven solvency, and Yul-optimized gas reduction across every deployment. Every tool is chosen for absolute precision and reliability.
+            </p>
           </motion.div>
         </div>
 
@@ -160,7 +162,7 @@ export default function TechStackGrid() {
                 borderColor: `${tech.color}50`,
               }}
               whileTap={{ scale: 0.96 }}
-              className="flex flex-col items-center justify-center p-5 sm:p-7 bg-white/80 backdrop-blur-md border border-slate-200/80 rounded-[20px] transition-colors duration-300 select-none shadow-sm group"
+              className="flex flex-col items-center justify-center p-4 sm:p-7 bg-white/80 backdrop-blur-md border border-slate-200/80 rounded-[20px] transition-colors duration-300 select-none shadow-sm group"
             >
               <div className="mb-3 sm:mb-4 transition-transform duration-300 group-hover:scale-110" style={{ color: tech.color }}>
                 {tech.icon}

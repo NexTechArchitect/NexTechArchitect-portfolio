@@ -68,11 +68,9 @@ const Icons = {
       <line x1="3" y1="15" x2="21" y2="15" />
     </svg>
   ),
-  React: () => (
-    <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2">
-      <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(30 12 12)" />
-      <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(150 12 12)" />
-      <circle cx="12" cy="12" r="2" fill="currentColor" />
+  Aave: () => (
+    <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+      <path d="M12 2L2 22h5.5l1.5-3h6l1.5 3H22L12 2zm0 5.5l2 4.5h-4l2-4.5z" />
     </svg>
   ),
   Tailwind: () => (
@@ -80,13 +78,9 @@ const Icons = {
       <path d="M12.001,4.8c-3.208,0-5.604,1.603-7.206,4.809c1.201-1.603,2.802-2.404,4.804-2.404c1.554,0,2.666,0.763,3.882,1.96 c1.189,1.171,2.545,2.507,5.726,2.507c3.208,0,5.604-1.603,7.206-4.809c-1.201,1.603-2.802,2.404-4.804,2.404 c-1.554,0-2.666-0.763-3.882-1.96C16.538,6.136,15.183,4.8,12.001,4.8z M4.795,14.42c-3.208,0-5.604,1.603-7.206,4.809 c1.201-1.603,2.802-2.404,4.804-2.404c1.554,0,2.666,0.763,3.882,1.96c1.189,1.171,2.545,2.507,5.726,2.507 c3.208,0,5.604-1.603,7.206-4.809c-1.201,1.603-2.802,2.404-4.804,2.404c-1.554,0-2.666-0.763-3.882-1.96 C11.332,15.755,9.977,14.42,4.795,14.42z" />
     </svg>
   ),
-  Git: () => (
-    <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="6" cy="18" r="3" />
-      <circle cx="6" cy="6" r="3" />
-      <circle cx="18" cy="18" r="3" />
-      <line x1="6" y1="9" x2="6" y2="15" />
-      <path d="M18 15v-2a3 3 0 0 0-3-3H9" />
+  Base: () => (
+    <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+      <path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm0-4.5a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11z"/>
     </svg>
   ),
   IPFS: () => (
@@ -100,20 +94,20 @@ const Icons = {
 
 // ─── TECH STACK DATA ──────────────────────────────────────────────────────
 const techStack = [
-  { name: "Solidity", icon: <Icons.Solidity />, color: "#475569" }, // Slate 600
-  { name: "Foundry", icon: <Icons.Foundry />, color: "#F59E0B" }, // Amber 500
-  { name: "Next.js", icon: <Icons.Nextjs />, color: "#000000" }, // Black
-  { name: "TypeScript", icon: <Icons.TypeScript />, color: "#3B82F6" }, // Blue 500
-  { name: "Chainlink", icon: <Icons.Chainlink />, color: "#2563EB" }, // Blue 600
-  { name: "Wagmi / Viem", icon: <Icons.Wagmi />, color: "#0F172A" }, // Slate 900
-  { name: "ERC-4337", icon: <Icons.ERC4337 />, color: "#D946EF" }, // Fuchsia 500
-  { name: "OpenZeppelin", icon: <Icons.OpenZeppelin />, color: "#4F46E5" }, // Indigo 600
-  { name: "EVM / Yul", icon: <Icons.EVM />, color: "#8B5CF6" }, // Violet 500
-  { name: "Slither", icon: <Icons.Slither />, color: "#EF4444" }, // Red 500
-  { name: "IPFS", icon: <Icons.IPFS />, color: "#06B6D4" }, // Cyan 500
-  { name: "React", icon: <Icons.React />, color: "#0EA5E9" }, // Sky 500
-  { name: "Tailwind", icon: <Icons.Tailwind />, color: "#14B8A6" }, // Teal 500
-  { name: "Git", icon: <Icons.Git />, color: "#F97316" }, // Orange 500
+  { name: "Solidity", icon: <Icons.Solidity />, color: "#475569" }, 
+  { name: "Foundry", icon: <Icons.Foundry />, color: "#F59E0B" }, 
+  { name: "EVM / Yul", icon: <Icons.EVM />, color: "#8B5CF6" }, 
+  { name: "Slither & Fuzzing", icon: <Icons.Slither />, color: "#EF4444" }, 
+  { name: "Chainlink", icon: <Icons.Chainlink />, color: "#2563EB" }, 
+  { name: "Aave V3 DeFi", icon: <Icons.Aave />, color: "#0EA5E9" }, 
+  { name: "ERC-4337 (AA)", icon: <Icons.ERC4337 />, color: "#D946EF" }, 
+  { name: "OpenZeppelin", icon: <Icons.OpenZeppelin />, color: "#4F46E5" }, 
+  { name: "Base Mainnet", icon: <Icons.Base />, color: "#0052FF" }, 
+  { name: "IPFS / Pinata", icon: <Icons.IPFS />, color: "#06B6D4" }, 
+  { name: "Next.js 14/15", icon: <Icons.Nextjs />, color: "#000000" }, 
+  { name: "Wagmi / Viem", icon: <Icons.Wagmi />, color: "#0F172A" }, 
+  { name: "TypeScript", icon: <Icons.TypeScript />, color: "#3B82F6" }, 
+  { name: "Tailwind CSS", icon: <Icons.Tailwind />, color: "#14B8A6" }, 
 ];
 
 export default function TechStackGrid() {
@@ -129,14 +123,14 @@ export default function TechStackGrid() {
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <p className="text-[10px] sm:text-xs font-mono tracking-[0.25em] text-teal-600 font-bold uppercase mb-3 sm:mb-4">
-             
+            <p className="text-[10px] sm:text-xs font-mono tracking-[0.25em] text-blue-600 font-bold uppercase mb-3 sm:mb-4">
+              Architecture & Security
             </p>
             <h2 className="text-3xl sm:text-5xl md:text-6xl font-black text-slate-900 tracking-tight mb-4 sm:mb-6" style={{ fontFamily: "'Georgia', serif" }}>
               Our Tech Stack
             </h2>
-            <p className="text-sm sm:text-lg text-slate-500 max-w-2xl leading-relaxed mx-auto sm:mx-0 font-medium">
-              We use industry-leading technologies to build fast, secure, and scalable Web3 applications. Every tool is chosen for the job, not the trend.
+            <p className="text-sm sm:text-lg text-slate-500 max-w-3xl leading-relaxed mx-auto sm:mx-0 font-medium">
+              We focus on threat-modeled security, invariant-proven solvency, and Yul-optimized gas reduction across every deployment. Every tool is chosen for absolute precision and reliability.
             </p>
           </motion.div>
         </div>
@@ -152,7 +146,7 @@ export default function TechStackGrid() {
             visible: { transition: { staggerChildren: 0.05 } }
           }}
         >
-          {techStack.map((tech, index) => (
+          {techStack.map((tech) => (
             <motion.div
               key={tech.name}
               variants={{
@@ -170,11 +164,11 @@ export default function TechStackGrid() {
             >
               <div 
                 className="mb-4 transition-colors duration-300"
-                style={{ color: tech.color }} // Inherits the brand color
+                style={{ color: tech.color }}
               >
                 {tech.icon}
               </div>
-              <span className="text-xs sm:text-sm font-bold text-slate-700 font-mono text-center">
+              <span className="text-[11px] sm:text-xs font-bold text-slate-700 font-mono text-center">
                 {tech.name}
               </span>
             </motion.div>
