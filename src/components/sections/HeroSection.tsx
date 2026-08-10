@@ -8,7 +8,7 @@ const displayFont = Bricolage_Grotesque({ subsets: ["latin"], weight: ["600", "7
 const bodyFont = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600"] });
 const monoFont = JetBrains_Mono({ subsets: ["latin"], weight: ["500", "700"] });
 
-// ─── CINEMATIC 3D "CARTOON" WEBGL-STYLE CANVAS (GLOBAL SPREAD) ────────────────
+// ─── CINEMATIC 3D "CARTOON" WEBGL-STYLE CANVAS ────────────────────────────────
 function Cinematic3DCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -23,13 +23,13 @@ function Cinematic3DCanvas() {
     let animationFrame: number;
     let time = 0;
 
-    // Increased length and MASSIVE spread so they fill the entire screen beautifully
+    // Tighter spread — no more orbs forcing layout height on mobile
     const orbs = Array.from({ length: 40 }, () => ({
-      x: (Math.random() - 0.5) * 2500, // Massive X spread
-      y: (Math.random() - 0.5) * 2500, // Massive Y spread
+      x: (Math.random() - 0.5) * 1600,
+      y: (Math.random() - 0.5) * 1600,
       z: Math.random() * 600 + 100,
       baseRadius: Math.random() * 50 + 20,
-      colorLight: Math.random() > 0.5 ? "#60A5FA" : "#34D399", 
+      colorLight: Math.random() > 0.5 ? "#60A5FA" : "#34D399",
       colorDark: Math.random() > 0.5 ? "#2563EB" : "#059669",
       offset: Math.random() * Math.PI * 2,
       speed: Math.random() * 0.01 + 0.005
@@ -40,15 +40,14 @@ function Cinematic3DCanvas() {
       time += 0.012;
 
       const isDesktop = width > 1024;
-      // Focus them slightly right on desktop, dead center on mobile
-      const cx = isDesktop ? width * 0.70 : width * 0.5; 
-      const cy = height * 0.5; 
+      const cx = isDesktop ? width * 0.70 : width * 0.5;
+      const cy = height * 0.5;
       const fov = 400;
 
       const projected = orbs.map(orb => {
         const floatY = orb.y + Math.sin(time + orb.offset) * 60;
         const floatX = orb.x + Math.cos(time * 0.8 + orb.offset) * 40;
-        
+
         const scale = fov / (fov + orb.z);
         const px = cx + floatX * scale;
         const py = cy + floatY * scale;
@@ -60,18 +59,16 @@ function Cinematic3DCanvas() {
       projected.forEach(p => {
         if (p.pr < 0) return;
 
-        // Draw Soft Shadow for depth
         ctx.beginPath();
         ctx.arc(p.px, p.py + p.pr * 0.5, p.pr, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(0,0,0,${0.04 * p.scale})`;
         ctx.fill();
 
-        // Draw 3D Cartoon Orb with Radial Gradient
         const grad = ctx.createRadialGradient(
-          p.px - p.pr * 0.3, p.py - p.pr * 0.3, p.pr * 0.1, 
-          p.px, p.py, p.pr 
+          p.px - p.pr * 0.3, p.py - p.pr * 0.3, p.pr * 0.1,
+          p.px, p.py, p.pr
         );
-        grad.addColorStop(0, "#FFFFFF"); // Shiny cartoon highlight
+        grad.addColorStop(0, "#FFFFFF");
         grad.addColorStop(0.3, p.colorLight);
         grad.addColorStop(1, p.colorDark);
 
@@ -100,7 +97,7 @@ function Cinematic3DCanvas() {
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 w-full h-full pointer-events-none opacity-40 mix-blend-multiply z-0"
+      className="absolute inset-0 w-full h-full pointer-events-none opacity-30 mix-blend-multiply z-0"
     />
   );
 }
@@ -140,18 +137,19 @@ const LINKS = [
 // ─── MAIN HERO SECTION ────────────────────────────────────────────────────────
 export default function HeroSection() {
   return (
-    <section className={`relative min-h-[100svh] bg-[#F8FAFC] overflow-hidden ${bodyFont.className}`}>
+    // ✅ Removed min-h-[100svh] — section now auto-sizes to content on mobile
+    <section className={`relative bg-[#F8FAFC] overflow-hidden ${bodyFont.className}`}>
       <Cinematic3DCanvas />
 
       {/* Aesthetic Background Blurs */}
       <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-blue-500/5 blur-[120px] pointer-events-none z-0" />
       <div className="absolute bottom-[10%] right-[-5%] w-[40vw] h-[40vw] rounded-full bg-cyan-400/10 blur-[100px] pointer-events-none z-0" />
 
-      {/* Layout Fix: Replaced justify-center with explicit padding for pixel-perfect mobile placement */}
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-10 lg:px-12 pt-[120px] md:pt-[160px] lg:pt-[200px] pb-20">
-        
+      {/* ✅ Reduced bottom padding on mobile: pb-20 → pb-12 */}
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-10 lg:px-12 pt-[100px] md:pt-[140px] lg:pt-[180px] pb-12 md:pb-20">
+
         <div className="flex flex-col items-start text-left max-w-[850px]">
-          
+
           {/* Status Badge */}
           <motion.div
             initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
@@ -183,7 +181,7 @@ export default function HeroSection() {
           </motion.div>
 
           {/* CTA */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}
             className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mb-10 sm:mb-12"
           >
@@ -198,7 +196,7 @@ export default function HeroSection() {
           </motion.div>
 
           {/* Social Links */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.4 }}
             className="flex flex-wrap items-center gap-3 sm:gap-4"
           >

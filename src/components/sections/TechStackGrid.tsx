@@ -113,7 +113,7 @@ const techStack = [
 
 export default function TechStackGrid() {
   return (
-    <section className="pt-10 pb-20 sm:pt-16 sm:pb-32 relative z-10 overflow-hidden bg-slate-50" id="skills">
+    <section className="pt-6 pb-14 sm:pt-12 sm:pb-24 relative z-10 overflow-hidden bg-slate-50" id="skills">
 
       <div className="absolute inset-0 pointer-events-none z-0">
         <div
