@@ -8,7 +8,7 @@ const displayFont = Bricolage_Grotesque({ subsets: ["latin"], weight: ["600", "7
 const bodyFont = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600"] });
 const monoFont = JetBrains_Mono({ subsets: ["latin"], weight: ["500", "700"] });
 
-// ─── CINEMATIC 3D "CARTOON" WEBGL-STYLE CANVAS (RESPONSIVE SPREAD) ─────────────
+// ─── CINEMATIC 3D "CARTOON" WEBGL-STYLE CANVAS (GLOBAL SPREAD) ────────────────
 function Cinematic3DCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -23,15 +23,16 @@ function Cinematic3DCanvas() {
     let animationFrame: number;
     let time = 0;
 
-    const orbs = Array.from({ length: 35 }, () => ({
-      x: (Math.random() - 0.5) * 1800, 
-      y: (Math.random() - 0.5) * 1800, 
+    // Increased length and MASSIVE spread so they fill the entire screen beautifully
+    const orbs = Array.from({ length: 40 }, () => ({
+      x: (Math.random() - 0.5) * 2500, // Massive X spread
+      y: (Math.random() - 0.5) * 2500, // Massive Y spread
       z: Math.random() * 600 + 100,
-      baseRadius: Math.random() * 55 + 25,
+      baseRadius: Math.random() * 50 + 20,
       colorLight: Math.random() > 0.5 ? "#60A5FA" : "#34D399", 
       colorDark: Math.random() > 0.5 ? "#2563EB" : "#059669",
       offset: Math.random() * Math.PI * 2,
-      speed: Math.random() * 0.01 + 0.008
+      speed: Math.random() * 0.01 + 0.005
     }));
 
     const render = () => {
@@ -39,6 +40,7 @@ function Cinematic3DCanvas() {
       time += 0.012;
 
       const isDesktop = width > 1024;
+      // Focus them slightly right on desktop, dead center on mobile
       const cx = isDesktop ? width * 0.70 : width * 0.5; 
       const cy = height * 0.5; 
       const fov = 400;
@@ -58,16 +60,18 @@ function Cinematic3DCanvas() {
       projected.forEach(p => {
         if (p.pr < 0) return;
 
+        // Draw Soft Shadow for depth
         ctx.beginPath();
         ctx.arc(p.px, p.py + p.pr * 0.5, p.pr, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(0,0,0,${0.05 * p.scale})`;
+        ctx.fillStyle = `rgba(0,0,0,${0.04 * p.scale})`;
         ctx.fill();
 
+        // Draw 3D Cartoon Orb with Radial Gradient
         const grad = ctx.createRadialGradient(
           p.px - p.pr * 0.3, p.py - p.pr * 0.3, p.pr * 0.1, 
           p.px, p.py, p.pr 
         );
-        grad.addColorStop(0, "#FFFFFF"); 
+        grad.addColorStop(0, "#FFFFFF"); // Shiny cartoon highlight
         grad.addColorStop(0.3, p.colorLight);
         grad.addColorStop(1, p.colorDark);
 
@@ -136,30 +140,31 @@ const LINKS = [
 // ─── MAIN HERO SECTION ────────────────────────────────────────────────────────
 export default function HeroSection() {
   return (
-    <section className={`relative min-h-[100svh] bg-[#F8FAFC] overflow-hidden flex flex-col ${bodyFont.className}`}>
+    <section className={`relative min-h-[100svh] bg-[#F8FAFC] overflow-hidden ${bodyFont.className}`}>
       <Cinematic3DCanvas />
 
       {/* Aesthetic Background Blurs */}
       <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-blue-500/5 blur-[120px] pointer-events-none z-0" />
       <div className="absolute bottom-[10%] right-[-5%] w-[40vw] h-[40vw] rounded-full bg-cyan-400/10 blur-[100px] pointer-events-none z-0" />
 
-      <div className="relative z-10 flex-1 flex flex-col justify-center w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 pt-28 pb-16">
+      {/* Layout Fix: Replaced justify-center with explicit padding for pixel-perfect mobile placement */}
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-10 lg:px-12 pt-[120px] md:pt-[160px] lg:pt-[200px] pb-20">
         
-        <div className="flex flex-col items-start text-left max-w-[850px] relative z-10">
+        <div className="flex flex-col items-start text-left max-w-[850px]">
           
           {/* Status Badge */}
           <motion.div
             initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2.5 px-5 py-2.5 bg-white border-2 border-slate-200 rounded-full shadow-sm mb-8"
+            className="inline-flex items-center gap-2.5 px-4 py-2 sm:px-5 sm:py-2.5 bg-white border-2 border-slate-200 rounded-full shadow-sm mb-6 sm:mb-8"
           >
-            <span className={`text-[10px] sm:text-xs font-black text-[#0052FF] tracking-widest uppercase ${monoFont.className}`}>
+            <span className={`text-[9px] sm:text-xs font-black text-[#0052FF] tracking-widest uppercase ${monoFont.className}`}>
               Protocol Architect & Smart Contract Engineer
             </span>
           </motion.div>
 
           {/* Name / Title */}
           <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
-            <h1 className={`text-5xl sm:text-6xl md:text-7xl lg:text-[80px] font-black text-slate-900 tracking-tight leading-[1.02] mb-6 ${displayFont.className}`}>
+            <h1 className={`text-[42px] leading-[1.05] sm:text-6xl md:text-7xl lg:text-[80px] font-black text-slate-900 tracking-tight lg:leading-[1.02] mb-6 ${displayFont.className}`}>
               Engineering Trustless <br className="hidden sm:block" />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
                 DeFi Infrastructure.
@@ -167,10 +172,10 @@ export default function HeroSection() {
             </h1>
           </motion.div>
 
-          {/* Senior Level Copywriting - Completely rewritten for maximum authority without any dashes */}
+          {/* Senior Level Copywriting */}
           <motion.div
             initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-sm sm:text-lg text-slate-600 leading-relaxed mb-10 font-medium bg-white/40 backdrop-blur-md p-5 sm:p-6 rounded-2xl border border-white/60 shadow-sm"
+            className="text-sm sm:text-lg text-slate-600 leading-relaxed mb-8 sm:mb-10 font-medium bg-white/40 backdrop-blur-md p-5 sm:p-6 rounded-2xl border border-white/60 shadow-sm"
           >
             I architect and secure production grade decentralized economic systems. Operating at the intersection of EVM mechanics and protocol security, I have engineered over 70 verified smart contracts across Base Mainnet and various Ethereum ecosystems. My core domains encompass institutional real world asset tokenization, high performance perpetual exchanges, and resilient governance primitives.
             <br /><br />
@@ -180,7 +185,7 @@ export default function HeroSection() {
           {/* CTA */}
           <motion.div 
             initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}
-            className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mb-12"
+            className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mb-10 sm:mb-12"
           >
             <a
               href="https://github.com/NexTechArchitect"
@@ -195,16 +200,16 @@ export default function HeroSection() {
           {/* Social Links */}
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.4 }}
-            className="flex flex-wrap items-center gap-4"
+            className="flex flex-wrap items-center gap-3 sm:gap-4"
           >
-            <span className={`text-[10px] font-bold text-slate-400 uppercase tracking-widest mr-2 ${monoFont.className}`}>Connect:</span>
+            <span className={`text-[10px] font-bold text-slate-400 uppercase tracking-widest mr-1 sm:mr-2 ${monoFont.className}`}>Connect:</span>
             {LINKS.map((l) => (
               <a
                 key={l.label}
                 href={l.href}
                 target={l.href.startsWith("http") ? "_blank" : undefined}
                 rel="noopener noreferrer"
-                className={`flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-slate-500 hover:text-[#0052FF] bg-white border-2 border-slate-100 hover:border-blue-100 px-4 py-2.5 rounded-xl transition-all shadow-sm ${monoFont.className}`}
+                className={`flex items-center gap-2 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-slate-500 hover:text-[#0052FF] bg-white border-2 border-slate-100 hover:border-blue-100 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all shadow-sm ${monoFont.className}`}
               >
                 {l.icon}
                 {l.label}
