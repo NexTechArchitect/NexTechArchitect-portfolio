@@ -8,7 +8,7 @@ const displayFont = Bricolage_Grotesque({ subsets: ["latin"], weight: ["600", "7
 const bodyFont = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600"] });
 const monoFont = JetBrains_Mono({ subsets: ["latin"], weight: ["500", "700"] });
 
-// ─── CINEMATIC 3D "CARTOON" WEBGL-STYLE CANVAS (RIGHT-ALIGNED) ────────────────
+// ─── CINEMATIC 3D "CARTOON" WEBGL-STYLE CANVAS (RESPONSIVE SPREAD) ─────────────
 function Cinematic3DCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -23,33 +23,28 @@ function Cinematic3DCanvas() {
     let animationFrame: number;
     let time = 0;
 
-    // Create 3D floating "Clay/Cartoon" orbs (Tighter cluster)
-    const orbs = Array.from({ length: 25 }, () => ({
-      x: (Math.random() - 0.5) * 600, // Reduced spread for a tighter cluster
-      y: (Math.random() - 0.5) * 600,
-      z: Math.random() * 400 + 100,
+    const orbs = Array.from({ length: 35 }, () => ({
+      x: (Math.random() - 0.5) * 1800, 
+      y: (Math.random() - 0.5) * 1800, 
+      z: Math.random() * 600 + 100,
       baseRadius: Math.random() * 55 + 25,
       colorLight: Math.random() > 0.5 ? "#60A5FA" : "#34D399", 
       colorDark: Math.random() > 0.5 ? "#2563EB" : "#059669",
       offset: Math.random() * Math.PI * 2,
-      speed: Math.random() * 0.015 + 0.01
+      speed: Math.random() * 0.01 + 0.008
     }));
 
     const render = () => {
       ctx.clearRect(0, 0, width, height);
       time += 0.012;
 
-      // ── RESPONSIVE POSITIONING ──
       const isDesktop = width > 1024;
-      // On desktop: Shift to 75% right. On mobile: Keep in center.
-      const cx = isDesktop ? width * 0.75 : width * 0.5; 
-      // On mobile: Push slightly down so it doesn't overlap top text too much.
-      const cy = isDesktop ? height * 0.5 : height * 0.65; 
+      const cx = isDesktop ? width * 0.70 : width * 0.5; 
+      const cy = height * 0.5; 
       const fov = 400;
 
-      // Sort by Z for proper 3D depth (painters algorithm)
       const projected = orbs.map(orb => {
-        const floatY = orb.y + Math.sin(time + orb.offset) * 50;
+        const floatY = orb.y + Math.sin(time + orb.offset) * 60;
         const floatX = orb.x + Math.cos(time * 0.8 + orb.offset) * 40;
         
         const scale = fov / (fov + orb.z);
@@ -63,18 +58,16 @@ function Cinematic3DCanvas() {
       projected.forEach(p => {
         if (p.pr < 0) return;
 
-        // Draw Soft Shadow for depth
         ctx.beginPath();
         ctx.arc(p.px, p.py + p.pr * 0.5, p.pr, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(0,0,0,${0.05 * p.scale})`;
         ctx.fill();
 
-        // Draw 3D Cartoon Orb with Radial Gradient
         const grad = ctx.createRadialGradient(
           p.px - p.pr * 0.3, p.py - p.pr * 0.3, p.pr * 0.1, 
           p.px, p.py, p.pr 
         );
-        grad.addColorStop(0, "#FFFFFF"); // Shiny cartoon highlight
+        grad.addColorStop(0, "#FFFFFF"); 
         grad.addColorStop(0.3, p.colorLight);
         grad.addColorStop(1, p.colorDark);
 
@@ -103,7 +96,7 @@ function Cinematic3DCanvas() {
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 w-full h-full pointer-events-none opacity-50 mix-blend-multiply z-0"
+      className="absolute inset-0 w-full h-full pointer-events-none opacity-40 mix-blend-multiply z-0"
     />
   );
 }
@@ -152,15 +145,14 @@ export default function HeroSection() {
 
       <div className="relative z-10 flex-1 flex flex-col justify-center w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 pt-28 pb-16">
         
-        {/* Adjusted width to allow right-side orbs to breathe on desktop */}
-        <div className="flex flex-col items-start text-left max-w-[750px] relative z-10">
+        <div className="flex flex-col items-start text-left max-w-[850px] relative z-10">
           
           {/* Status Badge */}
           <motion.div
             initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2.5 px-4 py-2 bg-white border-2 border-slate-200 rounded-full shadow-sm mb-8"
+            className="inline-flex items-center gap-2.5 px-5 py-2.5 bg-white border-2 border-slate-200 rounded-full shadow-sm mb-8"
           >
-            <span className={`text-[10px] sm:text-xs font-bold text-[#0052FF] tracking-widest uppercase ${monoFont.className}`}>
+            <span className={`text-[10px] sm:text-xs font-black text-[#0052FF] tracking-widest uppercase ${monoFont.className}`}>
               Protocol Architect & Smart Contract Engineer
             </span>
           </motion.div>
@@ -175,17 +167,17 @@ export default function HeroSection() {
             </h1>
           </motion.div>
 
-          {/* Bio - Packed with hardcore resume facts */}
+          {/* Senior Level Copywriting - Completely rewritten for maximum authority without any dashes */}
           <motion.div
             initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-sm sm:text-lg text-slate-600 leading-relaxed mb-10 font-medium bg-white/40 backdrop-blur-sm p-4 rounded-2xl border border-white/50"
+            className="text-sm sm:text-lg text-slate-600 leading-relaxed mb-10 font-medium bg-white/40 backdrop-blur-md p-5 sm:p-6 rounded-2xl border border-white/60 shadow-sm"
           >
-            I am a Solidity Engineer specializing in production-grade protocol architecture across Base Mainnet and EVM networks. With 70+ verified smart contracts deployed, my expertise spans institutional RWA tokenization (ERC-3643), 50x non-custodial Perpetuals DEXs, ERC-4626 Insurance Vaults, flash-loan resistant DAOs, ERC-4337 Account Abstraction, ERC-5484 Soulbound identity, and permissionless Keeper automation. 
+            I architect and secure production grade decentralized economic systems. Operating at the intersection of EVM mechanics and protocol security, I have engineered over 70 verified smart contracts across Base Mainnet and various Ethereum ecosystems. My core domains encompass institutional real world asset tokenization, high performance perpetual exchanges, and resilient governance primitives.
             <br /><br />
-            I independently architect, build, and audit complete stacks, focusing heavily on threat-modeled security, invariant-proven mathematical solvency, and Yul-optimized gas execution.
+            Security is my fundamental architectural baseline. I focus strictly on robust system design, stateful invariant fuzzing, and maximum gas efficiency using Yul assembly. I build fault tolerant infrastructure designed to protect liquidity and ensure absolute mathematical solvency under extreme market conditions.
           </motion.div>
 
-          {/* CTAs */}
+          {/* CTA */}
           <motion.div 
             initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}
             className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mb-12"

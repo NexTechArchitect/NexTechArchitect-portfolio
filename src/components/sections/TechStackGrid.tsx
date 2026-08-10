@@ -39,7 +39,8 @@ const Icons = {
   OpenZeppelin: () => (
     <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-      <path d="M12 8v4" /><path d="M12 16h.01" />
+      <path d="M12 8v4" />
+      <path d="M12 16h.01" />
     </svg>
   ),
   ERC4337: () => (
@@ -52,15 +53,19 @@ const Icons = {
   ),
   Slither: () => (
     <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 3v18" /><path d="M8 8l4-4 4 4" />
-      <path d="M8 16l4 4 4-4" /><circle cx="12" cy="12" r="3" />
+      <path d="M12 3v18" />
+      <path d="M8 8l4-4 4 4" />
+      <path d="M8 16l4 4 4-4" />
+      <circle cx="12" cy="12" r="3" />
     </svg>
   ),
   EVM: () => (
     <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-      <line x1="9" y1="3" x2="9" y2="21" /><line x1="15" y1="3" x2="15" y2="21" />
-      <line x1="3" y1="9" x2="21" y2="9" /><line x1="3" y1="15" x2="21" y2="15" />
+      <line x1="9" y1="3" x2="9" y2="21" />
+      <line x1="15" y1="3" x2="15" y2="21" />
+      <line x1="3" y1="9" x2="21" y2="9" />
+      <line x1="3" y1="15" x2="21" y2="15" />
     </svg>
   ),
   Aave: () => (
@@ -68,9 +73,10 @@ const Icons = {
       <path d="M12 2L2 22h5.5l1.5-3h6l1.5 3H22L12 2zm0 5.5l2 4.5h-4l2-4.5z" />
     </svg>
   ),
-  Base: () => (
-    <svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor">
-      <path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm0-4.5a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11z"/>
+  Vault: () => (
+    <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
     </svg>
   ),
   Tailwind: () => (
@@ -87,21 +93,22 @@ const Icons = {
   ),
 };
 
+// ─── TECH STACK DATA ──────────────────────────────────────────────────────
 const techStack = [
-  { name: "Solidity",      icon: <Icons.Solidity />,     color: "#475569" },
-  { name: "Foundry",       icon: <Icons.Foundry />,      color: "#D97706" },
-  { name: "EVM / Yul",     icon: <Icons.EVM />,          color: "#64748b" },
-  { name: "Slither & Fuzz",icon: <Icons.Slither />,      color: "#EF4444" },
-  { name: "Chainlink",     icon: <Icons.Chainlink />,    color: "#2563EB" },
-  { name: "Aave V3 DeFi",  icon: <Icons.Aave />,         color: "#0EA5E9" },
-  { name: "ERC-4337 (AA)", icon: <Icons.ERC4337 />,      color: "#0891B2" },
-  { name: "OpenZeppelin",  icon: <Icons.OpenZeppelin />, color: "#059669" },
-  { name: "Base Mainnet",  icon: <Icons.Base />,         color: "#0052FF" },
-  { name: "IPFS / Pinata", icon: <Icons.IPFS />,         color: "#06B6D4" },
-  { name: "Next.js 14/15", icon: <Icons.Nextjs />,       color: "#0f172a" },
-  { name: "Wagmi / Viem",  icon: <Icons.Wagmi />,        color: "#0f766e" },
-  { name: "TypeScript",    icon: <Icons.TypeScript />,   color: "#3B82F6" },
-  { name: "Tailwind CSS",  icon: <Icons.Tailwind />,     color: "#14B8A6" },
+  { name: "Solidity 0.8+",   icon: <Icons.Solidity />,     color: "#475569" },
+  { name: "Foundry & Anvil", icon: <Icons.Foundry />,      color: "#D97706" },
+  { name: "Yul & EVM",       icon: <Icons.EVM />,          color: "#64748b" },
+  { name: "Slither & Fuzz",  icon: <Icons.Slither />,      color: "#EF4444" },
+  { name: "Chainlink Oracles", icon: <Icons.Chainlink />,  color: "#2563EB" },
+  { name: "Aave V3 Routing", icon: <Icons.Aave />,         color: "#0EA5E9" },
+  { name: "ERC-4337 (AA)",   icon: <Icons.ERC4337 />,      color: "#0891B2" },
+  { name: "UUPS & Proxies",  icon: <Icons.OpenZeppelin />, color: "#059669" },
+  { name: "ERC-4626 Vaults", icon: <Icons.Vault />,        color: "#8B5CF6" }, // Replaced Base Mainnet
+  { name: "IPFS & Arweave",  icon: <Icons.IPFS />,         color: "#06B6D4" },
+  { name: "Next.js App Router", icon: <Icons.Nextjs />,    color: "#0f172a" },
+  { name: "Wagmi & Viem",    icon: <Icons.Wagmi />,        color: "#0f766e" },
+  { name: "TypeScript",      icon: <Icons.TypeScript />,   color: "#3B82F6" },
+  { name: "Tailwind CSS",    icon: <Icons.Tailwind />,     color: "#14B8A6" },
 ];
 
 export default function TechStackGrid() {
@@ -131,10 +138,10 @@ export default function TechStackGrid() {
               Architecture & Security
             </p>
             <h2 className="text-3xl sm:text-5xl md:text-6xl font-black text-slate-900 tracking-tight mb-4 sm:mb-6" style={{ fontFamily: "'Georgia', serif" }}>
-              My Tech Arsenal
+              Core Engineering Stack
             </h2>
             <p className="text-sm sm:text-base text-slate-500 max-w-3xl leading-relaxed mx-auto sm:mx-0 font-medium">
-              Focusing on threat-modeled security, invariant-proven solvency, and Yul-optimized gas reduction across every deployment. Every tool is chosen for absolute precision and reliability.
+              Focusing on threat-modeled security, invariant-proven solvency, and Yul-optimized gas reduction across every deployment[cite: 6]. Every tool is chosen for absolute precision and reliability.
             </p>
           </motion.div>
         </div>
