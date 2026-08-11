@@ -114,6 +114,15 @@ const LINKS = [
     ),
   },
   {
+    label: "LinkedIn",
+    href: "https://www.linkedin.com/in/nextech-amit/",
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+      </svg>
+    ),
+  },
+  {
     label: "Twitter",
     href: "https://x.com/itZ_AmiT0",
     icon: (
@@ -137,7 +146,6 @@ const LINKS = [
 // ─── MAIN HERO SECTION ────────────────────────────────────────────────────────
 export default function HeroSection() {
   return (
-    // ✅ Removed min-h-[100svh] — section now auto-sizes to content on mobile
     <section className={`relative bg-[#F8FAFC] overflow-hidden ${bodyFont.className}`}>
       <Cinematic3DCanvas />
 
@@ -145,18 +153,25 @@ export default function HeroSection() {
       <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-blue-500/5 blur-[120px] pointer-events-none z-0" />
       <div className="absolute bottom-[10%] right-[-5%] w-[40vw] h-[40vw] rounded-full bg-cyan-400/10 blur-[100px] pointer-events-none z-0" />
 
-      {/* ✅ Reduced bottom padding on mobile: pb-20 → pb-12 */}
+      {/* Responsive Padding */}
       <div className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-10 lg:px-12 pt-[100px] md:pt-[140px] lg:pt-[180px] pb-12 md:pb-20">
 
         <div className="flex flex-col items-start text-left max-w-[850px]">
 
-          {/* Status Badge */}
+          {/* Status Badge with Name & Pulsing Dot */}
           <motion.div
             initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2.5 px-4 py-2 sm:px-5 sm:py-2.5 bg-white border-2 border-slate-200 rounded-full shadow-sm mb-6 sm:mb-8"
+            className="inline-flex flex-wrap items-center gap-2.5 px-4 py-2 sm:px-5 sm:py-2.5 bg-white border-2 border-slate-200 rounded-full shadow-sm mb-6 sm:mb-8"
           >
-            <span className={`text-[9px] sm:text-xs font-black text-[#0052FF] tracking-widest uppercase ${monoFont.className}`}>
-              Protocol Architect & Smart Contract Engineer
+            {/* Pulsing Dot */}
+            <span className="relative flex h-2 w-2 sm:h-2.5 sm:w-2.5 shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-blue-500"></span>
+            </span>
+            
+            {/* Name and Title */}
+            <span className={`text-[10px] sm:text-xs font-black text-slate-800 tracking-widest uppercase ${monoFont.className}`}>
+              Amit Kumar <span className="text-[#0052FF] mx-1.5 sm:mx-2">|</span> Protocol Architect
             </span>
           </motion.div>
 

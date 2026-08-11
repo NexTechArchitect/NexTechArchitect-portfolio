@@ -313,7 +313,7 @@ export default function EngineeringJourneySection() {
           transition={{ delay: 0.5 }}
           className="font-mono text-[10px] text-slate-400 text-center mt-20 tracking-[0.2em] uppercase font-bold"
         >
-          Deployed across Base Mainnet & EVM Networks
+          Deployed across  Mainnet & EVM Test Networks
         </motion.p>
       </div>
     </section>
