@@ -1,236 +1,349 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Bricolage_Grotesque, JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
+import {
+  ArrowDownRight,
+  ArrowUpRight,
+  Check,
+  Copy,
+  Github,
+  Linkedin,
+  Mail,
+  ShieldCheck,
+  Terminal,
+  Twitter,
+} from "lucide-react";
+import ShaderCanvas from "@/components/ui/ShaderCanvas";
+import { fullStackProjects, type ProjectItem } from "@/data/projects";
+import { formatContractAddress } from "@/lib/portfolio";
 
-const displayFont = Bricolage_Grotesque({ subsets: ["latin"], weight: ["600", "700", "800"] });
-const bodyFont = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600"] });
-const monoFont = JetBrains_Mono({ subsets: ["latin"], weight: ["500", "700"] });
-
-// ─── CINEMATIC 3D "CARTOON" WEBGL-STYLE CANVAS ────────────────────────────────
-function Cinematic3DCanvas() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    let width = (canvas.width = canvas.offsetWidth);
-    let height = (canvas.height = canvas.offsetHeight);
-    let animationFrame: number;
-    let time = 0;
-
-    // Tighter spread — no more orbs forcing layout height on mobile
-    const orbs = Array.from({ length: 40 }, () => ({
-      x: (Math.random() - 0.5) * 1600,
-      y: (Math.random() - 0.5) * 1600,
-      z: Math.random() * 600 + 100,
-      baseRadius: Math.random() * 50 + 20,
-      colorLight: Math.random() > 0.5 ? "#60A5FA" : "#34D399",
-      colorDark: Math.random() > 0.5 ? "#2563EB" : "#059669",
-      offset: Math.random() * Math.PI * 2,
-      speed: Math.random() * 0.01 + 0.005
-    }));
-
-    const render = () => {
-      ctx.clearRect(0, 0, width, height);
-      time += 0.012;
-
-      const isDesktop = width > 1024;
-      const cx = isDesktop ? width * 0.70 : width * 0.5;
-      const cy = height * 0.5;
-      const fov = 400;
-
-      const projected = orbs.map(orb => {
-        const floatY = orb.y + Math.sin(time + orb.offset) * 60;
-        const floatX = orb.x + Math.cos(time * 0.8 + orb.offset) * 40;
-
-        const scale = fov / (fov + orb.z);
-        const px = cx + floatX * scale;
-        const py = cy + floatY * scale;
-        const pr = orb.baseRadius * scale;
-
-        return { ...orb, px, py, pr, scale };
-      }).sort((a, b) => b.z - a.z);
-
-      projected.forEach(p => {
-        if (p.pr < 0) return;
-
-        ctx.beginPath();
-        ctx.arc(p.px, p.py + p.pr * 0.5, p.pr, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(0,0,0,${0.04 * p.scale})`;
-        ctx.fill();
-
-        const grad = ctx.createRadialGradient(
-          p.px - p.pr * 0.3, p.py - p.pr * 0.3, p.pr * 0.1,
-          p.px, p.py, p.pr
-        );
-        grad.addColorStop(0, "#FFFFFF");
-        grad.addColorStop(0.3, p.colorLight);
-        grad.addColorStop(1, p.colorDark);
-
-        ctx.beginPath();
-        ctx.arc(p.px, p.py, p.pr, 0, Math.PI * 2);
-        ctx.fillStyle = grad;
-        ctx.fill();
-      });
-
-      animationFrame = requestAnimationFrame(render);
-    };
-    render();
-
-    const handleResize = () => {
-      width = canvas.width = canvas.offsetWidth;
-      height = canvas.height = canvas.offsetHeight;
-    };
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      cancelAnimationFrame(animationFrame);
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      className="absolute inset-0 w-full h-full pointer-events-none opacity-30 mix-blend-multiply z-0"
-    />
-  );
+interface HeroSectionProps {
+  openModal: (item: ProjectItem, type: "skill" | "project") => void;
 }
 
-// ─── SOCIAL ICONS ─────────────────────────────────────────────────────────────
-const LINKS = [
+const SOCIAL_LINKS = [
   {
     label: "GitHub",
     href: "https://github.com/NexTechArchitect",
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
-      </svg>
-    ),
+    icon: Github,
   },
   {
     label: "LinkedIn",
-    href: "https://www.linkedin.com/in/nextech-amit/",
-    icon: (
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
-      </svg>
-    ),
+    href: "https://www.linkedin.com/in/amit-kumar-811a11277",
+    icon: Linkedin,
   },
   {
-    label: "Twitter",
+    label: "X / Twitter",
     href: "https://x.com/itZ_AmiT0",
-    icon: (
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.258 5.63 5.906-5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-      </svg>
-    ),
+    icon: Twitter,
   },
   {
     label: "Email",
     href: "mailto:nextech.amit@gmail.com",
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="4" width="20" height="16" rx="2" />
-        <path d="m2 7 10 7 10-7" />
-      </svg>
-    ),
+    icon: Mail,
   },
-];
+] as const;
 
-// ─── MAIN HERO SECTION ────────────────────────────────────────────────────────
-export default function HeroSection() {
+const METRICS = [
+  {
+    value: "6",
+    label: "Production DeFi Protocols",
+    sub: "Deployed on Base Mainnet",
+  },
+  {
+    value: "5,000+",
+    label: "Foundry Fuzz Sequences",
+    sub: "Stateful Invariant Coverage",
+  },
+  {
+    value: "35%",
+    label: "Yul Gas Overhead Cut",
+    sub: "O(1) Swap-and-Pop Queues",
+  },
+  {
+    value: "0",
+    label: "Critical & High Findings",
+    sub: "Slither Static Analysis",
+  },
+] as const;
+
+const BASE_DEPLOYMENTS = fullStackProjects.slice(0, 3);
+
+export default function HeroSection({ openModal }: HeroSectionProps) {
+  const [selectedIdx, setSelectedIdx] = useState(0);
+  const [copiedAddr, setCopiedAddr] = useState<string | null>(null);
+
+  const activeProtocol = BASE_DEPLOYMENTS[selectedIdx] ?? BASE_DEPLOYMENTS[0];
+
+  const handleCopy = (address: string) => {
+    navigator.clipboard?.writeText(address);
+    setCopiedAddr(address);
+    window.setTimeout(() => {
+      setCopiedAddr((prev) => (prev === address ? null : prev));
+    }, 1800);
+  };
+
+  const scrollToProtocols = () => {
+    const el = document.getElementById("protocols");
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
-    <section className={`relative bg-[#F8FAFC] overflow-hidden ${bodyFont.className}`}>
-      <Cinematic3DCanvas />
+    <section
+      id="top"
+      className="relative bg-[#F8FAFC] overflow-hidden pt-24 sm:pt-28 lg:pt-32 pb-16 sm:pb-24"
+    >
+      {/* True WebGL2 GLSL Optical Refraction Backdrop */}
+      <ShaderCanvas variant="hero" className="opacity-95" />
 
-      {/* Aesthetic Background Blurs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-blue-500/5 blur-[120px] pointer-events-none z-0" />
-      <div className="absolute bottom-[10%] right-[-5%] w-[40vw] h-[40vw] rounded-full bg-cyan-400/10 blur-[100px] pointer-events-none z-0" />
+      {/* Crisp 1px Architectural Hairline Grid */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 architectural-grid pointer-events-none z-[1]"
+      />
 
-      {/* Responsive Padding */}
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-10 lg:px-12 pt-[100px] md:pt-[140px] lg:pt-[180px] pb-12 md:pb-20">
+      <div className="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
+        {/* 2-Column Balanced Hero Split */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-stretch">
+          {/* Left Column: Kinetic Typography & Core Engineering Thesis */}
+          <div className="lg:col-span-7 flex flex-col justify-center">
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              className="text-xs sm:text-sm font-mono-tabular text-slate-600 mb-5 flex flex-wrap items-center gap-x-2.5 gap-y-1"
+            >
+              <span className="font-semibold text-[#0B1220]">Amit Kumar</span>
+              <span aria-hidden="true" className="text-slate-300">
+                ·
+              </span>
+              <span className="text-[#0052FF] font-semibold">
+                Smart Contract Engineer & DeFi Protocol Architect
+              </span>
+            </motion.p>
 
-        <div className="flex flex-col items-start text-left max-w-[850px]">
-
-          {/* Status Badge with Name & Pulsing Dot */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
-            className="inline-flex flex-wrap items-center gap-2.5 px-4 py-2 sm:px-5 sm:py-2.5 bg-white border-2 border-slate-200 rounded-full shadow-sm mb-6 sm:mb-8"
-          >
-            {/* Pulsing Dot */}
-            <span className="relative flex h-2 w-2 sm:h-2.5 sm:w-2.5 shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-blue-500"></span>
-            </span>
-            
-            {/* Name and Title */}
-            <span className={`text-[10px] sm:text-xs font-black text-slate-800 tracking-widest uppercase ${monoFont.className}`}>
-              Amit Kumar <span className="text-[#0052FF] mx-1.5 sm:mx-2">|</span> Protocol Architect
-            </span>
-          </motion.div>
-
-          {/* Name / Title */}
-          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
-            <h1 className={`text-[42px] leading-[1.05] sm:text-6xl md:text-7xl lg:text-[80px] font-black text-slate-900 tracking-tight lg:leading-[1.02] mb-6 ${displayFont.className}`}>
-              Engineering Trustless <br className="hidden sm:block" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
+            <motion.h1
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, delay: 0.06, ease: [0.16, 1, 0.3, 1] }}
+              className="font-display text-4xl sm:text-6xl lg:text-[64px] font-extrabold tracking-tight text-[#0B1220] leading-[1.03] mb-6 text-balance"
+            >
+              Engineering Trustless{" "}
+              <span className="text-optical-gradient block sm:inline">
                 DeFi Infrastructure.
               </span>
-            </h1>
-          </motion.div>
+            </motion.h1>
 
-          {/* Senior Level Copywriting */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-sm sm:text-lg text-slate-600 leading-relaxed mb-8 sm:mb-10 font-medium bg-white/40 backdrop-blur-md p-5 sm:p-6 rounded-2xl border border-white/60 shadow-sm"
-          >
-            I architect and secure production grade decentralized economic systems. Operating at the intersection of EVM mechanics and protocol security, I have engineered over 70 verified smart contracts across Base Mainnet and various Ethereum ecosystems. My core domains encompass institutional real world asset tokenization, high performance perpetual exchanges, and resilient governance primitives.
-            <br /><br />
-            Security is my fundamental architectural baseline. I focus strictly on robust system design, stateful invariant fuzzing, and maximum gas efficiency using Yul assembly. I build fault tolerant infrastructure designed to protect liquidity and ensure absolute mathematical solvency under extreme market conditions.
-          </motion.div>
-
-          {/* CTA */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}
-            className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mb-10 sm:mb-12"
-          >
-            <a
-              href="https://github.com/NexTechArchitect"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`inline-flex items-center justify-center gap-2 bg-[#0052FF] hover:bg-blue-700 text-white text-xs sm:text-sm font-bold uppercase tracking-widest px-10 py-4 sm:py-5 rounded-2xl shadow-xl hover:shadow-blue-500/25 hover:-translate-y-1 transition-all ${monoFont.className}`}
+            <motion.p
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
+              className="text-base sm:text-lg text-slate-600 leading-relaxed max-w-2xl mb-8"
             >
-              View GitHub ↗
-            </a>
-          </motion.div>
+              I design, fuzz, and ship production EVM protocols. Across six live
+              deployments on Base Mainnet, my work spans ERC-3643 real-world asset
+              compliance, ERC-4626 Aave V3 yield vaults, O(1) keeper automation,
+              and 50x non-custodial perpetuals. Every system is hardened with
+              Foundry stateful invariant fuzzing, Slither static analysis, and
+              inline Yul gas optimization.
+            </motion.p>
 
-          {/* Social Links */}
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.4 }}
-            className="flex flex-wrap items-center gap-3 sm:gap-4"
-          >
-            <span className={`text-[10px] font-bold text-slate-400 uppercase tracking-widest mr-1 sm:mr-2 ${monoFont.className}`}>Connect:</span>
-            {LINKS.map((l) => (
-              <a
-                key={l.label}
-                href={l.href}
-                target={l.href.startsWith("http") ? "_blank" : undefined}
-                rel="noopener noreferrer"
-                className={`flex items-center gap-2 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-slate-500 hover:text-[#0052FF] bg-white border-2 border-slate-100 hover:border-blue-100 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all shadow-sm ${monoFont.className}`}
+            {/* Primary CTA + Secondary Text Links */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, delay: 0.18, ease: [0.16, 1, 0.3, 1] }}
+              className="flex flex-wrap items-center gap-4 mb-9"
+            >
+              <button
+                type="button"
+                onClick={scrollToProtocols}
+                className="inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl bg-[#0052FF] hover:bg-[#0040CC] text-white text-sm font-semibold tracking-wide shadow-[0_12px_28px_rgba(0,82,255,0.22)] transition-all duration-200 hover:-translate-y-0.5 whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0052FF] focus-visible:ring-offset-2"
               >
-                {l.icon}
-                {l.label}
-              </a>
-            ))}
-          </motion.div>
+                <span>Explore Flagship Protocols</span>
+                <ArrowDownRight className="w-4 h-4" aria-hidden="true" />
+              </button>
 
+              <a
+                href="https://github.com/NexTechArchitect"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl glass-surface hover:bg-white text-[#0B1220] text-sm font-semibold transition-all duration-200 whitespace-nowrap shrink-0"
+              >
+                <Github className="w-4 h-4 text-slate-700" aria-hidden="true" />
+                <span>GitHub Repositories</span>
+                <ArrowUpRight className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
+              </a>
+            </motion.div>
+
+            {/* Clean Unboxed Social Row */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.45, delay: 0.24 }}
+              className="flex flex-wrap items-center gap-x-6 gap-y-2.5 pt-5 border-t border-slate-200/80"
+            >
+              {SOCIAL_LINKS.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    target={item.href.startsWith("http") ? "_blank" : undefined}
+                    rel={item.href.startsWith("http") ? "noopener noreferrer" : undefined}
+                    className="inline-flex items-center gap-2 text-xs font-mono-tabular font-medium text-slate-600 hover:text-[#0052FF] transition-colors whitespace-nowrap shrink-0"
+                  >
+                    <Icon className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>{item.label}</span>
+                  </a>
+                );
+              })}
+            </motion.div>
+          </div>
+
+          {/* Right Column: Interactive Base Mainnet Deployment Inspector */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.14, ease: [0.16, 1, 0.3, 1] }}
+            className="lg:col-span-5 flex"
+          >
+            <div className="w-full rounded-3xl glass-surface-strong shadow-[0_24px_60px_rgba(15,23,42,0.08)] p-6 sm:p-7 flex flex-col justify-between">
+              <div>
+                {/* Inspector Header */}
+                <div className="flex items-center justify-between gap-3 pb-4 border-b border-slate-200/80">
+                  <div className="flex items-center gap-2 text-xs font-mono-tabular font-semibold text-[#0B1220]">
+                    <Terminal className="w-4 h-4 text-[#0052FF]" aria-hidden="true" />
+                    <span>Base Mainnet Deployments</span>
+                  </div>
+                  <span className="text-xs font-mono-tabular text-slate-500">
+                    Verified Contracts
+                  </span>
+                </div>
+
+                {/* Segmented Protocol Selector */}
+                <div
+                  role="tablist"
+                  aria-label="Select deployed Base Mainnet protocol"
+                  className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-slate-100/90 mt-4 mb-5"
+                >
+                  {BASE_DEPLOYMENTS.map((protocol, idx) => {
+                    const isSelected = idx === selectedIdx;
+                    return (
+                      <button
+                        key={protocol.id}
+                        type="button"
+                        role="tab"
+                        aria-selected={isSelected}
+                        onClick={() => setSelectedIdx(idx)}
+                        className={`px-2.5 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap truncate cursor-pointer ${
+                          isSelected
+                            ? "bg-white text-[#0052FF] shadow-sm"
+                            : "text-slate-600 hover:text-[#0B1220]"
+                        }`}
+                      >
+                        {protocol.shortTitle}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Selected Protocol Summary */}
+                <div className="mb-5">
+                  <p className="text-xs font-mono-tabular text-[#0891B2] font-semibold mb-1">
+                    {activeProtocol.standard}
+                  </p>
+                  <h2 className="font-display text-xl font-bold text-[#0B1220] tracking-tight mb-1.5">
+                    {activeProtocol.title}
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    {activeProtocol.metricDetail}
+                  </p>
+                </div>
+
+                {/* Verified Contract Addresses */}
+                <div className="divide-y divide-slate-200/70 border border-slate-200/80 rounded-2xl bg-[#F8FAFC]/80 overflow-hidden mb-5">
+                  {(activeProtocol.contracts || []).map((contract) => {
+                    const isCopied = copiedAddr === contract.address;
+                    return (
+                      <div
+                        key={contract.address}
+                        className="px-4 py-3 flex items-center justify-between gap-3"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-[#0B1220] truncate">
+                            {contract.label}
+                          </p>
+                          <p className="text-[11px] text-slate-500 truncate">
+                            {contract.role}
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleCopy(contract.address)}
+                          aria-label={`Copy ${contract.label} address`}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-[#0052FF]/40 text-[11px] font-mono-tabular text-slate-700 hover:text-[#0052FF] transition-colors shrink-0 cursor-pointer"
+                        >
+                          <span>
+                            {isCopied
+                              ? "Copied"
+                              : formatContractAddress(contract.address)}
+                          </span>
+                          {isCopied ? (
+                            <Check className="w-3 h-3 text-emerald-600" aria-hidden="true" />
+                          ) : (
+                            <Copy className="w-3 h-3 text-slate-400" aria-hidden="true" />
+                          )}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Footer Action Row */}
+              <div className="pt-4 border-t border-slate-200/80 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-1.5 text-xs font-mono-tabular text-slate-500">
+                  <ShieldCheck className="w-4 h-4 text-[#0052FF]" aria-hidden="true" />
+                  <span>Slither & Foundry Verified</span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => openModal(activeProtocol, "project")}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0B1220] hover:bg-[#0052FF] text-white text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                >
+                  <span>Inspect Case Study</span>
+                  <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+          </motion.div>
         </div>
+
+        {/* Full-Width Verified Base Mainnet Metrics Bar */}
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.28, ease: [0.16, 1, 0.3, 1] }}
+          className="mt-12 sm:mt-16 rounded-2xl glass-surface-strong overflow-hidden"
+        >
+          <div className="grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 divide-x-0 sm:divide-x divide-slate-200/80">
+            {METRICS.map((metric) => (
+              <div key={metric.label} className="p-5 sm:p-6">
+                <p className="font-mono-tabular text-2xl sm:text-3xl font-bold text-[#0B1220] tracking-tight mb-1">
+                  {metric.value}
+                </p>
+                <p className="text-xs sm:text-sm font-semibold text-[#0052FF]">
+                  {metric.label}
+                </p>
+                <p className="text-xs text-slate-500 mt-0.5">{metric.sub}</p>
+              </div>
+            ))}
+          </div>
+        </motion.div>
       </div>
     </section>
   );

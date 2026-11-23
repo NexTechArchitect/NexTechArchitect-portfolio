@@ -1,320 +1,258 @@
 "use client";
 
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useRef, useEffect } from "react";
+import { Check, Copy, FileCode2, ShieldAlert, Sparkles } from "lucide-react";
+import { ARCHITECTURE_INSIGHTS } from "@/data/projects";
 
-type Lesson = {
-  id: string;
-  num: string;
-  title: string;
-  body: string;
-  accent: string;
-  rgb: string;
-};
+function highlightSolidityLine(line: string) {
+  const trimmed = line.trim();
+  if (trimmed.startsWith("//")) {
+    return <span className="text-slate-400 italic">{line}</span>;
+  }
 
-// ─── HIGH-END ENGINEERING ARCHITECTURE INSIGHTS ──────────────────────────────
-const LESSONS: Lesson[] = [
-  {
-    id: "l1",
-    num: "01",
-    title: "Threat-Modeled Architecture & Flash-Loan Immunity",
-    body: "When building the Sentinel DAO, I initially assumed tracking balances via current block.number was sufficient to prevent same-block manipulation. It isn't. Sophisticated attackers can structure a massive flash-loan borrow and a governance proposal within the exact same transaction. The architectural fix was shifting to block.number - 1 for all voting weight snapshots, structurally neutralizing flash-loan governance attacks at the consensus layer. True security isn't about auditing the happy path; it's about mapping every hostile execution vector before writing the first interface.",
-    accent: "#2563EB", // Blue
-    rgb: "37,99,235",
-  },
-  {
-    id: "l2",
-    num: "02",
-    title: "O(1) Gas Efficiency & Yul Assembly Optimization",
-    body: "Smart contracts face strict block gas limits. In the On-Chain Automation Protocol, a standard loop for iterating and executing automated keeper jobs would eventually trigger out-of-gas reverts as the network scaled. I completely eliminated bounded loops by engineering a highly optimized O(1) swap-and-pop batch queue. By leveraging EVM inline assembly (Yul) for critical state transitions and tightly packing the storage layout, I reduced execution gas overhead by up to 35%. Efficiency isn't a refactor step; it is the foundation of scalable EVM infrastructure.",
-    accent: "#059669", // Emerald
-    rgb: "5,150,105",
-  },
-  {
-    id: "l3",
-    num: "03",
-    title: "Stateless On-Chain Compliance for Real-World Assets",
-    body: "Regulated assets require strict KYC and OFAC sanction checks. The industry standard is relying on centralized, off-chain API approvals for every transfer, which bottlenecks decentralization. I built a fundamentally different model for the Nexus RWA Protocol: a stateless Compliance Engine that intercepts ERC-20 transfer hooks to evaluate cryptographic identity commitments entirely on-chain in real-time. True Web3 infrastructure must abstract legal complexity into immutable, zero-trust code without relying on slow off-chain servers.",
-    accent: "#0891B2", // Cyan
-    rgb: "8,145,178",
-  },
-  {
-    id: "l4",
-    num: "04",
-    title: "Asynchronous Cross-Chain State & Account Abstraction",
-    body: "Building the Nexus Perpetuals 50x leverage non-custodial DEX revealed the true complexity of fragmented liquidity. Integrating Chainlink CCIP for cross-chain margin wasn't just about sending messages; it was about strict nonce deduplication. A delayed or replayed message could double-credit a margin account. By implementing local state-locking and custom ERC-4337 smart account paymasters, I ensured cross-chain execution remained gasless and mathematically sound against replay attacks.",
-    accent: "#D97706", // Amber
-    rgb: "217,119,6",
-  },
-  {
-    id: "l5",
-    num: "05",
-    title: "Immutable Storage Layouts in UUPS Proxy Patterns",
-    body: "When engineering the ERC-5484 Reputation System, I transitioned the scoring engine to an EIP-1822 UUPS Proxy to allow future logic upgrades. This requires absolute precision: one misaligned storage slot in a future V2 implementation will permanently corrupt the entire protocol's state. I now architect every upgradeable contract with strict storage gap arrays and collision-safe layout mappings from day one. Storage layout is a permanent constraint you design around, not a property you check after deployment.",
-    accent: "#7C3AED", // Violet
-    rgb: "124,58,237",
-  },
-];
+  const tokenRegex =
+    /(\b(?:pragma|solidity|abstract|contract|library|function|internal|external|public|private|view|pure|virtual|returns|return|if|revert|error|mapping|struct|storage|assembly|delete|constant|uint256|uint64|uint16|address|bool|bytes32)\b|\b0x[a-fA-F0-9]+\b|\b\d+(?:_\d+)*\b|"[^"]*"|\/\/.*$)/g;
 
-// ─── BACKGROUND PARTICLE FIELD ────────────────────────────────────────────────
-function ParticleField() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rafRef = useRef<number>(0);
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    let W = 0, H = 0;
+  while ((match = tokenRegex.exec(line)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(
+        <span key={`p-${lastIndex}`} className="text-slate-200">
+          {line.slice(lastIndex, match.index)}
+        </span>
+      );
+    }
 
-    const resize = () => {
-      W = canvas.offsetWidth;
-      H = canvas.offsetHeight;
-      canvas.width = W * devicePixelRatio;
-      canvas.height = H * devicePixelRatio;
-      ctx.scale(devicePixelRatio, devicePixelRatio);
-    };
-    resize();
-    window.addEventListener("resize", resize);
+    const token = match[0];
+    let cls = "text-slate-200";
+    if (token.startsWith("//")) {
+      cls = "text-slate-400 italic";
+    } else if (token.startsWith('"')) {
+      cls = "text-emerald-300";
+    } else if (/^(?:0x|\d)/.test(token)) {
+      cls = "text-amber-300";
+    } else if (
+      /^(?:uint256|uint64|uint16|address|bool|bytes32|mapping|struct)$/.test(token)
+    ) {
+      cls = "text-cyan-300";
+    } else {
+      cls = "text-sky-400 font-medium";
+    }
 
-    type P = { x: number; y: number; z: number; t: number; f: number; ox: number; oy: number };
-    const pts: P[] = Array.from({ length: 45 }, () => ({
-      x: Math.random() * 1400, y: Math.random() * 900,
-      z: Math.random(), t: Math.random() * Math.PI * 2,
-      f: 0.3 + Math.random() * 0.5,
-      ox: Math.random() * 1400, oy: Math.random() * 900,
-    }));
+    parts.push(
+      <span key={`t-${match.index}`} className={cls}>
+        {token}
+      </span>
+    );
+    lastIndex = match.index + token.length;
+  }
 
-    let time = 0;
-    const draw = () => {
-      if (W <= 0 || H <= 0) { rafRef.current = requestAnimationFrame(draw); return; }
-      ctx.clearRect(0, 0, W, H);
-      time += 0.0025;
-      
-      for (const p of pts) {
-        const ds = 0.4 + p.z * 0.6;
-        p.x = p.ox + Math.sin(time * p.f + p.t) * 18 * ds;
-        p.y = p.oy + Math.cos(time * p.f * 0.7 + p.t) * 12 * ds;
-        p.ox += Math.sin(time * 0.08 + p.t) * 0.08 * ds;
-        p.oy += Math.cos(time * 0.06 + p.t) * 0.055 * ds;
-        if (p.ox < -50) p.ox = W + 20;
-        if (p.ox > W + 50) p.ox = -20;
-        if (p.oy < -50) p.oy = H + 20;
-        if (p.oy > H + 50) p.oy = -20;
-      }
-      
-      for (let i = 0; i < pts.length; i++) {
-        for (let j = i + 1; j < pts.length; j++) {
-          const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y;
-          const d = Math.sqrt(dx * dx + dy * dy);
-          if (d < 85) {
-            ctx.beginPath();
-            ctx.strokeStyle = `rgba(37,99,235,${(1 - d / 85) * 0.08 * ((pts[i].z + pts[j].z) / 2)})`; // Base blue tint
-            ctx.lineWidth = 0.6;
-            ctx.moveTo(pts[i].x, pts[i].y);
-            ctx.lineTo(pts[j].x, pts[j].y);
-            ctx.stroke();
-          }
-        }
-      }
-      
-      for (const p of pts) {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 0.5 + p.z * 1.5, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(8,145,178,${0.08 + p.z * 0.2})`;
-        ctx.fill();
-      }
-      
-      rafRef.current = requestAnimationFrame(draw);
-    };
-    draw();
-    return () => { cancelAnimationFrame(rafRef.current); window.removeEventListener("resize", resize); };
-  }, []);
+  if (lastIndex < line.length) {
+    parts.push(
+      <span key={`e-${lastIndex}`} className="text-slate-200">
+        {line.slice(lastIndex)}
+      </span>
+    );
+  }
 
-  return (
-    <canvas
-      ref={canvasRef}
-      style={{
-        position: "absolute", inset: 0, width: "100%", height: "100%",
-        pointerEvents: "none", zIndex: 0, opacity: 0.35,
-      }}
-    />
-  );
+  return parts.length > 0 ? parts : <span>&nbsp;</span>;
 }
 
-// ─── INDIVIDUAL EXPERIENCE/LESSON CARD ────────────────────────────────────────
-function LessonCard({ lesson, index }: { lesson: Lesson; index: number }) {
-  const [open, setOpen] = useState(false);
-  const [hov, setHov] = useState(false);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 18 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-30px" }}
-      transition={{ delay: index * 0.08, duration: 0.5, ease: "easeOut" }}
-    >
-      <motion.button
-        onHoverStart={() => setHov(true)}
-        onHoverEnd={() => setHov(false)}
-        onClick={() => setOpen(!open)}
-        whileTap={{ scale: 0.98 }}
-        className="w-full text-left rounded-3xl bg-white/80 backdrop-blur-md relative overflow-hidden transition-all duration-300 group"
-        style={{
-          border: `2px solid ${hov || open ? `rgba(${lesson.rgb},0.3)` : "rgba(226,232,240,0.8)"}`,
-          boxShadow: open
-            ? `0 20px 40px -10px rgba(${lesson.rgb},0.15)`
-            : hov
-            ? `0 10px 30px -10px rgba(${lesson.rgb},0.1)`
-            : "0 4px 10px rgba(0,0,0,0.02)",
-        }}
-      >
-        {/* Animated Accent Line */}
-        <motion.div
-          className="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-3xl"
-          animate={{ opacity: hov || open ? 1 : 0.4, scaleY: hov || open ? 1 : 0.4 }}
-          style={{ background: lesson.accent, transformOrigin: "center" }}
-          transition={{ duration: 0.3, ease: "circOut" }}
-        />
-
-        <div className="p-6 sm:p-8 pl-8 sm:pl-10">
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 sm:gap-6">
-            <div className="flex-1 min-w-0">
-              <span
-                className="font-black select-none leading-none block mb-3 md:mb-4 transition-colors duration-300"
-                style={{
-                  color: hov || open ? `rgba(${lesson.rgb},0.15)` : `rgba(148,163,184,0.15)`,
-                  fontSize: "3rem",
-                  fontFamily: "monospace",
-                }}
-              >
-                {lesson.num}
-              </span>
-              <h3
-                className="text-lg sm:text-xl font-black text-slate-800 tracking-tight leading-snug transition-colors duration-300"
-                style={{ color: hov || open ? lesson.accent : undefined }}
-              >
-                {lesson.title}
-              </h3>
-            </div>
-
-            {/* Toggle Icon */}
-            <motion.div
-              className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center border-2 mt-2 sm:mt-0 text-sm font-black shadow-sm"
-              animate={{
-                borderColor: hov || open ? lesson.accent : "rgba(226,232,240,1)",
-                color: hov || open ? lesson.accent : "rgba(148,163,184,1)",
-                rotate: open ? 90 : 0,
-                backgroundColor: hov || open ? `rgba(${lesson.rgb},0.05)` : "#ffffff"
-              }}
-              transition={{ duration: 0.3, type: "spring" }}
-            >
-              {">"}
-            </motion.div>
-          </div>
-
-          <AnimatePresence initial={false}>
-            {open && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.4, type: "spring", bounce: 0.15 }}
-                className="overflow-hidden"
-              >
-                <p className="text-sm sm:text-base text-slate-600 leading-[1.8] mt-6 pt-6 border-t-2 border-slate-100 font-medium">
-                  {lesson.body}
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </motion.button>
-    </motion.div>
-  );
-}
-
-// ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 export default function EngineeringJourneySection() {
+  const [selectedId, setSelectedId] = useState(ARCHITECTURE_INSIGHTS[0].id);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const activeInsight =
+    ARCHITECTURE_INSIGHTS.find((item) => item.id === selectedId) ??
+    ARCHITECTURE_INSIGHTS[0];
+
+  const handleCopyCode = () => {
+    navigator.clipboard?.writeText(activeInsight.code);
+    setCopiedId(activeInsight.id);
+    window.setTimeout(() => {
+      setCopiedId((prev) => (prev === activeInsight.id ? null : prev));
+    }, 1800);
+  };
+
   return (
     <section
-      className="relative overflow-hidden"
-      style={{ background: "#F8FAFC", borderTop: "1px solid #e2e8f0" }}
-      id="experience"
+      id="insights"
+      className="relative bg-white border-t border-slate-200/80 py-20 sm:py-28 scroll-mt-20"
     >
-      <ParticleField />
-
-      {/* Aesthetic Blurs */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-        <motion.div
-          animate={{ scale: [1, 1.1, 1], x: [0, 30, 0], y: [0, -20, 0] }}
-          transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-[-10%] right-[-10%] w-[50vw] h-[50vw] rounded-full"
-          style={{
-            background: "radial-gradient(circle, rgba(37,99,235,0.06) 0%, transparent 70%)",
-            filter: "blur(80px)",
-          }}
-        />
-        <motion.div
-          animate={{ scale: [1, 1.15, 1], x: [0, -20, 0], y: [0, 30, 0] }}
-          transition={{ duration: 30, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute bottom-[-10%] left-[-10%] w-[45vw] h-[45vw] rounded-full"
-          style={{
-            background: "radial-gradient(circle, rgba(16,185,129,0.05) 0%, transparent 70%)",
-            filter: "blur(90px)",
-          }}
-        />
-      </div>
-
-      <div className="relative z-10 max-w-4xl mx-auto px-6 sm:px-10 py-24 sm:py-32">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, type: "spring" }}
-          className="mb-14 sm:mb-20 text-center sm:text-left"
-        >
-          <p className="text-[10px] sm:text-xs font-mono tracking-[0.25em] text-blue-600 font-bold uppercase mb-4 sm:mb-5">
-            Protocol Architecture
+      <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
+        {/* Section Heading */}
+        <div className="max-w-2xl mb-12 sm:mb-16">
+          <p className="text-xs font-mono-tabular font-semibold text-[#0052FF] mb-3">
+            03. Protocol Engineering Log
           </p>
-          <h2
-            className="text-4xl sm:text-5xl md:text-6xl font-black text-slate-900 tracking-tight leading-[1.1] mb-6"
-            style={{ fontFamily: "'Georgia', serif" }}
-          >
-            Engineering Insights &{" "}
-            <br className="hidden sm:block" />
-            <span
-              style={{
-                background: "linear-gradient(100deg, #0052FF 0%, #0891B2 55%, #059669 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-            >
-              System Design.
-            </span>
+          <h2 className="font-display text-3xl sm:text-5xl font-extrabold tracking-tight text-[#0B1220] leading-[1.08] mb-4 text-balance">
+            Architecture Insights &{" "}
+            <span className="text-optical-gradient">System Design.</span>
           </h2>
-          <p className="text-sm sm:text-lg text-slate-500 max-w-2xl leading-relaxed mx-auto sm:mx-0 font-medium">
-            Architecting 70+ verified smart contracts across multi-contract DeFi protocols taught me that real-world engineering is about mitigating edge cases before they hit the mainnet.
+          <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
+            Production security decisions, gas engineering trade-offs, and the
+            exact Solidity and Yul patterns used to neutralize hostile execution
+            vectors before mainnet deployment.
           </p>
-        </motion.div>
-
-        <div className="space-y-4 sm:space-y-6">
-          {LESSONS.map((lesson, i) => (
-            <LessonCard key={lesson.id} lesson={lesson} index={i} />
-          ))}
         </div>
 
-        <motion.p
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.5 }}
-          className="font-mono text-[10px] text-slate-400 text-center mt-20 tracking-[0.2em] uppercase font-bold"
-        >
-          Deployed across  Mainnet & EVM Test Networks
-        </motion.p>
+        {/* Interactive Split-View Architecture Log */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+          {/* Left Rail: Selectable Architectural Index */}
+          <div
+            role="tablist"
+            aria-label="Architecture engineering insights"
+            className="lg:col-span-5 flex flex-col gap-2.5"
+          >
+            {ARCHITECTURE_INSIGHTS.map((insight) => {
+              const isSelected = insight.id === activeInsight.id;
+              return (
+                <button
+                  key={insight.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isSelected}
+                  onClick={() => setSelectedId(insight.id)}
+                  className={`w-full text-left p-5 rounded-2xl border transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0052FF] ${
+                    isSelected
+                      ? "bg-[#F8FAFC] border-[#0052FF]/45 shadow-[0_10px_30px_rgba(0,82,255,0.08)]"
+                      : "bg-white border-slate-200/80 hover:border-slate-300 hover:bg-[#F8FAFC]/60"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2 text-xs font-mono-tabular mb-2">
+                    <span
+                      className={
+                        isSelected
+                          ? "text-[#0052FF] font-semibold"
+                          : "text-slate-500"
+                      }
+                    >
+                      {insight.num}. {insight.protocol}
+                    </span>
+                    <span className="text-slate-400">{insight.domain}</span>
+                  </div>
+                  <h3
+                    className={`font-display text-base sm:text-lg font-bold tracking-tight leading-snug ${
+                      isSelected ? "text-[#0B1220]" : "text-slate-700"
+                    }`}
+                  >
+                    {insight.title}
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                    {insight.summary}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Right Pane: Tactile Glassmorphic Detail & Solidity/Yul Code Viewer */}
+          <div className="lg:col-span-7">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeInsight.id}
+                role="tabpanel"
+                aria-label={activeInsight.title}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                className="rounded-3xl bg-[#F8FAFC] border border-slate-200/90 p-6 sm:p-8 shadow-[0_14px_40px_rgba(15,23,42,0.05)]"
+              >
+                {/* Header Metadata */}
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono-tabular text-slate-500 pb-4 border-b border-slate-200/80 mb-5">
+                  <span>
+                    <span className="text-[#0052FF] font-semibold">
+                      Note {activeInsight.num}
+                    </span>
+                    <span aria-hidden="true" className="mx-2 text-slate-300">
+                      ·
+                    </span>
+                    <span>{activeInsight.protocol}</span>
+                  </span>
+                  <span>{activeInsight.language}</span>
+                </div>
+
+                <h3 className="font-display text-2xl sm:text-3xl font-bold text-[#0B1220] tracking-tight leading-tight mb-4">
+                  {activeInsight.title}
+                </h3>
+
+                <p className="text-sm sm:text-base text-slate-600 leading-relaxed mb-6">
+                  {activeInsight.body}
+                </p>
+
+                {/* Trade-off & Verified Outcome */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                  <div className="p-4 rounded-2xl bg-white border border-slate-200/80">
+                    <div className="flex items-center gap-1.5 text-xs font-mono-tabular font-semibold text-slate-700 mb-1.5">
+                      <ShieldAlert className="w-3.5 h-3.5 text-[#0891B2]" aria-hidden="true" />
+                      <span>Design Trade-Off</span>
+                    </div>
+                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                      {activeInsight.tradeoff}
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-white border border-slate-200/80">
+                    <div className="flex items-center gap-1.5 text-xs font-mono-tabular font-semibold text-slate-700 mb-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-[#0052FF]" aria-hidden="true" />
+                      <span>Verified Outcome</span>
+                    </div>
+                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                      {activeInsight.outcome}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Syntax-Highlighted Solidity / Yul Snippet */}
+                <div className="rounded-2xl bg-[#0B1220] border border-slate-800 overflow-hidden shadow-lg">
+                  <div className="flex items-center justify-between gap-3 px-4 py-3 bg-[#111A2E] border-b border-slate-800">
+                    <div className="flex items-center gap-2 text-xs font-mono-tabular text-slate-300">
+                      <FileCode2 className="w-4 h-4 text-sky-400" aria-hidden="true" />
+                      <span>{activeInsight.filename}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleCopyCode}
+                      aria-label={`Copy ${activeInsight.filename} snippet`}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-mono-tabular text-slate-200 transition-colors cursor-pointer"
+                    >
+                      {copiedId === activeInsight.id ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-400" aria-hidden="true" />
+                          <span>Copied</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
+                          <span>Copy</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  <pre className="p-4 sm:p-5 overflow-x-auto text-xs sm:text-[13px] leading-6 font-mono-tabular">
+                    <code>
+                      {activeInsight.code.split("\n").map((line, i) => (
+                        <div key={i} className="table-row">
+                          <span className="table-cell pr-4 text-right select-none text-slate-600 w-8">
+                            {i + 1}
+                          </span>
+                          <span className="table-cell whitespace-pre">
+                            {highlightSolidityLine(line)}
+                          </span>
+                        </div>
+                      ))}
+                    </code>
+                  </pre>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
       </div>
     </section>
   );

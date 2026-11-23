@@ -1,13 +1,8 @@
-/** @type {import('next').NextConfig} */
+import type { NextConfig } from "next";
 
-const nextConfig = {
+const nextConfig: NextConfig = {
   reactStrictMode: false,
-  eslint: {
-  
-    ignoreDuringBuilds: true,
-  },
   typescript: {
-  
     ignoreBuildErrors: true,
   },
 };

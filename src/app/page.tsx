@@ -1,62 +1,57 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import Navbar from "@/components/ui/Navbar";
 import HeroSection from "@/components/sections/HeroSection";
-import TechStackGrid from "@/components/sections/TechStackGrid"; // <-- Naya import
+import TechStackGrid from "@/components/sections/TechStackGrid";
 import ProjectGatewaySection from "@/components/sections/ProjectGatewaySection";
 import EngineeringJourneySection from "@/components/sections/EngineeringJourneySection";
 import ContactFooter from "@/components/layout/ContactFooter";
 import UniversalModal from "@/components/overlays/UniversalModal";
 import ProjectGalleryOverlayWrapper from "@/components/overlays/ProjectGalleryOverlayWrapper";
-
-
+import ResumeModal from "@/components/overlays/ResumeModal";
 import { useModal } from "@/hooks/useModal";
 
 export default function Portfolio() {
-  const [isMounted, setIsMounted] = useState(false);
-  const [overlayType, setOverlayType] = useState<'fullstack' | 'core' | null>(null);
+  const [overlayType, setOverlayType] = useState<"fullstack" | "core" | null>(
+    null
+  );
+  const [resumeOpen, setResumeOpen] = useState(false);
   const { selectedItem, activeType, openModal, closeModal } = useModal();
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (!isMounted) return <main className="min-h-screen bg-white" />;
-
   return (
-    <main className="min-h-screen bg-white relative overflow-x-hidden">
-      
-      {/* Ambient Background Lights */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-[#0055FF]/5 blur-[150px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-[#00D4FF]/5 blur-[150px]" />
-      </div>
+    <div className="min-h-screen bg-[#F8FAFC] text-[#0B1220] relative overflow-x-hidden">
+      <Navbar onOpenResume={() => setResumeOpen(true)} />
 
-      <div className="relative z-10">
-        <HeroSection />
-        
+      <main className="relative z-10">
+        <HeroSection openModal={openModal} />
+
         <TechStackGrid />
-        
-        <ProjectGatewaySection openOverlay={(type) => setOverlayType(type)} />
-        
-      <EngineeringJourneySection />
-        
-        <ContactFooter />
-      </div>
 
-      <ProjectGalleryOverlayWrapper 
-        isOpen={overlayType !== null} 
-        type={overlayType} 
-        closeOverlay={() => setOverlayType(null)} 
+        <ProjectGatewaySection
+          openOverlay={(type) => setOverlayType(type)}
+          openModal={openModal}
+        />
+
+        <EngineeringJourneySection />
+      </main>
+
+      <ContactFooter onOpenResume={() => setResumeOpen(true)} />
+
+      <ProjectGalleryOverlayWrapper
+        isOpen={overlayType !== null}
+        type={overlayType}
+        closeOverlay={() => setOverlayType(null)}
         openModal={openModal}
       />
 
-      <UniversalModal 
-        selectedItem={selectedItem} 
-        activeType={activeType} 
-        closeModal={closeModal} 
+      <UniversalModal
+        selectedItem={selectedItem}
+        activeType={activeType}
+        closeModal={closeModal}
       />
-      
-    </main>
+
+      <ResumeModal isOpen={resumeOpen} onClose={() => setResumeOpen(false)} />
+    </div>
   );
 }

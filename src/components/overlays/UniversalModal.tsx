@@ -1,7 +1,10 @@
 "use client";
-import { motion, AnimatePresence } from "framer-motion";
 
-// Imports
+import { useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X } from "lucide-react";
+
+// Preserved 15 Case Study Imports
 import NexusCaseStudy from "../projects/NexusCaseStudy";
 import SentinelCaseStudy from "../projects/SentinelCaseStudy";
 import StableCoinCaseStudy from "../projects/StableCoinCaseStudy";
@@ -12,25 +15,66 @@ import MerkleAirdropCaseStudy from "../projects/MerkleAirdropCaseStudy";
 import CuteCatNFTCaseStudy from "../projects/CuteCatNFTCaseStudy";
 import SISOTokenCaseStudy from "../projects/SISOTokenCaseStudy";
 import OracleFundingCaseStudy from "../projects/OracleFundingCaseStudy";
-import NexusPolkaCaseStudy from "../projects/NexusPolkaCaseStudy"; 
-import ReputationCaseStudy from "../projects/ReputationCaseStudy"; 
-import InsuranceProtocol from "../projects/InsuranceProtocol"; 
+import NexusPolkaCaseStudy from "../projects/NexusPolkaCaseStudy";
+import ReputationCaseStudy from "../projects/ReputationCaseStudy";
+import InsuranceProtocol from "../projects/InsuranceProtocol";
 import AutomationProtocolCaseStudy from "../projects/AutomationProtocolCaseStudy";
-
 import NexusRWACaseStudy from "../projects/NexusRWACaseStudy";
 
-export default function UniversalModal({ selectedItem, activeType, closeModal }: any) {
+interface UniversalModalProps {
+  selectedItem: {
+    id?: string;
+    name?: string;
+    role?: string;
+    description?: string;
+    company?: string;
+    content?: Array<{ heading: string; text: string }>;
+  } | null;
+  activeType: "skill" | "project" | "experience" | null;
+  closeModal: () => void;
+}
+
+export default function UniversalModal({
+  selectedItem,
+  activeType,
+  closeModal,
+}: UniversalModalProps) {
+  useEffect(() => {
+    if (!selectedItem) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeModal();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [selectedItem, closeModal]);
+
   if (!selectedItem) return null;
 
   const renderContent = () => {
     if (activeType === "skill" || activeType === "experience") {
       return (
         <div className="p-8 md:p-12 text-slate-900 min-h-[50vh]">
-          <h2 className="text-4xl font-black mb-4">{selectedItem.name || selectedItem.role}</h2>
-          <p className="text-xl text-blue-600 mb-8">{selectedItem.description || selectedItem.company}</p>
-          {(selectedItem.content || []).map((c: any, i: number) => (
-            <div key={i} className="mb-6 p-6 bg-blue-50/50 rounded-2xl border border-blue-100">
-              <h4 className="font-bold text-blue-700 mb-2 uppercase tracking-widest text-sm">{c.heading}</h4>
+          <h2 className="font-display text-4xl font-bold mb-4">
+            {selectedItem.name || selectedItem.role}
+          </h2>
+          <p className="text-lg text-[#0052FF] mb-8">
+            {selectedItem.description || selectedItem.company}
+          </p>
+          {(selectedItem.content || []).map((c, i) => (
+            <div
+              key={i}
+              className="mb-6 p-6 bg-slate-50 rounded-2xl border border-slate-200/80"
+            >
+              <h4 className="font-mono-tabular font-semibold text-[#0052FF] mb-2 text-xs">
+                {c.heading}
+              </h4>
               <p className="text-slate-600 leading-relaxed">{c.text}</p>
             </div>
           ))}
@@ -39,13 +83,12 @@ export default function UniversalModal({ selectedItem, activeType, closeModal }:
     }
 
     const id = selectedItem.id;
-    
+
     if (id === "nexus-rwa") return <NexusRWACaseStudy />;
-    
     if (id === "onchain-automation") return <AutomationProtocolCaseStudy />;
-    if (id === "sentinel-insurance") return <InsuranceProtocol />; 
-    if (id === "fs4") return <ReputationCaseStudy />; 
-    if (id === "fs3") return <NexusPolkaCaseStudy />; 
+    if (id === "sentinel-insurance") return <InsuranceProtocol />;
+    if (id === "fs4") return <ReputationCaseStudy />;
+    if (id === "fs3") return <NexusPolkaCaseStudy />;
     if (id === "fs1") return <NexusCaseStudy />;
     if (id === "fs2") return <SentinelCaseStudy />;
     if (id === "c1") return <StableCoinCaseStudy />;
@@ -59,31 +102,45 @@ export default function UniversalModal({ selectedItem, activeType, closeModal }:
 
     return (
       <div className="p-20 text-center min-h-[50vh] flex flex-col items-center justify-center">
-        <h3 className="text-2xl font-black mb-4 text-slate-800">Under Construction 🚧</h3>
-        <p className="text-slate-500">The detailed case study is being written.</p>
+        <h3 className="font-display text-2xl font-bold mb-3 text-slate-800">
+          Case Study Unavailable
+        </h3>
+        <p className="text-slate-500 text-sm">
+          The detailed architectural breakdown for this entry is being prepared.
+        </p>
       </div>
     );
   };
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-10">
-        <motion.div 
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Protocol case study"
+        className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-10"
+      >
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           onClick={closeModal}
-          className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" 
+          className="absolute inset-0 bg-[#0B1220]/45 backdrop-blur-sm"
         />
-        <motion.div 
-          initial={{ y: 50, opacity: 0, scale: 0.95 }}
+        <motion.div
+          initial={{ y: 32, opacity: 0, scale: 0.97 }}
           animate={{ y: 0, opacity: 1, scale: 1 }}
-          exit={{ y: 50, opacity: 0, scale: 0.95 }}
-          className="relative w-full max-w-5xl max-h-full overflow-y-auto rounded-[40px] bg-white/90 backdrop-blur-2xl border border-white/50 shadow-[0_20px_80px_rgba(0,85,255,0.2)] custom-scrollbar-hide"
+          exit={{ y: 24, opacity: 0, scale: 0.97 }}
+          transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+          className="relative w-full max-w-5xl max-h-full overflow-y-auto rounded-[32px] bg-white/95 backdrop-blur-2xl border border-slate-200/90 shadow-[0_24px_80px_rgba(15,23,42,0.22)] custom-scrollbar-hide"
         >
-          <button 
-            onClick={closeModal} 
-            className="absolute top-6 right-6 z-[300] w-12 h-12 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+          <button
+            type="button"
+            onClick={closeModal}
+            aria-label="Close case study modal"
+            className="absolute top-5 right-5 z-[300] w-11 h-11 flex items-center justify-center rounded-full bg-white/90 border border-slate-200 text-slate-700 hover:bg-[#0052FF] hover:text-white hover:border-[#0052FF] transition-colors shadow-sm cursor-pointer"
           >
-            ✕
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
           {renderContent()}
         </motion.div>
