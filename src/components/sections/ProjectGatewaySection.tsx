@@ -146,16 +146,22 @@ function RefractiveBentoCard({
             {project.description}
           </p>
 
-          {/* Compact Verified Contract Preview on Wide Cards */}
+          {/* Compact Verified Contract Preview */}
           {project.contracts && project.contracts.length > 0 && (
-            <div className="mb-6 pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <div
+              className={`mb-6 pt-4 border-t border-slate-100 grid gap-2.5 ${
+                spanClass.includes("col-span-7")
+                  ? "grid-cols-1 sm:grid-cols-3"
+                  : "grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3"
+              }`}
+            >
               {project.contracts.map((contract) => (
                 <div
                   key={contract.address}
-                  className="px-3 py-2 rounded-xl bg-[#F8FAFC] border border-slate-200/70"
+                  className="px-3 py-2 rounded-xl bg-[#F8FAFC] border border-slate-200/70 min-w-0"
                 >
                   <p className="text-[11px] font-semibold text-[#0B1220] truncate">
-                    {contract.label}
+                    {contract.label.replace(".sol", "")}
                   </p>
                   <p className="text-[11px] font-mono-tabular text-slate-500">
                     {formatContractAddress(contract.address)}

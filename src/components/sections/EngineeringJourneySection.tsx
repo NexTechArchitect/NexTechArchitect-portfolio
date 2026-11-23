@@ -81,7 +81,7 @@ export default function EngineeringJourneySection() {
   return (
     <section
       id="insights"
-      className="relative bg-white border-t border-slate-200/80 py-20 sm:py-28 scroll-mt-20"
+      className="relative bg-white border-t border-slate-200/80 py-20 sm:py-28 scroll-mt-24"
     >
       <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
         {/* Section Heading */}
