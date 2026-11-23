@@ -1,31 +1,5 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import {
-  Bricolage_Grotesque,
-  Plus_Jakarta_Sans,
-  JetBrains_Mono,
-} from "next/font/google";
-
-const displayFont = Bricolage_Grotesque({
-  subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
-  variable: "--font-display",
-  display: "swap",
-});
-
-const bodyFont = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-sans",
-  display: "swap",
-});
-
-const monoFont = JetBrains_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-mono",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "NexTechArchitect | Amit Kumar, Smart Contract & DeFi Protocol Architect",
@@ -45,10 +19,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html
-      lang="en"
-      className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable} scroll-smooth`}
-    >
+    <html lang="en" className="scroll-smooth">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        />
+      </head>
       <body className="bg-[#F8FAFC] text-[#0B1220] font-sans antialiased selection:bg-[#0052FF]/15 selection:text-[#0052FF]">
         {children}
       </body>

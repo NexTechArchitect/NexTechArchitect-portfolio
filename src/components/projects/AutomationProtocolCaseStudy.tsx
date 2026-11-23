@@ -3,12 +3,10 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { Bricolage_Grotesque, JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
 
-const displayFont = Bricolage_Grotesque({ subsets: ["latin"], weight: ["600", "700", "800"] });
-const bodyFont = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600"] });
-const monoFont = JetBrains_Mono({ subsets: ["latin"], weight: ["500", "700"] });
-
+const displayFont = { className: "font-display" };
+const bodyFont = { className: "font-sans" };
+const monoFont = { className: "font-mono-tabular" };
 // ─── HIGH-END 3D WEBGL-STYLE CANVAS ──────────────────────────────────────────
 function Premium3DCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
