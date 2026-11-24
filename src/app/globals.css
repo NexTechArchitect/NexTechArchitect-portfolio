@@ -1,31 +1,45 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-background: #F8FAFC;
-  --color-foreground: #0B1220;
-  --color-accent: #0052FF;
-  --color-accent-teal: #0891B2;
-  --font-display: "Bricolage Grotesque", system-ui, sans-serif;
-  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
+  --color-ivory: #FAF6F0;
+  --color-sand: #F3ECE1;
+  --color-espresso: #231712;
+  --color-umber: #5C4B43;
+  --color-bronze: #8C7A6B;
+  --color-burnt: #E85D04;
+  --color-amber: #F48C06;
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
 :root {
   color-scheme: light;
-  --font-display: "Bricolage Grotesque", system-ui, sans-serif;
-  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
+  --bg-ivory: #FAF6F0;
+  --bg-sand: #F3ECE1;
+  --ink-espresso: #231712;
+  --ink-umber: #5C4B43;
+  --ink-bronze: #8C7A6B;
+  --accent-burnt: #E85D04;
+  --accent-amber: #F48C06;
+  --hairline-bronze: rgba(35, 23, 18, 0.12);
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
 html {
   scroll-behavior: smooth;
+  background-color: #FAF6F0;
 }
 
+/* Never apply overflow: hidden to html or body to preserve smooth native scroll */
 body {
-  background-color: #F8FAFC;
-  color: #0B1220;
+  background-color: #FAF6F0;
+  color: #231712;
   font-family: var(--font-sans);
-  overflow-x: hidden;
+  min-height: 100%;
 }
 
 .font-display {
@@ -37,48 +51,71 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* Crisp 1px architectural hairline grid */
-.architectural-grid {
+/* Frosted Cream Glass for floating editorial surfaces */
+.cream-glass {
+  background: rgba(255, 252, 247, 0.82);
+  backdrop-filter: blur(18px) saturate(125%);
+  -webkit-backdrop-filter: blur(18px) saturate(125%);
+  border: 1px solid rgba(35, 23, 18, 0.12);
+}
+
+.cream-glass-solid {
+  background: rgba(255, 252, 247, 0.96);
+  border: 1px solid rgba(35, 23, 18, 0.12);
+}
+
+.hairline-bronze {
+  border-color: rgba(35, 23, 18, 0.12);
+}
+
+/* Subtle warm architectural drafting grid on Creamy Ivory */
+.editorial-drafting-grid {
   background-image:
-    linear-gradient(to right, rgba(15, 23, 42, 0.045) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(15, 23, 42, 0.045) 1px, transparent 1px);
-  background-size: 64px 64px;
+    linear-gradient(to right, rgba(35, 23, 18, 0.038) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(35, 23, 18, 0.038) 1px, transparent 1px);
+  background-size: 72px 72px;
 }
 
-/* Frosted optical glass surface */
-.glass-surface {
-  background: rgba(255, 255, 255, 0.78);
-  backdrop-filter: blur(18px) saturate(140%);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
-  border: 1px solid rgba(15, 23, 42, 0.08);
+/* Perspective stage for scroll-linked architectural depth */
+.perspective-stage {
+  perspective: 1400px;
+  transform-style: preserve-3d;
 }
 
-.glass-surface-strong {
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(22px) saturate(150%);
-  -webkit-backdrop-filter: blur(22px) saturate(150%);
-  border: 1px solid rgba(15, 23, 42, 0.1);
+/* Subtle pulsing warm aura for the Studio Agent geometric orb */
+@keyframes agentAuraPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.42;
+  }
+  50% {
+    transform: scale(1.16);
+    opacity: 0.18;
+  }
 }
 
-/* Optical cobalt to teal ink gradient */
-.text-optical-gradient {
-  background: linear-gradient(105deg, #0052FF 0%, #0284C7 52%, #0891B2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.agent-orb-aura {
+  animation: agentAuraPulse 3.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
-/* Hide scrollbars cleanly where intentional */
-.custom-scrollbar-hide::-webkit-scrollbar {
-  display: none;
+/* Clean custom scrollbars inside agent console */
+.studio-scroll::-webkit-scrollbar {
+  width: 5px;
 }
-.custom-scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+.studio-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.studio-scroll::-webkit-scrollbar-thumb {
+  background: rgba(35, 23, 18, 0.16);
+  border-radius: 9999px;
 }
 
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+  .agent-orb-aura {
+    animation: none;
   }
 }

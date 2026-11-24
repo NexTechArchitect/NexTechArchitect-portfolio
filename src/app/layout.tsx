@@ -4,11 +4,11 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "NexTechArchitect | Amit Kumar, Smart Contract & DeFi Protocol Architect",
   description:
-    "Smart Contract Engineer and DeFi Protocol Architect. Six production DeFi protocols deployed on Base Mainnet spanning ERC-3643 RWA compliance, ERC-4626 Aave V3 vaults, O(1) keeper automation, and 50x perpetuals infrastructure.",
+    "Amit Kumar (NexTechArchitect), Smart Contract Engineer and DeFi Protocol Architect designing and deploying multi-contract systems across Ethereum and EVM-compatible mainnets.",
   openGraph: {
     title: "NexTechArchitect | Amit Kumar, DeFi Protocol Architect",
     description:
-      "Production DeFi architecture on Base Mainnet: ERC-3643 RWA tokenization, ERC-4626 Aave V3 vaults, O(1) Yul automation, Foundry invariant fuzzing, and Slither static analysis.",
+      "Multi-contract DeFi, ERC-3643 real-world asset, ERC-4626 vault, and ERC-4337 account abstraction systems engineered for Ethereum and EVM mainnets.",
     type: "website",
   },
 };
@@ -29,10 +29,10 @@ export default function RootLayout({
         />
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,600;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
         />
       </head>
-      <body className="bg-[#F8FAFC] text-[#0B1220] font-sans antialiased selection:bg-[#0052FF]/15 selection:text-[#0052FF]">
+      <body className="bg-[#FAF6F0] text-[#231712] font-sans antialiased selection:bg-[#E85D04]/15 selection:text-[#E85D04]">
         {children}
       </body>
     </html>
