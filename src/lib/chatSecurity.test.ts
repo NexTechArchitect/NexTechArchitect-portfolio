@@ -1,12 +1,85 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  GEMINI_MODELS,
   InMemoryRateLimiter,
   MAX_HISTORY_TURNS,
   MAX_MESSAGE_LENGTH,
+  buildModelGenerateConfig,
+  extractGeminiText,
+  extractUpstreamErrorInfo,
   isAllowedRequestOrigin,
+  resolveApiKey,
   validateChatPayload,
 } from "./chatSecurity";
+
+test("resolveApiKey ignores placeholder values like 'Gemini' and selects valid AIza key in priority order", () => {
+  assert.equal(resolveApiKey("Gemini", "", undefined, null), "");
+  assert.equal(resolveApiKey("AIzaShortKey"), "");
+  assert.equal(
+    resolveApiKey('  "AIzaSyRealKeyFromApiKey1234567890"  ', "Gemini"),
+    "AIzaSyRealKeyFromApiKey1234567890"
+  );
+  assert.equal(
+    resolveApiKey("Gemini", "AIzaSyFallbackGeminiKey1234567890"),
+    "AIzaSyFallbackGeminiKey1234567890"
+  );
+  assert.equal(
+    resolveApiKey(
+      "AIzaSyPrimaryApiKey1234567890123",
+      "AIzaSySecondaryGeminiKey123456789"
+    ),
+    "AIzaSyPrimaryApiKey1234567890123"
+  );
+});
+
+test("GEMINI_MODELS uses only production-stable gemini-2.5-flash and gemini-2.0-flash", () => {
+  assert.deepEqual([...GEMINI_MODELS], ["gemini-2.5-flash", "gemini-2.0-flash"]);
+});
+
+test("extractGeminiText ignores thought parts and falls back cleanly from getter to candidates parts", () => {
+  assert.equal(extractGeminiText({ text: "Hello from Gemini" }), "Hello from Gemini");
+  assert.equal(
+    extractGeminiText({
+      candidates: [
+        {
+          content: {
+            parts: [
+              { text: "internal reasoning", thought: true },
+              { text: "Visible answer" },
+            ],
+          },
+        },
+      ],
+    }),
+    "Visible answer"
+  );
+  assert.equal(
+    extractGeminiText({
+      get text() {
+        throw new Error("no text part");
+      },
+      candidates: [{ content: { parts: [{ text: "Recovered text" }] } }],
+    }),
+    "Recovered text"
+  );
+});
+
+test("buildModelGenerateConfig disables thinking budget on gemini-2.5-flash only", () => {
+  const cfg25 = buildModelGenerateConfig("gemini-2.5-flash", "sys");
+  assert.deepEqual(cfg25.thinkingConfig, { thinkingBudget: 0 });
+  const cfg20 = buildModelGenerateConfig("gemini-2.0-flash", "sys");
+  assert.equal(cfg20.thinkingConfig, undefined);
+});
+
+test("extractUpstreamErrorInfo extracts status and redacts accidental API key values", () => {
+  const info = extractUpstreamErrorInfo({
+    status: 403,
+    message: "API key AIzaSySecretValue123456789012345 rejected",
+  });
+  assert.equal(info.status, 403);
+  assert.equal(info.message, "API key [REDACTED_KEY] rejected");
+});
 
 test("InMemoryRateLimiter enforces 20 req/min per IP and resets after window", () => {
   const limiter = new InMemoryRateLimiter(3, 60_000);

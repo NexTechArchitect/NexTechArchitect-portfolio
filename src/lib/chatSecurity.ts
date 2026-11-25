@@ -1,5 +1,10 @@
 import type { ConversationTurnInput } from "./agentSystemPrompt";
 
+export const GEMINI_MODELS = [
+  "gemini-2.5-flash",
+  "gemini-2.0-flash",
+] as const;
+
 export const MAX_BODY_BYTES = 32_768;
 export const MAX_MESSAGE_LENGTH = 1_000;
 export const MAX_HISTORY_TURNS = 10;
@@ -7,6 +12,108 @@ export const MAX_HISTORY_TURN_LENGTH = 2_000;
 export const RATE_LIMIT_MAX_REQUESTS = 20;
 export const RATE_LIMIT_WINDOW_MS = 60_000;
 const MAX_TRACKED_IPS = 2_000;
+
+/**
+ * Resolves the first valid Gemini API key from candidate environment values.
+ * Ignores placeholder strings (such as "Gemini") by requiring a real Google
+ * API key prefix ("AIza") and length > 20 characters.
+ */
+export function resolveApiKey(
+  ...candidates: Array<string | undefined | null>
+): string {
+  for (const raw of candidates) {
+    if (typeof raw !== "string") continue;
+    const trimmed = raw
+      .trim()
+      .replace(/^["']|["']$/g, "")
+      .trim();
+    if (trimmed.length > 20 && trimmed.startsWith("AIza")) {
+      return trimmed;
+    }
+  }
+  return "";
+}
+
+/**
+ * Extracts HTTP status/code and sanitized error message for server logging
+ * without ever exposing API keys in logs.
+ */
+export function extractUpstreamErrorInfo(err: unknown): {
+  status: number | string;
+  message: string;
+} {
+  const errObj =
+    err && typeof err === "object" ? (err as Record<string, unknown>) : null;
+  const rawStatus = errObj?.status ?? errObj?.code;
+  const status =
+    typeof rawStatus === "number" || typeof rawStatus === "string"
+      ? rawStatus
+      : "unknown";
+  const rawMessage =
+    err instanceof Error
+      ? err.message
+      : typeof errObj?.message === "string"
+      ? errObj.message
+      : String(err ?? "Unknown upstream error");
+  const sanitizedMessage = rawMessage.replace(/AIza[A-Za-z0-9_-]+/g, "[REDACTED_KEY]");
+  return { status, message: sanitizedMessage };
+}
+
+/**
+ * Safely extracts visible (non-thought) text from a @google/genai chunk or response.
+ */
+export function extractGeminiText(chunk: unknown): string {
+  if (!chunk || typeof chunk !== "object") return "";
+  const record = chunk as {
+    text?: unknown;
+    candidates?: Array<{
+      content?: {
+        parts?: Array<{ text?: unknown; thought?: unknown }>;
+      };
+    }>;
+  };
+
+  try {
+    if (typeof record.text === "string" && record.text.length > 0) {
+      return record.text;
+    }
+  } catch {
+    // Some SDK response getters can throw if no text part exists; fall back to candidates
+  }
+
+  const parts = record.candidates?.[0]?.content?.parts;
+  if (!Array.isArray(parts)) return "";
+
+  let combined = "";
+  for (const part of parts) {
+    if (!part || typeof part !== "object") continue;
+    if (part.thought === true) continue;
+    if (typeof part.text === "string" && part.text.length > 0) {
+      combined += part.text;
+    }
+  }
+  return combined;
+}
+
+/**
+ * Builds per-model generation config. Disables dynamic thinking on Gemini 2.5
+ * models so streaming delivers instant visible tokens without silent proxy pauses.
+ */
+export function buildModelGenerateConfig(
+  model: string,
+  systemInstruction: string
+): {
+  systemInstruction: string;
+  thinkingConfig?: { thinkingBudget: number };
+} {
+  if (model.startsWith("gemini-2.5")) {
+    return {
+      systemInstruction,
+      thinkingConfig: { thinkingBudget: 0 },
+    };
+  }
+  return { systemInstruction };
+}
 
 export interface RateLimitResult {
   allowed: boolean;
@@ -18,6 +125,7 @@ export interface ValidatedChatPayload {
   ok: true;
   message: string;
   history: ConversationTurnInput[];
+  stream: boolean;
 }
 
 export interface InvalidChatPayload {
@@ -242,5 +350,6 @@ export function validateChatPayload(rawPayload: unknown): ChatPayloadValidation 
     ok: true,
     message,
     history: sanitizedHistory.slice(-MAX_HISTORY_TURNS),
+    stream: record.stream !== false,
   };
 }

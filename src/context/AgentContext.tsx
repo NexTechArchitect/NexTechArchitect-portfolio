@@ -220,25 +220,20 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
 
         if (requestSeqRef.current !== seq) return;
 
-        if (result.ok) {
-          setIsThinking(false);
-          speakText(result.text);
-          return;
-        }
-
         setIsThinking(false);
-        setActiveTopic("error");
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: assistantId,
-            role: "assistant",
-            text: result.error,
-            topic: "error",
-            isError: true,
-            retryPrompt: trimmed,
-          },
-        ]);
+        if (!streamedInserted) {
+          setActiveTopic(result.mode === "gemini" ? "live" : "local");
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: assistantId,
+              role: "assistant",
+              text: result.text,
+              topic: result.mode === "gemini" ? "live" : "local",
+            },
+          ]);
+        }
+        speakText(result.text);
       })();
     },
     [speakText]

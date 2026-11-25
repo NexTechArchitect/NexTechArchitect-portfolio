@@ -47,15 +47,70 @@ export default function HeroSection({
     <section
       id="top"
       ref={heroRef}
-      className="relative bg-[#FAF6F0] silk-grain pt-24 sm:pt-28 lg:pt-32 overflow-x-clip"
+      className="relative bg-[#FAF6F0] silk-grain overflow-x-clip"
     >
+      {/* Top Architectural Canopy: Deep Obsidian Espresso (#140E0B) -> Warm Ivory (#FAF6F0) Concave Curve & Burnt-Orange Rim */}
+      <div
+        aria-hidden="true"
+        data-testid="hero-top-canopy"
+        className="pointer-events-none relative w-full bg-[#140E0B] silk-grain-dark overflow-hidden"
+      >
+        <div
+          className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 w-[72%] max-w-[980px] h-[170px] rounded-full opacity-45"
+          style={{
+            background:
+              "radial-gradient(ellipse at center, rgba(232, 93, 4, 0.28) 0%, rgba(217, 107, 39, 0.1) 48%, rgba(20, 14, 11, 0) 76%)",
+          }}
+        />
+        {/* Upper Dark Espresso Band Framing the Floating Navbar */}
+        <div className="h-[92px] sm:h-[104px] lg:h-[110px]" />
+
+        {/* Concave Dark-to-Light Curve & Glowing Burnt-Orange Hairline */}
+        <div className="pointer-events-none relative w-full leading-none">
+          <svg
+            viewBox="0 0 1440 124"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            preserveAspectRatio="none"
+            className="pointer-events-none block w-full h-[46px] sm:h-[58px] lg:h-[68px]"
+          >
+            <defs>
+              <linearGradient
+                id="topCanopyRimStroke"
+                x1="0"
+                y1="0"
+                x2="1440"
+                y2="0"
+                gradientUnits="userSpaceOnUse"
+              >
+                <stop offset="0%" stopColor="#D96B27" stopOpacity="0.16" />
+                <stop offset="28%" stopColor="#E85D04" stopOpacity="0.72" />
+                <stop offset="50%" stopColor="#F48C06" stopOpacity="0.95" />
+                <stop offset="72%" stopColor="#E85D04" stopOpacity="0.72" />
+                <stop offset="100%" stopColor="#D96B27" stopOpacity="0.16" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M0 124V92C360 10 1080 10 1440 92V124H0Z"
+              fill="#FAF6F0"
+            />
+            <path
+              d="M0 92C360 10 1080 10 1440 92"
+              stroke="url(#topCanopyRimStroke)"
+              strokeWidth="2.2"
+              vectorEffect="non-scaling-stroke"
+            />
+          </svg>
+        </div>
+      </div>
+
       {/* Organic layered apricot & warm amber studio light diffusion */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -top-24 right-[-6%] w-[680px] h-[680px] rounded-full opacity-75"
+        className="pointer-events-none absolute top-28 right-[-6%] w-[640px] h-[640px] rounded-full opacity-70"
         style={{
           background:
-            "radial-gradient(circle, rgba(244, 140, 6, 0.16) 0%, rgba(232, 93, 4, 0.08) 38%, rgba(250, 246, 240, 0) 72%)",
+            "radial-gradient(circle, rgba(244, 140, 6, 0.15) 0%, rgba(232, 93, 4, 0.07) 38%, rgba(250, 246, 240, 0) 72%)",
         }}
       />
       <div
@@ -67,9 +122,9 @@ export default function HeroSection({
         }}
       />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 lg:pt-8 pb-4 sm:pb-6">
         {/* 2-Column Editorial Hero Split */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center min-h-[480px] lg:min-h-[530px]">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center min-h-[460px] lg:min-h-[500px]">
           {/* Left Column: Commanding Upright Sora Typography & Humanized Senior Narrative */}
           <div className="lg:col-span-7 flex flex-col justify-center">
             <p className="text-[13px] sm:text-sm font-mono-tabular tracking-[0.04em] text-[#7D6C61]">

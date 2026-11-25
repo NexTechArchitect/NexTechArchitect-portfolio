@@ -14,6 +14,12 @@ interface AmitAvatar3DProps {
   onScrollToContact: () => void;
 }
 
+const WELCOME_HEADLINES = [
+  "Hi there, I'm Amit.",
+  "Welcome to my portfolio.",
+  "Let's explore DeFi systems.",
+] as const;
+
 function detectSoftwareWebGL(): boolean {
   if (typeof document === "undefined") return true;
   try {
@@ -46,8 +52,8 @@ function createContactShadowTexture(): THREE.CanvasTexture {
       size * 0.48
     );
     gradient.addColorStop(0, "rgba(24, 17, 13, 0.28)");
-    gradient.addColorStop(0.55, "rgba(36, 26, 21, 0.11)");
-    gradient.addColorStop(1, "rgba(251, 248, 243, 0)");
+    gradient.addColorStop(0.55, "rgba(36, 26, 21, 0.1)");
+    gradient.addColorStop(1, "rgba(250, 246, 240, 0)");
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, size, size);
   }
@@ -66,6 +72,7 @@ export default function AmitAvatar3D({
   const mountRef = useRef<HTMLDivElement | null>(null);
   const waveProgressRef = useRef(0);
   const [webglReady, setWebglReady] = useState(true);
+  const [welcomeIndex, setWelcomeIndex] = useState(0);
   const [activeSpotlightIndex, setActiveSpotlightIndex] = useState(0);
   const [isSpotlightPaused, setIsSpotlightPaused] = useState(false);
 
@@ -121,7 +128,20 @@ export default function AmitAvatar3D({
     ]
   );
 
-  // Auto-rotate frameless studio prompts every 1.8 seconds (pauses smoothly on hover/focus or reduced motion)
+  // Cycle refined welcome headline above the 3D avatar every 2.8 seconds
+  useEffect(() => {
+    const prefersReducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReducedMotion) return;
+
+    const interval = window.setInterval(() => {
+      setWelcomeIndex((prev) => (prev + 1) % WELCOME_HEADLINES.length);
+    }, 2800);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  // Auto-rotate compact quick-action prompt below the 3D avatar every 1.8 seconds
   useEffect(() => {
     if (isSpotlightPaused) return;
     const prefersReducedMotion =
@@ -135,7 +155,7 @@ export default function AmitAvatar3D({
     return () => window.clearInterval(interval);
   }, [isSpotlightPaused, spotlightItems.length]);
 
-  // Automatic smooth welcome wave & nod gesture on initial page landing (zero auto-audio)
+  // Automatic smooth welcome wave & nod gesture on initial page landing
   useEffect(() => {
     const prefersReducedMotion =
       typeof window !== "undefined" &&
@@ -185,8 +205,8 @@ export default function AmitAvatar3D({
     );
     renderer.setClearColor(0x000000, 0);
 
-    const initialW = Math.max(container.clientWidth, 300);
-    const initialH = Math.max(container.clientHeight, 320);
+    const initialW = Math.max(container.clientWidth, 280);
+    const initialH = Math.max(container.clientHeight, 280);
     renderer.setSize(initialW, initialH, false);
     renderer.domElement.style.width = "100%";
     renderer.domElement.style.height = "100%";
@@ -213,27 +233,27 @@ export default function AmitAvatar3D({
       0.1,
       40
     );
-    camera.position.set(0, 0.36, 6.25);
+    camera.position.set(0, 0.24, 5.85);
     camera.lookAt(0, 0.22, 0);
 
-    // Warm 3-point Spline-inspired Studio Lighting + Burnt Orange Rim Glow
-    const hemiLight = new THREE.HemisphereLight(0xfffaf3, 0xbca590, 1.3);
+    // Soft Warm 3-Point Editorial Studio Lighting
+    const hemiLight = new THREE.HemisphereLight(0xfffaf3, 0xbca590, 1.32);
     scene.add(hemiLight);
 
-    const keyLight = new THREE.DirectionalLight(0xfff3e4, 2.05);
+    const keyLight = new THREE.DirectionalLight(0xfff4e6, 2.15);
     keyLight.position.set(4.2, 5.8, 5.4);
     scene.add(keyLight);
 
-    const fillLight = new THREE.DirectionalLight(0xf3e4d4, 0.95);
+    const fillLight = new THREE.DirectionalLight(0xf3e4d4, 0.98);
     fillLight.position.set(-4.5, 2.4, 3.8);
     scene.add(fillLight);
 
-    const rimLight = new THREE.PointLight(0xe85d04, 3.8, 15, 1.5);
-    rimLight.position.set(-2.8, 2.0, -2.5);
+    const rimLight = new THREE.PointLight(0xe85d04, 3.6, 15, 1.45);
+    rimLight.position.set(-2.8, 2.1, -2.2);
     scene.add(rimLight);
 
-    const warmBounce = new THREE.PointLight(0xd96b27, 1.5, 12, 1.5);
-    warmBounce.position.set(2.8, -0.4, 2.6);
+    const warmBounce = new THREE.PointLight(0xd96b27, 1.45, 12, 1.5);
+    warmBounce.position.set(2.6, -0.4, 2.8);
     scene.add(warmBounce);
 
     const disposablesGeo: THREE.BufferGeometry[] = [];
@@ -248,7 +268,7 @@ export default function AmitAvatar3D({
       return m;
     };
 
-    // Matte & Satin PBR Material Palette (roughness varied >= 0.25 across adjacent zones)
+    // Matte & Satin PBR Character Material Palette
     const skinMat = trackMat(
       new THREE.MeshStandardMaterial({
         color: 0xd9a07b,
@@ -316,36 +336,39 @@ export default function AmitAvatar3D({
     const catchlightMat = trackMat(
       new THREE.MeshBasicMaterial({ color: 0xfffaf2 })
     );
+
     const rootGroup = new THREE.Group();
-    rootGroup.position.set(0, -0.02, 0);
+    rootGroup.position.set(0, 0, 0);
     scene.add(rootGroup);
 
-    // 1. Soft Ambient Floating Shadow Beneath Bust (Zero Pedestal, Zero Ring)
+    // 1. Soft Ambient Floating Shadow Beneath Bust
     const shadowTexture = createContactShadowTexture();
     const shadowMesh = new THREE.Mesh(
-      trackGeo(new THREE.CircleGeometry(1.45, 36)),
+      trackGeo(new THREE.CircleGeometry(1.18, 36)),
       trackMat(
         new THREE.MeshBasicMaterial({
           map: shadowTexture,
           transparent: true,
           depthWrite: false,
-          opacity: 0.44,
+          opacity: 0.4,
         })
       )
     );
     shadowMesh.rotation.x = -Math.PI / 2;
-    shadowMesh.position.set(0, -1.32, 0);
+    shadowMesh.position.set(0, -1.06, 0.1);
     rootGroup.add(shadowMesh);
 
-    // 2. Floating Character Rig (Clean Stylized Portrait Bust)
+    // 2. Clean Compact Character Rig (~0.95x scale)
     const characterRig = new THREE.Group();
-    characterRig.position.set(0, -0.88, 0);
+    const BASE_CHARACTER_Y = -0.82;
+    characterRig.position.set(0, BASE_CHARACTER_Y, 0.1);
+    characterRig.scale.setScalar(0.95);
     rootGroup.add(characterRig);
 
     const upperBody = new THREE.Group();
     characterRig.add(upperBody);
 
-    // Tailored sculpted matte espresso hoodie bust with smooth rounded floating hem
+    // Tailored sculpted matte espresso hoodie bust
     const torsoProfile = [
       new THREE.Vector2(0.01, 0.04),
       new THREE.Vector2(0.32, 0.06),
@@ -375,7 +398,7 @@ export default function AmitAvatar3D({
     shoulders.position.set(0, 0.96, -0.02);
     upperBody.add(shoulders);
 
-    // Sculpted hoodie collar + crisp burnt-orange inner accent trim
+    // Sculpted hoodie collar + burnt-orange inner accent trim
     const outerCollar = new THREE.Mesh(
       trackGeo(new THREE.TorusGeometry(0.31, 0.095, 18, 36)),
       hoodieMat
@@ -392,7 +415,7 @@ export default function AmitAvatar3D({
     burntOrangeCollarAccent.position.set(0, 1.23, 0.04);
     upperBody.add(burntOrangeCollarAccent);
 
-    // Minimal front zipper / seam accent with copper pull
+    // Minimal front zipper accent
     const frontSeam = new THREE.Mesh(
       trackGeo(new THREE.CapsuleGeometry(0.012, 0.36, 8, 12)),
       copperMetalMat
@@ -415,7 +438,7 @@ export default function AmitAvatar3D({
       upperBody.add(aglet);
     });
 
-    // Seamless Left Arm (relaxed natural posture)
+    // Left Arm (relaxed natural posture)
     const leftArmGroup = new THREE.Group();
     leftArmGroup.position.set(-0.59, 0.94, 0);
     upperBody.add(leftArmGroup);
@@ -469,7 +492,7 @@ export default function AmitAvatar3D({
     leftThumb.rotation.z = -0.65;
     leftHandGroup.add(leftThumb);
 
-    // Seamless Right Arm (articulated shoulder -> forearm -> hand for friendly click wave)
+    // Right Arm (articulated shoulder -> forearm -> hand for friendly wave)
     const rightShoulderPivot = new THREE.Group();
     rightShoulderPivot.position.set(0.59, 0.94, 0);
     upperBody.add(rightShoulderPivot);
@@ -535,12 +558,11 @@ export default function AmitAvatar3D({
     neck.position.set(0, 1.32, 0.01);
     upperBody.add(neck);
 
-    // 3. Articulated Head Group (smooth pointer tracking + warm nod)
+    // Articulated Head Group
     const headGroup = new THREE.Group();
     headGroup.position.set(0, 1.77, 0.02);
     upperBody.add(headGroup);
 
-    // Sculpted clean oval head
     const headMesh = new THREE.Mesh(
       trackGeo(new THREE.SphereGeometry(0.51, 36, 36)),
       skinMat
@@ -548,7 +570,6 @@ export default function AmitAvatar3D({
     headMesh.scale.set(0.9, 1.08, 0.95);
     headGroup.add(headMesh);
 
-    // Soft refined chin taper
     const chin = new THREE.Mesh(
       trackGeo(new THREE.SphereGeometry(0.21, 24, 24)),
       skinMat
@@ -557,7 +578,6 @@ export default function AmitAvatar3D({
     chin.position.set(0, -0.36, 0.14);
     headGroup.add(chin);
 
-    // Rounded stylized ears
     const earGeo = trackGeo(new THREE.SphereGeometry(0.095, 18, 18));
     [-0.45, 0.45].forEach((x) => {
       const ear = new THREE.Mesh(earGeo, skinShadowMat);
@@ -566,7 +586,7 @@ export default function AmitAvatar3D({
       headGroup.add(ear);
     });
 
-    // Sleek Modern Styled Hair (contoured crown + low-profile diagonal sweep + clean faded sides)
+    // Sleek Modern Styled Hair
     const hairCrown = new THREE.Mesh(
       trackGeo(new THREE.SphereGeometry(0.525, 36, 36)),
       hairMat
@@ -615,7 +635,7 @@ export default function AmitAvatar3D({
     hairBack.position.set(0, 0.04, -0.22);
     headGroup.add(hairBack);
 
-    // Expressive Cursor-Tracking Eyes
+    // Cursor-Tracking Eyes
     const createEye = (xOffset: number) => {
       const eyeSocket = new THREE.Group();
       eyeSocket.position.set(xOffset, 0.03, 0.43);
@@ -651,7 +671,6 @@ export default function AmitAvatar3D({
     const leftPupil = createEye(-0.165);
     const rightPupil = createEye(0.165);
 
-    // Clean matte eyebrows
     const browGeo = trackGeo(new THREE.CapsuleGeometry(0.019, 0.115, 8, 12));
     const leftBrow = new THREE.Mesh(browGeo, hairMat);
     leftBrow.position.set(-0.165, 0.165, 0.445);
@@ -663,7 +682,7 @@ export default function AmitAvatar3D({
     rightBrow.rotation.z = Math.PI / 2 + 0.07;
     headGroup.add(rightBrow);
 
-    // Minimal thin brushed-bronze architect glasses
+    // Thin brushed-bronze architect glasses
     const glassesGroup = new THREE.Group();
     glassesGroup.position.set(0, 0.03, 0.505);
     headGroup.add(glassesGroup);
@@ -693,7 +712,6 @@ export default function AmitAvatar3D({
       glassesGroup.add(temple);
     });
 
-    // Clean minimal sculpted nose
     const nose = new THREE.Mesh(
       trackGeo(new THREE.CapsuleGeometry(0.03, 0.068, 10, 14)),
       skinShadowMat
@@ -702,7 +720,6 @@ export default function AmitAvatar3D({
     nose.rotation.x = 0.22;
     headGroup.add(nose);
 
-    // Friendly warm smile arc
     const smile = new THREE.Mesh(
       trackGeo(new THREE.TorusGeometry(0.098, 0.014, 10, 24, Math.PI * 0.7)),
       trackMat(
@@ -721,11 +738,9 @@ export default function AmitAvatar3D({
       renderer.compile(scene, camera);
     }
 
-    // Visibility flags declared before pointer listeners to avoid offscreen layout thrashing
     let isVisible = true;
     let isTabVisible = !document.hidden;
 
-    // Cursor tracking + breathing + click wave animation state
     let targetX = 0;
     let targetY = 0;
     let currentX = 0;
@@ -761,7 +776,7 @@ export default function AmitAvatar3D({
 
       // Gentle idle breathing
       const breath = Math.sin(elapsed * 1.9);
-      upperBody.position.y = breath * 0.022;
+      upperBody.position.y = breath * 0.02;
       upperBody.scale.set(1 + breath * 0.008, 1 + breath * 0.01, 1);
 
       // Friendly wave & warm nod decay
@@ -773,7 +788,6 @@ export default function AmitAvatar3D({
           waveProgressRef.current - dt * 0.44
         );
         const p = waveProgressRef.current;
-        // Smooth ease-in-out envelope
         waveAmount = Math.sin(p * Math.PI);
         nodOffset = Math.sin(p * Math.PI * 2) * 0.12 * waveAmount;
       }
@@ -808,9 +822,9 @@ export default function AmitAvatar3D({
       );
       rightHandGroup.rotation.z = waveOsc * 0.6;
 
-      // Gentle studio floating drift & subtle body sway (shadow breathes inversely)
-      const floatY = Math.sin(elapsed * 1.35) * 0.045;
-      characterRig.position.y = -0.88 + floatY;
+      // Gentle studio floating drift & subtle body sway
+      const floatY = Math.sin(elapsed * 1.35) * 0.04;
+      characterRig.position.y = BASE_CHARACTER_Y + floatY;
       characterRig.rotation.y = Math.sin(elapsed * 0.6) * 0.055 + currentX * 0.11;
       const shadowScale = 1 - floatY * 0.65;
       shadowMesh.scale.set(shadowScale, shadowScale, 1);
@@ -834,7 +848,7 @@ export default function AmitAvatar3D({
     let frameId = 0;
     let timerId = 0;
     let lastTime = performance.now();
-    let elapsed = 0.4;
+    let elapsed = 0.85;
 
     const scheduleSoftwareNext = (cb: () => void) => {
       const gl = renderer.getContext() as WebGL2RenderingContext | null;
@@ -945,8 +959,41 @@ export default function AmitAvatar3D({
 
   return (
     <div className="relative w-full flex flex-col items-center">
-      {/* Clean Floating 3D Character (Click plays friendly wave & opens Ask Agent) */}
-      <div className="relative w-full h-[250px] sm:h-[296px] lg:h-[322px]">
+      {/* Refined Animated Welcome Headline Above 3D Avatar (Zero Box, Zero Border) */}
+      <div
+        data-testid="avatar-welcome-headline"
+        className="relative z-20 min-h-[38px] mb-2 flex items-center justify-center text-center"
+      >
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={WELCOME_HEADLINES[welcomeIndex]}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
+            className="inline-flex items-center gap-2.5"
+          >
+            <span
+              aria-hidden="true"
+              className="w-2 h-2 rounded-full bg-[#E85D04] shrink-0"
+            />
+            <p className="font-display text-xl sm:text-2xl font-semibold tracking-tight text-[#1C1410]">
+              {WELCOME_HEADLINES[welcomeIndex]}
+            </p>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* Compact Studio Stage + Interactive 3D Amit Character (~0.95x, Clean Soft Studio Lighting) */}
+      <div className="relative w-full max-w-[360px] h-[280px] sm:h-[310px]">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-4 rounded-full opacity-75"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(244, 140, 6, 0.14) 0%, rgba(232, 93, 4, 0.05) 48%, rgba(250, 246, 240, 0) 74%)",
+          }}
+        />
         {webglReady ? (
           <div
             ref={mountRef}
@@ -960,13 +1007,13 @@ export default function AmitAvatar3D({
                 handleAvatarClick();
               }
             }}
-            className="w-full h-full cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] rounded-3xl"
+            className="relative z-10 w-full h-full cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] rounded-3xl"
           />
         ) : (
           <button
             type="button"
             onClick={handleAvatarClick}
-            className="w-full h-full rounded-3xl bg-[#F0E7DB] border border-[#18110D]/12 flex flex-col items-center justify-center p-8 text-center cursor-pointer"
+            className="relative z-10 w-full h-full rounded-3xl bg-[#F0E7DB] border border-[#18110D]/12 flex flex-col items-center justify-center p-8 text-center cursor-pointer"
           >
             <span className="w-16 h-16 rounded-full bg-[#18110D] text-[#FBF8F3] font-display font-bold text-xl flex items-center justify-center">
               AK
@@ -978,14 +1025,14 @@ export default function AmitAvatar3D({
         )}
       </div>
 
-      {/* Minimal Frameless Floating Studio Prompt */}
+      {/* Compact 1.8s Rotating Single-Line Quick-Action Prompt Below 3D Avatar */}
       <div
         data-testid="avatar-floating-prompt"
         onMouseEnter={() => setIsSpotlightPaused(true)}
         onMouseLeave={() => setIsSpotlightPaused(false)}
         onFocusCapture={() => setIsSpotlightPaused(true)}
         onBlurCapture={() => setIsSpotlightPaused(false)}
-        className="relative z-20 mt-1 w-full max-w-[460px] min-h-[68px] px-2 flex items-center justify-center"
+        className="relative z-20 mt-2 w-full max-w-[460px] min-h-[54px] px-2 flex items-center justify-center"
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div

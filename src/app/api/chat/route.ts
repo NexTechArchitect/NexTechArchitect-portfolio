@@ -4,21 +4,20 @@ import {
   buildAmitSystemPrompt,
   normalizeConversationContents,
 } from "@/lib/agentSystemPrompt";
+import { generateLocalFallbackReply } from "@/lib/localAgentFallback";
 import {
+  GEMINI_MODELS,
   InMemoryRateLimiter,
   MAX_BODY_BYTES,
   RATE_LIMIT_MAX_REQUESTS,
   RATE_LIMIT_WINDOW_MS,
+  buildModelGenerateConfig,
   extractClientIp,
-  isAllowedRequestOrigin,
+  extractGeminiText,
+  extractUpstreamErrorInfo,
+  resolveApiKey,
   validateChatPayload,
 } from "@/lib/chatSecurity";
-
-const GEMINI_MODELS = [
-  "gemini-2.5-flash",
-  "gemini-4-hydrogen",
-  "gemini-3.1-flash-lite",
-] as const;
 
 const rateLimiter = new InMemoryRateLimiter(
   RATE_LIMIT_MAX_REQUESTS,
@@ -26,49 +25,19 @@ const rateLimiter = new InMemoryRateLimiter(
 );
 
 function isRetryableError(err: unknown): boolean {
-  const msg = err instanceof Error ? err.message : String(err);
-  return /\b(429|500|502|503|504|UNAVAILABLE|RESOURCE_EXHAUSTED)\b/i.test(msg);
+  const { status, message } = extractUpstreamErrorInfo(err);
+  return /\b(429|500|502|503|504|UNAVAILABLE|RESOURCE_EXHAUSTED)\b/i.test(
+    `${status} ${message}`
+  );
 }
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function formatReadableError(err: unknown): string {
-  const raw = err instanceof Error ? err.message : String(err);
-  if (/API_KEY_INVALID|PERMISSION_DENIED|401|403/i.test(raw)) {
-    return "The Gemini API key could not be authenticated. Please check the API key configured in Settings > Secrets.";
-  }
-  if (/503|UNAVAILABLE|high demand/i.test(raw)) {
-    return "The AI service is experiencing a brief traffic spike. Please tap Retry in a moment.";
-  }
-  if (/429|RESOURCE_EXHAUSTED|quota/i.test(raw)) {
-    return "Rate limit reached. Please wait a moment and try again.";
-  }
-  return "Unable to complete the request right now. Please try again.";
-}
-
 export async function POST(req: NextRequest) {
   try {
-    // 1. Verify Origin / Referer in production to prevent cross-site endpoint abuse
-    const isProduction = process.env.NODE_ENV === "production";
-    if (
-      !isAllowedRequestOrigin({
-        origin: req.headers.get("origin"),
-        referer: req.headers.get("referer"),
-        host: req.headers.get("host"),
-        forwardedHost: req.headers.get("x-forwarded-host"),
-        isProduction,
-        allowedOriginsEnv: process.env.ALLOWED_ORIGINS,
-      })
-    ) {
-      return NextResponse.json(
-        { error: "Forbidden request origin." },
-        { status: 403 }
-      );
-    }
-
-    // 2. Enforce per-IP sliding-window rate limit (20 requests / minute)
+    // 1. Enforce per-IP sliding-window rate limit (20 requests / minute)
     const clientIp = extractClientIp(req.headers);
     const rate = rateLimiter.check(clientIp);
     if (!rate.allowed) {
@@ -85,7 +54,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. Enforce strict payload byte limit before parsing
+    // 2. Enforce strict payload byte limit before parsing
     const contentLengthHeader = req.headers.get("content-length");
     if (contentLengthHeader) {
       const declaredBytes = Number(contentLengthHeader);
@@ -115,7 +84,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 4. Validate JSON shape, 1,000-char message cap, and last-10-turns history cap
+    // 3. Validate JSON shape, 1,000-char message cap, and last-10-turns history cap
     const validated = validateChatPayload(parsedBody);
     if (!validated.ok) {
       return NextResponse.json(
@@ -124,22 +93,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const apiKey = (
-      process.env.GEMINI_API_KEY ||
-      process.env.API_KEY ||
-      ""
-    ).trim();
+    // 4. Resolve valid AIza key (prioritizing API_KEY over GEMINI_API_KEY and ignoring placeholders)
+    const apiKey = resolveApiKey(
+      process.env.API_KEY,
+      process.env.GEMINI_API_KEY
+    );
 
     if (!apiKey) {
-      console.error(
-        "[Ask Amit /api/chat] Missing server-side GEMINI_API_KEY configuration."
-      );
       return NextResponse.json(
         {
-          error:
-            "AI assistant is temporarily unavailable. Please verify server configuration and try again.",
+          reply: generateLocalFallbackReply(validated.message),
+          mode: "local",
         },
-        { status: 503 }
+        {
+          status: 200,
+          headers: { "X-Content-Type-Options": "nosniff" },
+        }
       );
     }
 
@@ -157,91 +126,68 @@ export async function POST(req: NextRequest) {
       validated.message
     );
     const systemInstruction = buildAmitSystemPrompt();
-    const encoder = new TextEncoder();
 
-    const stream = new ReadableStream<Uint8Array>({
-      async start(controller) {
-        let emitted = false;
-        let lastError: unknown = null;
-
-        for (const model of GEMINI_MODELS) {
-          const maxAttempts = 2;
-          for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-            try {
-              const responseStream = await ai.models.generateContentStream({
-                model,
-                contents,
-                config: {
-                  systemInstruction,
+    for (const model of GEMINI_MODELS) {
+      const maxAttempts = 2;
+      for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+        try {
+          const response = await ai.models.generateContent({
+            model,
+            contents,
+            config: buildModelGenerateConfig(model, systemInstruction),
+          });
+          const text = extractGeminiText(response)
+            .replace(/\u2014/g, ", ")
+            .trim();
+          if (text) {
+            return NextResponse.json(
+              { reply: text, mode: "gemini", model },
+              {
+                status: 200,
+                headers: {
+                  "X-Content-Type-Options": "nosniff",
                 },
-              });
-
-              for await (const chunk of responseStream) {
-                const delta = chunk.text ?? "";
-                if (!delta) continue;
-                emitted = true;
-                const sanitizedDelta = delta.replace(/\u2014/g, ", ");
-                controller.enqueue(
-                  encoder.encode(
-                    `data: ${JSON.stringify({ delta: sanitizedDelta, model })}\n\n`
-                  )
-                );
               }
-
-              if (emitted) {
-                controller.enqueue(
-                  encoder.encode(
-                    `data: ${JSON.stringify({ done: true, mode: "gemini", model })}\n\n`
-                  )
-                );
-                controller.close();
-                return;
-              }
-            } catch (err) {
-              lastError = err;
-              console.error(
-                `[Ask Amit /api/chat] Model "${model}" attempt ${attempt + 1} failed.`
-              );
-              if (emitted) {
-                controller.enqueue(
-                  encoder.encode(
-                    `data: ${JSON.stringify({ done: true, mode: "gemini", model })}\n\n`
-                  )
-                );
-                controller.close();
-                return;
-              }
-              if (isRetryableError(err) && attempt + 1 < maxAttempts) {
-                await sleep(450 * (attempt + 1));
-                continue;
-              }
-              break;
-            }
+            );
           }
+        } catch (err) {
+          const info = extractUpstreamErrorInfo(err);
+          console.error(
+            `[Ask Amit /api/chat] Model "${model}" attempt ${attempt + 1} failed (status=${info.status}): ${info.message}`
+          );
+          if (isRetryableError(err) && attempt + 1 < maxAttempts) {
+            await sleep(450 * (attempt + 1));
+            continue;
+          }
+          break;
         }
+      }
+    }
 
-        const errorText = formatReadableError(lastError);
-        controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify({ error: errorText })}\n\n`)
-        );
-        controller.close();
-      },
-    });
-
-    return new Response(stream, {
-      status: 200,
-      headers: {
-        "Content-Type": "text/event-stream; charset=utf-8",
-        "Cache-Control": "no-cache, no-transform",
-        Connection: "keep-alive",
-        "X-Content-Type-Options": "nosniff",
-      },
-    });
-  } catch {
-    console.error("[Ask Amit /api/chat] Unexpected request error.");
     return NextResponse.json(
-      { error: "Unable to complete the request right now. Please try again." },
-      { status: 500 }
+      {
+        reply: generateLocalFallbackReply(validated.message),
+        mode: "local",
+      },
+      {
+        status: 200,
+        headers: { "X-Content-Type-Options": "nosniff" },
+      }
+    );
+  } catch (err) {
+    const info = extractUpstreamErrorInfo(err);
+    console.error(
+      `[Ask Amit /api/chat] Unexpected request error (status=${info.status}): ${info.message}`
+    );
+    return NextResponse.json(
+      {
+        reply: generateLocalFallbackReply(""),
+        mode: "local",
+      },
+      {
+        status: 200,
+        headers: { "X-Content-Type-Options": "nosniff" },
+      }
     );
   }
 }

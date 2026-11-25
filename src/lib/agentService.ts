@@ -1,4 +1,5 @@
 import { sanitizeEditorialCopy } from "./agentKnowledge";
+import { generateLocalFallbackReply } from "./localAgentFallback";
 
 export interface ChatTurnPayload {
   role: "user" | "assistant";
@@ -9,6 +10,7 @@ export interface StreamChatResult {
   ok: true;
   text: string;
   model?: string;
+  mode: "gemini" | "local";
 }
 
 export interface StreamChatFailure {
@@ -19,136 +21,97 @@ export interface StreamChatFailure {
 
 export type AmitChatResponse = StreamChatResult | StreamChatFailure;
 
+async function revealProgressively(
+  fullText: string,
+  onDelta: (accumulatedText: string) => void
+): Promise<void> {
+  const prefersReducedMotion =
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  if (prefersReducedMotion || fullText.length <= 48) {
+    onDelta(fullText);
+    return;
+  }
+
+  // Smooth, brisk word-group progressive reveal (~180-320ms total)
+  const chunkSize = Math.max(18, Math.ceil(fullText.length / 18));
+  let cursor = 0;
+
+  while (cursor < fullText.length) {
+    cursor = Math.min(fullText.length, cursor + chunkSize);
+    if (cursor < fullText.length) {
+      const nextSpace = fullText.indexOf(" ", cursor);
+      if (nextSpace !== -1 && nextSpace - cursor < 16) {
+        cursor = nextSpace + 1;
+      }
+    }
+    onDelta(fullText.slice(0, cursor));
+    if (cursor < fullText.length) {
+      await new Promise((resolve) => window.setTimeout(resolve, 14));
+    }
+  }
+}
+
 /**
- * Streams live responses from the server-side `/api/chat` Gemini pipeline.
- * Logs real HTTP/network/SSE errors via console.error so nothing fails silently.
+ * Requests a clean JSON response from `/api/chat` (`application/json`).
+ * If `/api/chat` fails, times out, returns non-JSON, or hits rate limits,
+ * transparently serves a sharp context-aware reply from `generateLocalFallbackReply`
+ * so visitors never encounter error boxes.
  */
 export async function streamAmitChat(
   message: string,
   history: readonly ChatTurnPayload[],
   onDelta: (accumulatedText: string) => void
-): Promise<AmitChatResponse> {
+): Promise<StreamChatResult> {
   const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), 35000);
+  const timeoutId = window.setTimeout(() => controller.abort(), 20000);
+  const trimmedHistory: ChatTurnPayload[] = history.slice(-10).map((m) => ({
+    role: m.role,
+    text: m.text,
+  }));
+
+  let liveText = "";
+  let resolvedModel: string | undefined;
 
   try {
     const response = await fetch("/api/chat", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
       signal: controller.signal,
       body: JSON.stringify({
         message,
-        history: history.slice(-16).map((m) => ({
-          role: m.role,
-          text: m.text,
-        })),
+        history: trimmedHistory,
       }),
     });
 
     const contentType = response.headers.get("content-type") ?? "";
-
-    if (!response.ok) {
-      let errorDetail = `Request failed with status ${response.status}`;
-      try {
-        const errJson = (await response.json()) as { error?: string };
-        if (errJson.error) errorDetail = errJson.error;
-      } catch {
-        // Non-JSON error body
-      }
-      console.error("[Ask Amit] /api/chat HTTP error:", response.status, errorDetail);
-      return { ok: false, error: errorDetail, status: response.status };
-    }
-
-    if (contentType.includes("application/json")) {
+    if (response.ok && contentType.includes("application/json")) {
       const data = (await response.json()) as {
         reply?: string;
-        error?: string;
         model?: string;
       };
-      if (data.error || !data.reply) {
-        const errMsg =
-          data.error || "The assistant did not return a response. Please try again.";
-        console.error("[Ask Amit] /api/chat JSON error:", errMsg);
-        return { ok: false, error: errMsg };
-      }
-      const clean = sanitizeEditorialCopy(data.reply);
-      onDelta(clean);
-      return { ok: true, text: clean, model: data.model };
-    }
-
-    const reader = response.body?.getReader();
-    if (!reader) {
-      const errMsg = "Streaming reader was unavailable on the response.";
-      console.error("[Ask Amit]", errMsg);
-      return { ok: false, error: errMsg };
-    }
-
-    const decoder = new TextDecoder();
-    let buffer = "";
-    let fullText = "";
-    let resolvedModel: string | undefined;
-
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-
-      const lines = buffer.split("\n");
-      buffer = lines.pop() ?? "";
-
-      for (const rawLine of lines) {
-        const line = rawLine.trim();
-        if (!line.startsWith("data:")) continue;
-        const payload = line.slice(5).trim();
-        if (!payload) continue;
-
-        try {
-          const parsed = JSON.parse(payload) as {
-            delta?: string;
-            done?: boolean;
-            model?: string;
-            error?: string;
-          };
-
-          if (parsed.error) {
-            console.error("[Ask Amit] Upstream Gemini stream error:", parsed.error);
-            if (!fullText.trim()) {
-              return { ok: false, error: parsed.error };
-            }
-          }
-
-          if (parsed.model) {
-            resolvedModel = parsed.model;
-          }
-
-          if (parsed.delta) {
-            fullText += parsed.delta;
-            onDelta(sanitizeEditorialCopy(fullText));
-          }
-        } catch (parseErr) {
-          console.error("[Ask Amit] Failed to parse SSE frame:", parseErr);
-        }
+      if (typeof data.reply === "string" && data.reply.trim().length > 0) {
+        liveText = sanitizeEditorialCopy(data.reply);
+        resolvedModel = data.model;
       }
     }
-
-    const cleaned = sanitizeEditorialCopy(fullText);
-    if (!cleaned) {
-      const errMsg = "No text was received from the model stream. Please try again.";
-      console.error("[Ask Amit]", errMsg);
-      return { ok: false, error: errMsg };
-    }
-
-    return { ok: true, text: cleaned, model: resolvedModel };
-  } catch (err) {
-    const isAbort = err instanceof DOMException && err.name === "AbortError";
-    const messageText = isAbort
-      ? "The response timed out. Please try sending your question again."
-      : err instanceof Error
-      ? err.message
-      : "Unable to reach the assistant service.";
-    console.error("[Ask Amit] Live chat request failed:", err);
-    return { ok: false, error: messageText };
+  } catch {
+    // Transparently fall through to built-in local portfolio & EVM assistant
   } finally {
     window.clearTimeout(timeoutId);
   }
+
+  if (liveText) {
+    await revealProgressively(liveText, onDelta);
+    return { ok: true, text: liveText, model: resolvedModel, mode: "gemini" };
+  }
+
+  const fallbackText = generateLocalFallbackReply(message);
+  await revealProgressively(fallbackText, onDelta);
+  return { ok: true, text: fallbackText, mode: "local" };
 }
