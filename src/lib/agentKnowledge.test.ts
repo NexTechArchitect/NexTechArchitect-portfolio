@@ -4,74 +4,97 @@ import {
   AGENT_DEFAULT_GREETING,
   AGENT_INITIAL_PROMPTS,
   BANNED_BUZZWORDS,
-  generateAgentReply,
-  getProtocolExplanation,
+  buildProjectPrompt,
+  sanitizeEditorialCopy,
 } from "./agentKnowledge";
+import {
+  buildAmitSystemPrompt,
+  normalizeConversationContents,
+} from "./agentSystemPrompt";
+import {
+  fullStackProjects,
+  coreProjects,
+  ARCHITECTURE_INSIGHTS,
+} from "../data/projects";
 
-function assertCleanEditorialVoice(text: string, label: string) {
-  assert.ok(
-    !text.includes("\u2014"),
-    `${label} must not contain em-dash characters`
-  );
-  const lower = text.toLowerCase();
-  for (const word of BANNED_BUZZWORDS) {
-    assert.ok(
-      !lower.includes(word),
-      `${label} must not contain banned buzzword "${word}"`
-    );
-  }
-  assert.ok(
-    /\b(I|I'm|I'll|I've|My|my)\b/.test(text),
-    `${label} must be written in first-person voice`
-  );
-}
-
-test("default greeting and initial prompts are clean and match requirements", () => {
+test("greeting copy and exact 3 starter questions match clean executive specification", () => {
   assert.equal(
     AGENT_DEFAULT_GREETING,
-    "Hi there, I'm Amit. Welcome to my protocol studio. Click any prompt below or select a protocol on the page, and I'll walk you through the smart contract architecture."
+    "Hey! I'm Amit Kumar's personal AI assistant. Ask me anything about Amit's DeFi protocols, smart contract architecture, or any general tech and Web3 question."
   );
+  assert.ok(!/hinglish|gemini 2\.5/i.test(AGENT_DEFAULT_GREETING));
+  assert.ok(!AGENT_DEFAULT_GREETING.includes("\u2014"));
+
+  assert.deepEqual(AGENT_INITIAL_PROMPTS, [
+    "What are Amit's flagship projects?",
+    "How can I connect with Amit?",
+    "How does Amit approach protocol security and gas optimization?",
+  ]);
   assert.equal(AGENT_INITIAL_PROMPTS.length, 3);
-  assertCleanEditorialVoice(AGENT_DEFAULT_GREETING, "default greeting");
-});
 
-test("all primary architectural queries return first-person replies with 2 follow-ups", () => {
-  const queries = [
-    "What protocols have you shipped?",
-    "How do you prevent flash-loan exploits?",
-    "Tell me about your Yul gas optimizations",
-    "How do you keep UUPS proxies storage-safe?",
-    "Walk me through Nexus RWA compliance",
-    "How does Sentinel Insurance protect vault capital?",
-    "Walk me through Nexus Perpetuals architecture",
-    "How do you test invariants in Foundry?",
-    "Are you available for senior smart contract roles?",
-    "Tell me something completely general about smart contract engineering",
-  ];
-
-  for (const query of queries) {
-    const reply = generateAgentReply(query);
-    assert.equal(reply.followUps.length, 2, `Expected 2 follow-ups for "${query}"`);
-    assert.ok(reply.followUps[0].trim().length > 0);
-    assert.ok(reply.followUps[1].trim().length > 0);
-    assertCleanEditorialVoice(reply.text, `reply for "${query}"`);
+  for (const word of BANNED_BUZZWORDS) {
+    assert.ok(!AGENT_DEFAULT_GREETING.toLowerCase().includes(word));
   }
 });
 
-test("protocol triggers map directly to tailored protocol explanations", () => {
-  const ids = [
-    "nexus-rwa",
-    "onchain-automation",
-    "sentinel-insurance",
-    "fs1",
-    "fs4",
-    "fs2",
-  ];
+test("normalizeConversationContents drops leading model turns and alternates user/model cleanly", () => {
+  const firstTurn = normalizeConversationContents(
+    [{ role: "assistant", text: AGENT_DEFAULT_GREETING }],
+    "How does Amit save gas in On-Chain Automation Protocol?"
+  );
+  assert.equal(firstTurn.length, 1);
+  assert.equal(firstTurn[0].role, "user");
+  assert.equal(
+    firstTurn[0].parts[0].text,
+    "How does Amit save gas in On-Chain Automation Protocol?"
+  );
 
-  for (const id of ids) {
-    const { prompt, reply } = getProtocolExplanation(id);
-    assert.ok(prompt.length > 0);
-    assert.equal(reply.followUps.length, 2);
-    assertCleanEditorialVoice(reply.text, `protocol explanation for "${id}"`);
+  const multiTurn = normalizeConversationContents(
+    [
+      { role: "assistant", text: "Welcome greeting" },
+      { role: "user", text: "Hi" },
+      { role: "assistant", text: "Hello! How can I help?" },
+      { role: "user", text: "Explain Nexus RWA" },
+      { role: "user", text: "Specifically the NAV breaker" },
+    ],
+    "Specifically the NAV breaker"
+  );
+  assert.equal(multiTurn[0].role, "user");
+  assert.equal(multiTurn[1].role, "model");
+  assert.equal(multiTurn[2].role, "user");
+  assert.equal(multiTurn[2].parts.length, 2);
+});
+
+test("system prompt serializes complete 15-project gallery, contracts, credentials, and all 5 workbench files", () => {
+  const prompt = buildAmitSystemPrompt();
+  assert.match(prompt, /Cyfrin Updraft/);
+  assert.match(prompt, /Alchemy University/);
+  assert.match(prompt, /Cluster University of Jammu/);
+  assert.match(prompt, /nextech\.amit@gmail\.com/);
+
+  for (const insight of ARCHITECTURE_INSIGHTS) {
+    assert.ok(prompt.includes(insight.filename), `Missing ${insight.filename}`);
+    assert.ok(prompt.includes(insight.tradeoff), `Missing tradeoff for ${insight.filename}`);
   }
+  for (const project of [...fullStackProjects, ...coreProjects]) {
+    assert.ok(prompt.includes(project.title), `Missing ${project.title}`);
+    assert.ok(prompt.includes(project.link), `Missing GitHub URL for ${project.title}`);
+    if (project.liveUrl) {
+      assert.ok(prompt.includes(project.liveUrl), `Missing live URL for ${project.title}`);
+    }
+    for (const contract of project.contracts ?? []) {
+      assert.ok(prompt.includes(contract.address), `Missing address for ${contract.label}`);
+    }
+  }
+});
+
+test("buildProjectPrompt and sanitizeEditorialCopy work for all 15 projects", () => {
+  const all = [...fullStackProjects, ...coreProjects];
+  assert.equal(all.length, 15);
+  for (const project of all) {
+    const prompt = buildProjectPrompt(project.id);
+    assert.ok(prompt.includes(project.title));
+    assert.ok(!prompt.includes("\u2014"));
+  }
+  assert.equal(sanitizeEditorialCopy("Solidity — Yul  fast"), "Solidity , Yul fast");
 });

@@ -68,7 +68,10 @@ export interface TechStackItem {
 
 export interface CodeLine {
   line: number;
-  tokens: Array<{ text: string; type: "plain" | "keyword" | "type" | "fn" | "comment" | "number" | "string" }>;
+  tokens: Array<{
+    text: string;
+    type: "plain" | "keyword" | "type" | "fn" | "comment" | "number" | "string";
+  }>;
 }
 
 export interface ArchitectureInsight {
@@ -92,17 +95,18 @@ export const fullStackProjects: ProjectItem[] = [
     title: "Nexus RWA Protocol",
     shortTitle: "Nexus RWA",
     description:
-      "Institutional real-world asset tokenization engine deployed on Base Mainnet with ERC-3643 transfer compliance, on-chain KYC and OFAC identity registries, a 15% Chainlink NAV circuit breaker, and O(1) Merkle yield distribution.",
+      "Institutional real-world asset tokenization engine built for Ethereum and EVM mainnets with ERC-3643 transfer compliance and O(1) Merkle yield distribution. Every token movement checks on-chain KYC and OFAC identity registries inside the transfer hook alongside a 15% Chainlink NAV circuit breaker.",
     category: "fullstack",
     flagship: true,
-    network: "Base Mainnet",
+    network: "Ethereum & EVM",
     standard: "ERC-3643 / Chainlink NAV",
-    metric: "15% Circuit Breaker",
-    metricDetail: "O(1) Merkle yield claims and 5,000+ Foundry fuzz sequences",
-    tech: ["Solidity", "ERC-3643", "Chainlink NAV", "Foundry", "Base Mainnet"],
+    metric: "On-Chain Transfer Compliance",
+    metricDetail:
+      "IdentityRegistry transfer hooks paired with O(1) Merkle yield distribution",
+    tech: ["Solidity", "ERC-3643", "Chainlink NAV", "Foundry", "EVM Mainnet"],
     link: "https://github.com/NexTechArchitect/Nexus-RWA-Protocol/",
     liveUrl: "https://nexus-rwa-protocol.vercel.app/",
-    accentColor: "#0052FF",
+    accentColor: "#E85D04",
     iconKey: "building",
     contracts: [
       {
@@ -127,17 +131,18 @@ export const fullStackProjects: ProjectItem[] = [
     title: "On-Chain Automation Protocol",
     shortTitle: "Automation",
     description:
-      "Decentralized keeper execution engine on Base Mainnet built around an O(1) swap-and-pop batch queue, staked keeper bond slashing, stateless call routing, and Yul-optimized state transitions reducing gas overhead by up to 35%.",
+      "Decentralized keeper execution engine featuring a constant-time swap-and-pop batch queue, staked operator bonds, and stateless call routing. Inline Yul slot management eliminates linear loop DoS risks and cuts execution gas overhead by up to 35%.",
     category: "fullstack",
     flagship: true,
-    network: "Base Mainnet",
+    network: "Ethereum & EVM",
     standard: "O(1) Keeper Network",
     metric: "35% Yul Gas Reduction",
-    metricDetail: "Constant-time batch job scheduling with zero unbounded loops",
-    tech: ["Solidity", "Yul Assembly", "Foundry", "Base Mainnet", "Next.js"],
+    metricDetail:
+      "Constant-time batch job scheduling with zero unbounded loops",
+    tech: ["Solidity", "Yul Assembly", "Foundry", "EVM Mainnet", "Next.js"],
     link: "https://github.com/NexTechArchitect/OnChain-Automation-Protocol",
     liveUrl: "https://on-chain-automation-protocol.vercel.app/",
-    accentColor: "#0891B2",
+    accentColor: "#D96B27",
     iconKey: "cpu",
     contracts: [
       {
@@ -162,17 +167,18 @@ export const fullStackProjects: ProjectItem[] = [
     title: "Sentinel Insurance Protocol",
     shortTitle: "Sentinel Insurance",
     description:
-      "Decentralized DeFi insurance architecture deployed on Base Mainnet combining ERC-4626 capital vaults routed into Aave V3 yield strategies, ERC-721 coverage policies, and flash-loan resistant DAO claim adjudication.",
+      "DeFi coverage architecture pairing ERC-4626 capital vaults routed into Aave V3 yield strategies with tokenized ERC-721 underwriting policies. Claim adjudication anchors voting power to prior-block snapshots and a Veto Council timelock to block flash-loan capture.",
     category: "fullstack",
     flagship: true,
-    network: "Base Mainnet",
+    network: "Ethereum & EVM",
     standard: "ERC-4626 / Aave V3",
     metric: "Aave V3 Yield Vaults",
-    metricDetail: "Flash-loan resistant claims governor with Veto Council safeguards",
-    tech: ["Solidity", "ERC-4626", "Aave V3", "Foundry", "Base Mainnet"],
+    metricDetail:
+      "Flash-loan resistant claims governor with Veto Council safeguards",
+    tech: ["Solidity", "ERC-4626", "Aave V3", "Foundry", "EVM Mainnet"],
     link: "https://github.com/NexTechArchitect/Sentinel-Insurance-Protocol",
     liveUrl: "https://sentinel-insurance-protocol.vercel.app/",
-    accentColor: "#2563EB",
+    accentColor: "#E85D04",
     iconKey: "shield",
     contracts: [
       {
@@ -194,20 +200,21 @@ export const fullStackProjects: ProjectItem[] = [
   },
   {
     id: "fs1",
-    title: "Nexus Perpetuals (Protocol OS)",
+    title: "Nexus Perpetuals DEX",
     shortTitle: "Nexus Perpetuals",
     description:
-      "Non-custodial 50x leverage perpetuals DEX integrating ERC-4337 smart account paymasters for gasless order execution, Chainlink CCIP cross-chain margin relay with nonce deduplication, and automated liquidation engines.",
+      "Non-custodial 50x leverage perpetuals DEX with ERC-4337 smart account paymasters for gasless order execution and automated liquidations. Chainlink CCIP cross-chain margin relays enforce source-chain allowlists and nonce locks before crediting collateral.",
     category: "fullstack",
     flagship: true,
     network: "Ethereum / CCIP",
     standard: "50x Perps / ERC-4337",
     metric: "50x Leverage DEX",
-    metricDetail: "Gasless smart account execution with CCIP cross-chain margin",
+    metricDetail:
+      "Gasless smart account execution with CCIP cross-chain margin",
     tech: ["Solidity", "ERC-4337", "Chainlink CCIP", "Foundry", "Next.js"],
     link: "https://github.com/NexTechArchitect/Nexus-Protocol-OS",
     liveUrl: "https://nexus-protocol-os.vercel.app/",
-    accentColor: "#059669",
+    accentColor: "#D96B27",
     iconKey: "activity",
     contracts: [
       {
@@ -228,55 +235,58 @@ export const fullStackProjects: ProjectItem[] = [
     ],
   },
   {
-    id: "fs3",
-    title: "Nexus Perps v2 (Polkadot Hub)",
-    shortTitle: "Nexus Perps v2",
-    description:
-      "Cross-chain perpetuals infrastructure deployed on Polkadot Hub EVM featuring automated price keepers, 50x isolated leverage positions, real-time liquidation vaults, and cross-chain margin relay.",
-    category: "fullstack",
-    network: "Polkadot Hub",
-    standard: "50x Perps / Keepers",
-    metric: "50x Isolated Margin",
-    metricDetail: "Automated price keepers and cross-chain margin settlement",
-    tech: ["Solidity", "Polkadot Hub", "Chainlink CCIP", "Next.js"],
-    link: "https://github.com/NexTechArchitect/nexus-polka-perps",
-    liveUrl: "https://nexus-protocol-v2.vercel.app/",
-    accentColor: "#0284C7",
-    iconKey: "layers",
-  },
-  {
-    id: "fs4",
-    title: "ERC-5484 On-Chain Reputation",
-    shortTitle: "ERC-5484 Reputation",
-    description:
-      "Fully on-chain reputation protocol built on ERC-5484 Soulbound Tokens and EIP-1822 UUPS upgradeable proxies. Wallet behavior evolves dynamic reputation scores and renders upgraded SVG medal metadata entirely on-chain with zero IPFS dependency.",
-    category: "fullstack",
-    network: "Base Mainnet",
-    standard: "ERC-5484 / UUPS",
-    metric: "100% On-Chain SVG",
-    metricDetail: "Storage-gap safe UUPS proxy with dynamic SBT progression",
-    tech: ["Solidity", "ERC-5484", "UUPS Proxy", "Foundry", "Next.js"],
-    link: "https://github.com/NexTechArchitect/RST-Reputation-Protocol",
-    liveUrl: "https://rst-reputation-protocol.vercel.app/",
-    accentColor: "#4F46E5",
-    iconKey: "award",
-  },
-  {
     id: "fs2",
     title: "Sentinel DAO Governance",
     shortTitle: "Sentinel DAO",
     description:
-      "Modular on-chain governance architecture combining ERC20Votes checkpoint snapshots at block.number - 1, TimelockController execution queues, quorum thresholds, and a full Wagmi governance dashboard.",
+      "Modular on-chain governance system pairing ERC20Votes checkpoints with a full Next.js and Wagmi proposal execution dashboard. Prior-block vote snapshots and TimelockController queues prevent atomic flash-loan treasury takeovers.",
     category: "fullstack",
-    network: "Base Mainnet",
+    network: "Ethereum & EVM",
     standard: "Governor / Timelock",
     metric: "Flash-Loan Immune",
-    metricDetail: "Prior-block snapshot voting with delayed timelock execution",
+    metricDetail:
+      "Prior-block snapshot voting with delayed timelock execution",
     tech: ["Solidity", "OpenZeppelin", "Wagmi", "Next.js"],
     link: "https://github.com/NexTechArchitect/Web3-FullStack-Sentinal-DAO",
     liveUrl: "https://sentinel-dao-brown.vercel.app/",
-    accentColor: "#0F766E",
+    accentColor: "#E85D04",
     iconKey: "landmark",
+  },
+  {
+    id: "fs3",
+    title: "Nexus Perps v2 (Polkadot Hub)",
+    shortTitle: "Nexus Perps v2",
+    description:
+      "Cross-chain perpetuals exchange built for Polkadot Hub EVM supporting 50x isolated leverage positions and automated price keepers. Isolated margin accounting and deterministic liquidation triggers keep vault solvency intact under rapid volatility.",
+    category: "fullstack",
+    network: "Polkadot Hub EVM",
+    standard: "50x Perps / Keepers",
+    metric: "50x Isolated Margin",
+    metricDetail:
+      "Automated price keepers and cross-chain margin settlement",
+    tech: ["Solidity", "Polkadot Hub", "Chainlink CCIP", "Next.js"],
+    link: "https://github.com/NexTechArchitect/nexus-polka-perps",
+    liveUrl: "https://nexus-protocol-v2.vercel.app/",
+    accentColor: "#D96B27",
+    iconKey: "layers",
+  },
+  {
+    id: "fs4",
+    title: "ERC-5484 Soulbound Reputation",
+    shortTitle: "ERC-5484 Reputation",
+    description:
+      "On-chain reputation system built on non-transferable ERC-5484 tokens that render evolving SVG medal metadata directly from contract state. EIP-1822 UUPS upgradeability with reserved storage gaps prevents slot collisions across future versions.",
+    category: "fullstack",
+    network: "Ethereum & EVM",
+    standard: "ERC-5484 / UUPS",
+    metric: "100% On-Chain SVG",
+    metricDetail:
+      "Storage-gap safe UUPS proxy with dynamic SBT progression",
+    tech: ["Solidity", "ERC-5484", "UUPS Proxy", "Foundry", "Next.js"],
+    link: "https://github.com/NexTechArchitect/RST-Reputation-Protocol",
+    liveUrl: "https://rst-reputation-protocol.vercel.app/",
+    accentColor: "#E85D04",
+    iconKey: "award",
   },
 ];
 
@@ -286,15 +296,16 @@ export const coreProjects: ProjectItem[] = [
     title: "Decentralized StableCoin Engine",
     shortTitle: "DSC StableCoin",
     description:
-      "Exogenous, crypto-collateralized algorithmic stablecoin pegged to USD using Chainlink stale-price checks, 200% over-collateralization health factors, liquidation bonuses, and stateful Foundry invariant fuzzing.",
+      "Exogenous crypto-collateralized stablecoin pegged to USD with 200% minimum collateralization and automated liquidation bonuses. Handler-based Foundry invariant fuzzing and Chainlink staleness guards verify protocol solvency across adversarial sequences.",
     category: "core",
     network: "EVM / Foundry",
     standard: "CDP / Invariant Fuzzing",
     metric: "200% Min Collateral",
-    metricDetail: "Stateful handler-based Foundry invariant suite verifying solvency",
+    metricDetail:
+      "Stateful handler-based Foundry invariant suite verifying solvency",
     tech: ["Solidity", "Foundry", "Chainlink Oracles", "Invariant Fuzzing"],
     link: "https://github.com/NexTechArchitect/Foundry-Defi-StableCoin",
-    accentColor: "#059669",
+    accentColor: "#E85D04",
     iconKey: "coins",
   },
   {
@@ -302,15 +313,16 @@ export const coreProjects: ProjectItem[] = [
     title: "Automated Provably Fair Raffle",
     shortTitle: "VRF Raffle",
     description:
-      "Autonomous on-chain raffle engineered as a strict finite state machine integrating Chainlink VRF v2.5 verifiable randomness and Chainlink Automation upkeep triggers with custom gas-efficient error handling.",
+      "Autonomous on-chain raffle wired to Chainlink VRF v2.5 randomness and Chainlink Automation upkeep triggers. A strict finite state machine locks entry during settlement so reentrancy and timing manipulation are impossible.",
     category: "core",
     network: "EVM / Chainlink",
     standard: "Chainlink VRF v2.5",
     metric: "Deterministic FSM",
-    metricDetail: "Zero-operator execution verified via unit and staging tests",
+    metricDetail:
+      "Zero-operator execution verified via unit and staging tests",
     tech: ["Solidity", "Chainlink VRF", "Chainlink Automation", "Foundry"],
     link: "https://github.com/NexTechArchitect/Raffle-Lottery-Foundry",
-    accentColor: "#0284C7",
+    accentColor: "#D96B27",
     iconKey: "dice",
   },
   {
@@ -318,15 +330,16 @@ export const coreProjects: ProjectItem[] = [
     title: "ERC-4337 Account Abstraction Core",
     shortTitle: "ERC-4337 Core",
     description:
-      "Protocol-accurate smart account implementation targeting the canonical EntryPoint contract with ECDSA UserOperation signature validation, prefund settlement, and modular Paymaster gas sponsorship.",
+      "Minimal smart account built directly against the canonical ERC-4337 EntryPoint with modular Paymaster gas sponsorship. Strict ECDSA UserOperation validation and EntryPoint-only execution gates isolate account funds from unauthorized callers.",
     category: "core",
-    network: "EVM / zkSync",
+    network: "Ethereum / EVM",
     standard: "ERC-4337 EntryPoint",
     metric: "Custom UserOp Flow",
-    metricDetail: "Direct EntryPoint integration with minimal signature verification",
+    metricDetail:
+      "Direct EntryPoint integration with minimal signature verification",
     tech: ["Solidity", "ERC-4337", "Paymaster", "Foundry"],
     link: "https://github.com/NexTechArchitect/ERC4337-Account-Abstraction-Foundry",
-    accentColor: "#0052FF",
+    accentColor: "#E85D04",
     iconKey: "key",
   },
   {
@@ -334,15 +347,16 @@ export const coreProjects: ProjectItem[] = [
     title: "UUPS Upgradeable Protocol",
     shortTitle: "UUPS Proxy Core",
     description:
-      "Production-grade EIP-1822 UUPS proxy architecture enforcing initializer guards, storage-gap collision resistance, owner-gated upgrade authorization, and automated V1-to-V2 state preservation scripts.",
+      "EIP-1822 UUPS proxy framework with reproducible Foundry upgrade scripts from V1 to V2 implementations. Initializer locks, owner-gated upgrade checks, and explicit storage gaps prevent hijacking and layout corruption.",
     category: "core",
     network: "EVM / Foundry",
     standard: "EIP-1822 / ERC-1967",
     metric: "Collision-Safe Slots",
-    metricDetail: "Automated Foundry upgrade scripts validating storage layout",
+    metricDetail:
+      "Automated Foundry upgrade scripts validating storage layout",
     tech: ["Solidity", "UUPS Proxies", "OpenZeppelin", "Foundry"],
     link: "https://github.com/NexTechArchitect/uups-protocol-config",
-    accentColor: "#475569",
+    accentColor: "#D96B27",
     iconKey: "refresh",
   },
   {
@@ -350,31 +364,33 @@ export const coreProjects: ProjectItem[] = [
     title: "Merkle-712 Airdrop Protocol",
     shortTitle: "Merkle-712 Airdrop",
     description:
-      "Gas-optimized token claim architecture combining off-chain Merkle tree proof verification with EIP-712 typed structured signatures so relayers can sponsor claims without exposing double-spend vectors.",
+      "Gas-efficient token distribution engine combining O(log N) Merkle proof verification with relayer-sponsored gasless claiming. EIP-712 typed domain signatures and claimed-state flags close signature replay and double-claim vectors.",
     category: "core",
     network: "EVM / Foundry",
     standard: "EIP-712 / Merkle Proof",
     metric: "O(log N) Proof Claims",
-    metricDetail: "Delegated gasless claiming with replay-protected signatures",
+    metricDetail:
+      "Delegated gasless claiming with replay-protected signatures",
     tech: ["Solidity", "EIP-712", "Merkle Trees", "Foundry"],
     link: "https://github.com/NexTechArchitect/Siso-Merkle-Airdrop",
-    accentColor: "#0891B2",
+    accentColor: "#E85D04",
     iconKey: "gitbranch",
   },
   {
     id: "c6",
-    title: "CuteCat NFT Protocol (IPFS)",
-    shortTitle: "ERC-721 Provenance",
+    title: "CuteCat NFT Protocol",
+    shortTitle: "CuteCat NFT",
     description:
-      "ERC-721 collection architecture demonstrating both deterministic IPFS content addressing and fully on-chain Base64 SVG encoding with Foundry deployment scripts and metadata verification tests.",
+      "ERC-721 architecture demonstrating both content-addressed IPFS metadata and fully on-chain Base64 SVG token rendering. Deterministic Foundry deployment scripts and URI invariants verify immutability without centralized servers.",
     category: "core",
     network: "EVM / IPFS",
     standard: "ERC-721 / Base64 SVG",
     metric: "Dual Metadata Engine",
-    metricDetail: "Immutable IPFS pinning paired with on-chain SVG rendering",
+    metricDetail:
+      "Immutable IPFS pinning paired with on-chain SVG rendering",
     tech: ["Solidity", "ERC-721", "IPFS", "Foundry Scripts"],
     link: "https://github.com/NexTechArchitect/ERC721-Advanced-IPFS-NFT",
-    accentColor: "#4F46E5",
+    accentColor: "#D96B27",
     iconKey: "image",
   },
   {
@@ -382,15 +398,15 @@ export const coreProjects: ProjectItem[] = [
     title: "SISO Token Standard",
     shortTitle: "SISO ERC-20",
     description:
-      "Hardened ERC-20 token primitive built with strict role-based access control, supply cap invariants, emergency pause circuit breakers, and reproducible Foundry deployment pipelines.",
+      "Hardened ERC-20 token primitive engineered with role-gated minting, hard supply ceilings, and emergency pause breakers. Custom errors and Foundry invariant checks enforce supply conservation on every state transition.",
     category: "core",
-    network: "Ethereum Sepolia",
+    network: "Ethereum & EVM",
     standard: "ERC-20 / RBAC",
     metric: "Strict Supply Invariant",
     metricDetail: "Role-gated minting with automated Foundry verification",
     tech: ["Solidity", "ERC-20", "Access Control", "Foundry"],
     link: "https://github.com/NexTechArchitect/SISO-Token-ERC20",
-    accentColor: "#0F766E",
+    accentColor: "#E85D04",
     iconKey: "lock",
   },
   {
@@ -398,15 +414,16 @@ export const coreProjects: ProjectItem[] = [
     title: "Oracle-Pegged Crowdfunding",
     shortTitle: "Oracle FundMe",
     description:
-      "Decentralized treasury contract enforcing USD-denominated minimum contributions via live Chainlink AggregatorV3Interface price feeds, packed storage variables, and gas-benchmarked withdrawal paths.",
+      "Treasury contribution contract enforcing USD-denominated minimums through live Chainlink AggregatorV3Interface price feeds. Packed storage reads, cached memory withdrawal loops, and owner-only sweeps keep gas costs tight and safe.",
     category: "core",
     network: "EVM / Chainlink",
     standard: "AggregatorV3 / Gas Opt",
     metric: "USD-Pegged Thresholds",
-    metricDetail: "Live oracle normalization with cached memory withdrawal loops",
+    metricDetail:
+      "Live oracle normalization with cached memory withdrawal loops",
     tech: ["Solidity", "Chainlink Data Feeds", "DeFi Math", "Foundry"],
     link: "https://github.com/NexTechArchitect/FundMe-Contract",
-    accentColor: "#0EA5E9",
+    accentColor: "#D96B27",
     iconKey: "globe",
   },
 ];
@@ -425,9 +442,9 @@ export const TECH_STACK: TechStackItem[] = [
     iconKey: "cpu",
   },
   {
-    name: "Base Mainnet",
+    name: "Ethereum & EVM Mainnets",
     domain: "Protocol & EVM",
-    focus: "6 deployed production DeFi protocols",
+    focus: "Production multi-contract DeFi deployments",
     iconKey: "network",
   },
   {
@@ -505,10 +522,13 @@ export const ARCHITECTURE_INSIGHTS: ArchitectureInsight[] = [
     protocol: "Sentinel Insurance & DAO",
     domain: "Governance Security",
     title: "Threat-Modeled Architecture & Flash-Loan Immunity",
-    summary: "Neutralizing single-block flash-loan governance capture at the snapshot boundary.",
+    summary:
+      "Neutralizing single-block flash-loan governance capture at the snapshot boundary.",
     body: "When engineering Sentinel DAO adjudication, tracking balances at the active block.number exposes governance to atomic flash-loan borrows and proposal votes inside a single transaction. Shifting every voting-weight lookup to prior-block checkpoints (block.number - 1) combined with a TimelockController delay structurally eliminates same-block vote manipulation before execution ever reaches the treasury.",
-    tradeoff: "Requires ERC20Votes checkpoint writes on token transfers, adding modest SSTORE gas during routine transfers in exchange for deterministic flash-loan immunity.",
-    outcome: "Zero flash-loan governance attack vectors across stateful Foundry fuzz campaigns.",
+    tradeoff:
+      "Requires ERC20Votes checkpoint writes on token transfers, adding modest SSTORE gas during routine transfers in exchange for deterministic flash-loan immunity.",
+    outcome:
+      "Zero flash-loan governance attack vectors across stateful Foundry fuzz campaigns.",
     filename: "ClaimsGovernor.sol",
     language: "Solidity",
     code: `// SPDX-License-Identifier: MIT
@@ -541,10 +561,13 @@ abstract contract SnapshotGuard {
     protocol: "On-Chain Automation Protocol",
     domain: "EVM Gas Engineering",
     title: "O(1) Keeper Queues & Yul Assembly Optimization",
-    summary: "Eliminating bounded loop DoS with constant-time swap-and-pop batch scheduling.",
+    summary:
+      "Eliminating bounded loop DoS with constant-time swap-and-pop batch scheduling.",
     body: "Standard keeper registries that linearly scan active jobs eventually breach block gas limits as protocol adoption scales. In On-Chain Automation, every active job tracks its own 1-based index inside a dense array so cancellations and batch dequeues execute in strict O(1) time via swap-and-pop. Critical slot reads and pointer updates run in inline Yul assembly, cutting execution overhead by up to 35%.",
-    tradeoff: "Swap-and-pop breaks strict FIFO ordering, so execution priority is encoded through explicit deadline timestamps and keeper incentive tiers rather than array position.",
-    outcome: "Up to 35% execution gas reduction and constant O(1) removal regardless of total active jobs.",
+    tradeoff:
+      "Swap-and-pop breaks strict FIFO ordering, so execution priority is encoded through explicit deadline timestamps and keeper incentive tiers rather than array position.",
+    outcome:
+      "Up to 35% execution gas reduction and constant O(1) removal regardless of total active jobs.",
     filename: "SwapPopQueue.yul",
     language: "Yul / Solidity",
     code: `// SPDX-License-Identifier: MIT
@@ -582,10 +605,13 @@ library SwapPopQueue {
     protocol: "Nexus RWA Protocol",
     domain: "ERC-3643 Compliance",
     title: "Stateless On-Chain Compliance & 15% NAV Circuit Breaker",
-    summary: "Enforcing institutional KYC, OFAC sanctions, and oracle deviation limits inside ERC-20 hooks.",
-    body: "Most RWA implementations gate secondary transfers behind slow centralized signing servers. For Nexus RWA on Base Mainnet, the ComplianceEngine intercepts every ERC-20 transfer hook to verify cryptographic identity commitments on-chain in real time. Simultaneously, the NAVOracle validates Chainlink updates against a 15% 24-hour deviation circuit breaker so a compromised or stale feed halts minting and redemptions automatically.",
-    tradeoff: "Every peer-to-peer transfer performs two staticcalls to the IdentityRegistry and ComplianceEngine, trading minimal L2 gas for zero centralized API bottlenecks.",
-    outcome: "100% KYC enforcement across 219+ unit and invariant tests with 0 critical or high Slither findings.",
+    summary:
+      "Enforcing institutional KYC, OFAC sanctions, and oracle deviation limits inside ERC-20 hooks.",
+    body: "Most RWA implementations gate secondary transfers behind slow centralized signing servers. For Nexus RWA on EVM mainnet, the ComplianceEngine intercepts every ERC-20 transfer hook to verify cryptographic identity commitments on-chain in real time. Simultaneously, the NAVOracle validates Chainlink updates against a 15% 24-hour deviation circuit breaker so a compromised or stale feed halts minting and redemptions automatically.",
+    tradeoff:
+      "Every peer-to-peer transfer performs two staticcalls to the IdentityRegistry and ComplianceEngine, trading minimal gas for zero centralized API bottlenecks.",
+    outcome:
+      "100% KYC enforcement across unit and invariant suites with zero critical or high Slither findings.",
     filename: "ComplianceHook.sol",
     language: "Solidity",
     code: `// SPDX-License-Identifier: MIT
@@ -622,13 +648,16 @@ contract NexusComplianceHook {
   {
     id: "l4",
     num: "04",
-    protocol: "Nexus Perpetuals (Protocol OS)",
+    protocol: "Nexus Perpetuals DEX",
     domain: "Cross-Chain & AA",
     title: "Asynchronous CCIP Margin Replay Defense & ERC-4337 Paymasters",
-    summary: "Protecting 50x leverage cross-chain margin settlements against delayed or duplicated relays.",
-    body: "Cross-chain perpetuals margin routing introduces asynchronous settlement hazards where a retried or re-ordered bridge packet could double-credit trader collateral. Nexus Protocol OS combines Chainlink CCIP source-chain allowlisting with deterministic messageId nonce locking before crediting margin vaults, paired with ERC-4337 paymasters so active traders execute orders without managing native gas balances.",
-    tradeoff: "Storing processed messageId commitments permanently increases state footprint, mitigated by mapping compact bytes32 flags rather than full payload structs.",
-    outcome: "Deterministic replay immunity across multi-chain margin relays and gasless order routing.",
+    summary:
+      "Protecting 50x leverage cross-chain margin settlements against delayed or duplicated relays.",
+    body: "Cross-chain perpetuals margin routing introduces asynchronous settlement hazards where a retried or re-ordered bridge packet could double-credit trader collateral. Nexus Perpetuals DEX combines Chainlink CCIP source-chain allowlisting with deterministic messageId nonce locking before crediting margin vaults, paired with ERC-4337 paymasters so active traders execute orders without managing native gas balances.",
+    tradeoff:
+      "Storing processed messageId commitments permanently increases state footprint, mitigated by mapping compact bytes32 flags rather than full payload structs.",
+    outcome:
+      "Deterministic replay immunity across multi-chain margin relays and gasless order routing.",
     filename: "CCIPMarginReceiver.sol",
     language: "Solidity",
     code: `// SPDX-License-Identifier: MIT
@@ -664,10 +693,13 @@ contract CCIPMarginReceiver {
     protocol: "ERC-5484 Reputation & Sentinel",
     domain: "Upgradeability & Vaults",
     title: "Storage-Gap Safe UUPS Proxies & ERC-4626 Inflation Guards",
-    summary: "Preventing proxy storage collisions and first-depositor vault share manipulation.",
+    summary:
+      "Preventing proxy storage collisions and first-depositor vault share manipulation.",
     body: "Upgradeable protocols live with their storage layout forever. Across the ERC-5484 Reputation Engine and Sentinel's ERC-4626 Aave V3 vaults, every base contract reserves explicit 50-slot storage gaps and virtual share offsets to neutralize both V2 layout corruption and ERC-4626 first-depositor donation attacks. Foundry storage inspection runs inside CI before any upgrade transaction is signed.",
-    tradeoff: "Fixed storage gaps constrain inheritance refactors, enforcing strict append-only state schemas across protocol versions.",
-    outcome: "Zero storage slot drift across V1-to-V2 upgrades and full resistance to vault share dilution.",
+    tradeoff:
+      "Fixed storage gaps constrain inheritance refactors, enforcing strict append-only state schemas across protocol versions.",
+    outcome:
+      "Zero storage slot drift across V1-to-V2 upgrades and full resistance to vault share dilution.",
     filename: "ReputationStorageV1.sol",
     language: "Solidity",
     code: `// SPDX-License-Identifier: MIT

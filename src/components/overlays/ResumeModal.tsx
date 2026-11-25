@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Download, ExternalLink } from "lucide-react";
 
@@ -12,22 +11,6 @@ interface ResumeModalProps {
 const RESUME_PATH = "/Amit_Blockchain_Engineer.pdf";
 
 export default function ResumeModal({ isOpen, onClose }: ResumeModalProps) {
-  useEffect(() => {
-    if (!isOpen) return;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKeyDown);
-
-    return () => {
-      document.body.style.overflow = prevOverflow;
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [isOpen, onClose]);
-
   return (
     <AnimatePresence>
       {isOpen && (
@@ -42,7 +25,7 @@ export default function ResumeModal({ isOpen, onClose }: ResumeModalProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-[#0B1220]/45 backdrop-blur-sm"
+            className="absolute inset-0 bg-[#140E0B]/65 backdrop-blur-sm"
           />
 
           <motion.div
@@ -50,25 +33,25 @@ export default function ResumeModal({ isOpen, onClose }: ResumeModalProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.98 }}
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-            className="relative z-10 w-full max-w-4xl h-[88vh] flex flex-col overflow-hidden rounded-3xl bg-white border border-slate-200/90 shadow-[0_28px_80px_rgba(15,23,42,0.22)]"
+            className="relative z-10 w-full max-w-4xl h-[88vh] flex flex-col overflow-hidden rounded-3xl bg-[#FAF6F0] border border-[#140E0B]/15 shadow-[0_28px_80px_rgba(15,10,8,0.48)]"
           >
             {/* Header Bar */}
-            <div className="flex items-center justify-between gap-4 px-6 sm:px-8 py-4 bg-white border-b border-slate-200/80 shrink-0">
-              <div>
-                <p className="text-xs font-mono-tabular text-[#0052FF] font-semibold">
+            <div className="flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 py-3.5 sm:py-4 bg-[#140E0B] text-[#FAF6F0] border-b border-[#FAF6F0]/10 shrink-0">
+              <div className="min-w-0">
+                <p className="text-[11px] font-mono-tabular uppercase tracking-[0.12em] text-[#D96B27] font-semibold">
                   Curriculum Vitae
                 </p>
-                <h2 className="font-display text-lg sm:text-xl font-bold text-[#0B1220] tracking-tight">
-                  Amit Kumar — Resume
+                <h2 className="font-display text-base sm:text-xl font-bold text-[#FAF6F0] tracking-[-0.025em] truncate">
+                  Amit Kumar · Resume
                 </h2>
               </div>
 
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2 shrink-0">
                 <a
                   href={RESUME_PATH}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-semibold text-slate-700 transition-colors"
+                  className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3.5 py-2 rounded-full border border-[#FAF6F0]/18 bg-[#221813] hover:border-[#E85D04] text-xs font-semibold text-[#FAF6F0] transition-colors"
                 >
                   <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
                   <span className="hidden sm:inline">Open Tab</span>
@@ -77,17 +60,18 @@ export default function ResumeModal({ isOpen, onClose }: ResumeModalProps) {
                 <a
                   href={RESUME_PATH}
                   download="Amit_Blockchain_Engineer.pdf"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0052FF] hover:bg-[#0040CC] text-white text-xs font-semibold transition-colors"
+                  className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3.5 sm:px-4 py-2 rounded-full bg-[#E85D04] hover:bg-[#D14F00] text-[#FAF6F0] text-xs font-semibold transition-colors whitespace-nowrap"
                 >
                   <Download className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Download PDF</span>
+                  <span className="hidden sm:inline">Download PDF</span>
+                  <span className="sm:hidden">PDF</span>
                 </a>
 
                 <button
                   type="button"
                   onClick={onClose}
                   aria-label="Close resume modal"
-                  className="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-slate-200 bg-white hover:bg-[#0B1220] hover:text-white text-slate-600 transition-colors cursor-pointer"
+                  className="inline-flex items-center justify-center w-11 h-11 rounded-full border border-[#FAF6F0]/15 bg-[#221813] hover:bg-[#E85D04] text-[#FAF6F0] transition-colors cursor-pointer"
                 >
                   <X className="w-4 h-4" aria-hidden="true" />
                 </button>
@@ -95,7 +79,10 @@ export default function ResumeModal({ isOpen, onClose }: ResumeModalProps) {
             </div>
 
             {/* Embedded PDF Viewer */}
-            <div className="flex-1 bg-slate-100">
+            <div
+              className="flex-1 bg-[#F5EFE6] h-full w-full overflow-y-auto overscroll-contain"
+              style={{ WebkitOverflowScrolling: "touch" }}
+            >
               <iframe
                 src={`${RESUME_PATH}#view=FitH`}
                 title="Amit Kumar Resume PDF"

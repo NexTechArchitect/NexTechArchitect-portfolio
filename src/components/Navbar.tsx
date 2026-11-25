@@ -1,125 +1,220 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Menu, X } from "lucide-react";
+import { FileText, Menu, Terminal, X } from "lucide-react";
 
 const NAV_LINKS = [
-  { label: "Architecture", href: "#architecture" },
-  { label: "Protocols", href: "#protocols" },
-  { label: "Workbench", href: "#workbench" },
-  { label: "Contact", href: "#contact" },
+  { id: "architecture", label: "Architecture", href: "#architecture" },
+  { id: "protocols", label: "Protocols", href: "#protocols" },
+  { id: "workbench", label: "Workbench", href: "#workbench" },
+  { id: "contact", label: "Contact", href: "#contact" },
 ] as const;
 
-export default function Navbar() {
+interface NavbarProps {
+  onOpenResume: () => void;
+  onOpenAgent: () => void;
+  onNavigate?: () => void;
+}
+
+export default function Navbar({
+  onOpenResume,
+  onOpenAgent,
+  onNavigate,
+}: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => {
       setScrolled(window.scrollY > 18);
+
+      const probeY = window.scrollY + 180;
+      let current = "";
+      for (const link of NAV_LINKS) {
+        const el = document.getElementById(link.id);
+        if (el && el.offsetTop <= probeY) {
+          current = link.id;
+        }
+      }
+      setActiveSection(current);
     };
+
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const handleAnchorClick = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    href: string
+  ) => {
+    setMobileMenuOpen(false);
+    if (onNavigate) {
+      onNavigate();
+    }
+    if (href.startsWith("#")) {
+      const targetId = href.slice(1);
+      const targetEl = document.getElementById(targetId);
+      if (targetEl) {
+        e.preventDefault();
+        window.requestAnimationFrame(() => {
+          targetEl.scrollIntoView({ behavior: "smooth", block: "start" });
+          window.history.replaceState(null, "", href);
+        });
+      }
+    }
+  };
+
+  const handleAskAgentClick = () => {
+    setMobileMenuOpen(false);
+    onOpenAgent();
+  };
+
   return (
-    <header className="fixed top-0 inset-x-0 z-40 pointer-events-none px-4 sm:px-6 pt-3 sm:pt-4">
+    <header className="fixed top-0 inset-x-0 z-40 pointer-events-none pt-3 sm:pt-4">
       <div
-        className={`pointer-events-auto max-w-[1180px] mx-auto rounded-full transition-shadow duration-200 cream-glass px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4 sm:gap-8 ${
+        data-testid="floating-navbar-pill"
+        className={`pointer-events-auto w-[calc(100%-1.5rem)] max-w-6xl mx-auto h-[68px] lg:h-[72px] px-4 sm:px-5 lg:px-6 rounded-full border border-[#18110D]/12 bg-[rgba(251,248,243,0.94)] backdrop-blur-md transition-[background-color,border-color,box-shadow] duration-300 hover:bg-[#FFFDF9] hover:border-[#E85D04]/35 hover:shadow-[0_14px_36px_rgba(232,93,4,0.08)] flex items-center justify-between gap-2.5 sm:gap-4 lg:gap-6 ${
           scrolled
-            ? "shadow-[0_12px_36px_-18px_rgba(35,23,18,0.22)]"
-            : "shadow-[0_4px_20px_-14px_rgba(35,23,18,0.12)]"
+            ? "shadow-[0_18px_46px_-20px_rgba(24,17,13,0.28)]"
+            : "shadow-[0_8px_28px_-16px_rgba(24,17,13,0.14)]"
         }`}
       >
-        {/* Left: Editorial Wordmark */}
+        {/* Left: Refined Copper-Orange Geometric Mark + Wordmark */}
         <a
           href="#top"
-          className="font-display font-bold text-lg sm:text-[19px] tracking-[-0.02em] text-[#231712] whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF6F0] rounded-sm"
+          onClick={(e) => handleAnchorClick(e, "#top")}
+          className="inline-flex items-center gap-2.5 min-h-[44px] shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF6F0] rounded-full pr-1"
         >
-          NexTechArchitect
+          <span
+            aria-hidden="true"
+            className="relative w-8 h-8 rounded-lg bg-[#18110D] border border-[#E85D04]/45 flex items-center justify-center shadow-[0_6px_16px_-8px_rgba(232,93,4,0.75)] shrink-0"
+          >
+            <span className="w-3 h-3 rotate-45 border-[2px] border-[#E85D04] rounded-[2px]" />
+          </span>
+          <span className="font-display font-bold text-lg sm:text-xl tracking-tight text-[#18110D] whitespace-nowrap">
+            NexTechArchitect
+          </span>
         </a>
 
-        {/* Center: Smooth-scroll Anchor Links */}
+        {/* Center: Responsive Architectural Nav Links with Warm Pill Hover & Active Indicator */}
         <nav
           aria-label="Primary Navigation"
-          className="hidden md:flex items-center gap-7"
+          className="hidden lg:flex items-center gap-1.5 xl:gap-2"
         >
-          {NAV_LINKS.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="relative text-sm font-medium text-[#5C4B43] hover:text-[#231712] transition-colors duration-150 whitespace-nowrap shrink-0 py-1 after:content-[''] after:absolute after:left-0 after:right-0 after:bottom-0 after:h-[1.5px] after:bg-[#E85D04] after:scale-x-0 hover:after:scale-x-100 after:origin-left after:transition-transform after:duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] rounded-sm"
-            >
-              {link.label}
-            </a>
-          ))}
+          {NAV_LINKS.map((link) => {
+            const isActive = activeSection === link.id;
+            return (
+              <a
+                key={link.href}
+                href={link.href}
+                onClick={(e) => handleAnchorClick(e, link.href)}
+                aria-current={isActive ? "page" : undefined}
+                className={`relative inline-flex items-center justify-center min-h-[44px] px-3.5 rounded-full text-[15.5px] font-medium transition-colors duration-200 whitespace-nowrap shrink-0 hover:bg-[#E85D04]/10 hover:text-[#E85D04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] ${
+                  isActive
+                    ? "text-[#18110D] font-semibold"
+                    : "text-[#594A42]"
+                }`}
+              >
+                {link.label}
+                <span
+                  aria-hidden="true"
+                  className={`absolute left-3.5 right-3.5 bottom-1.5 h-[2px] rounded-full bg-[#E85D04] transition-transform duration-200 origin-left ${
+                    isActive ? "scale-x-100" : "scale-x-0"
+                  }`}
+                />
+              </a>
+            );
+          })}
         </nav>
 
-        {/* Right: EVM Mainnets status + Start a Conversation CTA */}
-        <div className="flex items-center gap-4 shrink-0">
-          <div className="hidden lg:flex items-center gap-2 text-xs font-medium text-[#5C4B43] whitespace-nowrap shrink-0">
-            <span
-              className="w-2 h-2 rounded-full bg-[#E85D04] inline-block shrink-0"
+        {/* Right: Resume & Ask Agent Primary Trigger */}
+        <div className="flex items-center gap-2 lg:gap-2.5 shrink-0">
+          <button
+            type="button"
+            onClick={onOpenResume}
+            className="hidden sm:inline-flex items-center justify-center gap-1.5 min-h-[44px] px-4 lg:px-4.5 py-2 rounded-full text-[15px] font-semibold text-[#18110D] border border-[#18110D]/16 bg-[#FAF6F0]/90 hover:border-[#E85D04]/55 hover:bg-[#F3EBE0] active:scale-[0.98] transition-[background-color,border-color,transform] duration-150 whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04]"
+          >
+            <FileText
+              className="w-4 h-4 text-[#E85D04]"
               aria-hidden="true"
             />
-            <span className="font-mono-tabular tracking-tight">
-              EVM Mainnets
-            </span>
-          </div>
+            <span>Resume</span>
+          </button>
 
-          <a
-            href="#contact"
-            className="hidden sm:inline-flex items-center justify-center px-4 py-2 rounded-full text-xs sm:text-[13px] font-semibold text-[#FAF6F0] bg-[#E85D04] hover:bg-[#D14F00] active:scale-[0.98] transition-all duration-150 whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF6F0]"
+          <button
+            type="button"
+            data-testid="navbar-ask-agent"
+            onClick={handleAskAgentClick}
+            className="hidden sm:inline-flex items-center justify-center gap-2 min-h-[44px] px-4.5 lg:px-5 py-2 rounded-full text-[15px] font-semibold text-[#FAF6F0] bg-[#18110D] hover:bg-[#E85D04] active:scale-[0.98] transition-[background-color,transform] duration-150 whitespace-nowrap shrink-0 cursor-pointer shadow-[0_12px_26px_-14px_rgba(24,17,13,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF6F0] group"
           >
-            Start a Conversation
-          </a>
+            <Terminal
+              className="w-4 h-4 text-[#E85D04] group-hover:text-[#FAF6F0] transition-colors"
+              aria-hidden="true"
+            />
+            <span>Ask Agent</span>
+          </button>
 
           <button
             type="button"
             onClick={() => setMobileMenuOpen((prev) => !prev)}
-            aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-label={
+              mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"
+            }
             aria-expanded={mobileMenuOpen}
-            className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-full text-[#231712] hover:bg-[#231712]/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04]"
+            className="lg:hidden inline-flex items-center justify-center w-11 h-11 rounded-full text-[#18110D] hover:bg-[#E85D04]/10 hover:text-[#E85D04] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04]"
           >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {mobileMenuOpen ? (
+              <X className="w-5 h-5" />
+            ) : (
+              <Menu className="w-5 h-5" />
+            )}
           </button>
         </div>
       </div>
 
-      {/* Mobile Drawer */}
+      {/* Mobile & Portrait Tablet Drawer */}
       {mobileMenuOpen && (
-        <div className="pointer-events-auto md:hidden mt-2 max-w-[1180px] mx-auto rounded-2xl cream-glass-solid p-4 shadow-[0_18px_44px_-16px_rgba(35,23,18,0.22)]">
+        <div className="pointer-events-auto lg:hidden mt-2.5 w-[calc(100%-1.5rem)] max-w-6xl mx-auto rounded-2xl border border-[#18110D]/12 bg-[rgba(251,248,243,0.97)] backdrop-blur-md p-4 sm:p-5 shadow-[0_22px_54px_-18px_rgba(24,17,13,0.28)]">
           <nav
             aria-label="Mobile Navigation"
-            className="flex flex-col divide-y divide-[#231712]/10"
+            className="flex flex-col gap-1"
           >
             {NAV_LINKS.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className="py-3 text-base font-medium text-[#231712] hover:text-[#E85D04] transition-colors"
+                onClick={(e) => handleAnchorClick(e, link.href)}
+                className="min-h-[44px] px-3.5 rounded-xl flex items-center text-[15.5px] font-medium text-[#18110D] hover:bg-[#E85D04]/10 hover:text-[#E85D04] transition-colors"
               >
                 {link.label}
               </a>
             ))}
           </nav>
-          <div className="mt-4 pt-3 border-t border-[#231712]/10 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-xs text-[#5C4B43]">
-              <span
-                className="w-2 h-2 rounded-full bg-[#E85D04] inline-block"
+          <div className="mt-4 pt-4 border-t border-[#18110D]/10 flex flex-wrap items-center justify-between gap-3 sm:hidden">
+            <button
+              type="button"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                onOpenResume();
+              }}
+              className="inline-flex items-center justify-center gap-2 min-h-[44px] flex-1 px-5 py-2.5 rounded-full text-[15px] font-semibold text-[#18110D] border border-[#18110D]/16 bg-[#F5EFE6] cursor-pointer whitespace-nowrap"
+            >
+              <FileText
+                className="w-4 h-4 text-[#E85D04]"
                 aria-hidden="true"
               />
-              <span className="font-mono-tabular">EVM Mainnets</span>
-            </div>
-            <a
-              href="#contact"
-              onClick={() => setMobileMenuOpen(false)}
-              className="inline-flex items-center justify-center px-4 py-2.5 rounded-full text-xs font-semibold text-[#FAF6F0] bg-[#E85D04] hover:bg-[#D14F00] transition-colors whitespace-nowrap"
+              <span>Resume</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleAskAgentClick}
+              className="inline-flex items-center justify-center gap-2 min-h-[44px] flex-1 px-5 py-2.5 rounded-full text-[15px] font-semibold text-[#FAF6F0] bg-[#18110D] hover:bg-[#E85D04] transition-colors cursor-pointer whitespace-nowrap"
             >
-              Start a Conversation
-            </a>
+              <Terminal className="w-4 h-4 text-[#E85D04]" aria-hidden="true" />
+              <span>Ask Agent</span>
+            </button>
           </div>
         </div>
       )}
