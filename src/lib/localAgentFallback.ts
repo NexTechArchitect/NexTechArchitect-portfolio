@@ -58,77 +58,21 @@ function hasPhrase(q: NormalizedQuery, phrase: string): boolean {
   return false;
 }
 
-const PROJECT_ALIASES: Record<string, readonly string[]> = {
-  "nexus-rwa": [
-    "nexus rwa",
-    "nexus rwa protocol",
-    "nustb",
-    "complianceengine",
-    "identityregistry",
-    "ofac",
-    "nav oracle",
-    "nav circuit breaker",
-    "15% nav",
-    "real world asset tokenization",
-  ],
-  "onchain-automation": [
-    "on chain automation",
-    "onchain automation",
-    "automation protocol",
-    "keeper registry",
-    "jobmanager",
-    "keeperregistry",
-    "executionengine",
-    "swap and pop",
-    "swappop",
-    "35% gas",
-    "35%",
-  ],
-  "sentinel-insurance": [
-    "sentinel insurance",
-    "insurance protocol",
-    "policyengine",
-    "coveragepool",
-    "claimsgovernor",
-    "veto council",
-    "underwriting",
-  ],
-  fs1: [
-    "nexus perpetuals",
-    "perpetuals dex",
-    "nexus protocol os",
-    "positionmanager",
-    "nexuspaymaster",
-    "crosschainrouter",
-    "50x leverage",
-    "50x",
-  ],
-  fs2: [
-    "sentinel dao",
-    "dao governance",
-    "erc20votes",
-    "timelockcontroller",
-  ],
-  fs3: ["polkadot", "polka perps", "perps v2", "nexus perps v2"],
-  fs4: [
-    "rst reputation",
-    "svg medal",
-    "erc 5484 reputation",
-    "soulbound reputation",
-  ],
-  c1: ["dsc", "decentralized stablecoin", "stablecoin engine", "200%"],
-  c2: ["provably fair raffle", "raffle", "lottery", "vrf raffle"],
-  c3: [
-    "erc 4337 core",
-    "account abstraction core",
-    "account abstraction foundry",
-  ],
-  c4: ["uups protocol", "uups proxy core", "uups upgradeable protocol"],
-  c5: ["merkle 712", "merkle airdrop", "siso merkle", "gasless claiming"],
-  c6: ["cutecat", "cute cat", "ipfs nft"],
-  c7: ["siso token", "siso erc20", "siso"],
-  c8: ["fundme", "fund me", "crowdfunding", "oracle fundme"],
-};
+export interface FallbackHistoryTurn {
+  role: string;
+  text?: string;
+  content?: string;
+}
+
+function getTurnText(turn: FallbackHistoryTurn): string {
+  const raw =
+    typeof turn.text === "string"
+      ? turn.text
+      : typeof turn.content === "string"
+        ? turn.content
+        : "";
+  return raw.trim();
+}
 
 const PROJECT_STANDARD_SECONDARY: Record<string, readonly string[]> = {
   "nexus-rwa": ["erc3643", "erc 3643", "3643", "rwa", "kyc"],
@@ -1150,7 +1094,34 @@ function findInsightForProject(
   });
 }
 
-function formatSingleProject(project: ProjectItem): string {
+type ProjectIntent =
+  | "walkthrough"
+  | "gas"
+  | "security"
+  | "architecture"
+  | "links"
+  | "story";
+
+function formatProjectLinks(project: ProjectItem): string[] {
+  const lines: string[] = [];
+  if (project.liveUrl) {
+    lines.push(`- **Live App:** ${project.liveUrl}`);
+  }
+  lines.push(`- **GitHub:** ${project.link}`);
+  return lines;
+}
+
+function formatProjectContracts(project: ProjectItem): string[] {
+  if (project.smartContracts.length === 0) return [];
+  const lines: string[] = ["- **Smart Contracts:**"];
+  for (const c of project.smartContracts) {
+    const addr = c.address ? ` (\`${c.address}\`)` : "";
+    lines.push(`  - **${c.name}**${addr}: ${c.responsibility}`);
+  }
+  return lines;
+}
+
+function formatProjectWalkthrough(project: ProjectItem): string {
   const lines: string[] = [
     `### ${project.title}`,
     `**Category:** ${
@@ -1159,23 +1130,22 @@ function formatSingleProject(project: ProjectItem): string {
         : "Core EVM Contract"
     } | **Network:** ${project.network} | **Standard:** ${project.standard}`,
     "",
-    project.description,
+    `**Story & Problem Solved:** ${project.story}`,
+    "",
+    `**Core Architecture:** ${project.architecture}`,
+    "",
+    ...formatProjectContracts(project),
+    "",
+    "- **Security Invariants:**",
+    ...project.securityInvariants.map((inv) => `  - ${inv}`),
+    "",
+    "- **Gas Optimizations:**",
+    ...project.gasOptimizations.map((opt) => `  - ${opt}`),
     "",
     `- **Key Highlight:** ${project.metric} (${project.metricDetail})`,
-    `- **Stack:** ${project.tech.join(", ")}`,
+    `- **Tech Stack:** ${project.tech.join(", ")}`,
+    ...formatProjectLinks(project),
   ];
-
-  if (project.contracts && project.contracts.length > 0) {
-    lines.push("- **Deployed Contracts:**");
-    for (const c of project.contracts) {
-      lines.push(`  - **${c.label}** (${c.role}): \`${c.address}\``);
-    }
-  }
-
-  if (project.liveUrl) {
-    lines.push(`- **Live App:** ${project.liveUrl}`);
-  }
-  lines.push(`- **GitHub:** ${project.link}`);
 
   const relatedInsight = findInsightForProject(project);
   if (relatedInsight) {
@@ -1185,6 +1155,213 @@ function formatSingleProject(project: ProjectItem): string {
   }
 
   return lines.join("\n");
+}
+
+function formatProjectGasDeepDive(project: ProjectItem): string {
+  const relatedInsight = findInsightForProject(project);
+  const deployed = project.smartContracts.filter((c) => Boolean(c.address));
+  const lines: string[] = [
+    `### Gas Optimizations in ${project.title}`,
+    `Built on **${project.network}** (${project.standard}), **${project.title}** minimizes EVM execution and storage cost through targeted contract-level optimizations:`,
+    "",
+    ...project.gasOptimizations.map((opt) => `- ${opt}`),
+    "",
+    `- **Key Metric:** ${project.metric} (${project.metricDetail})`,
+  ];
+
+  if (deployed.length > 0) {
+    lines.push(
+      `- **Deployed Contracts:** ${deployed
+        .map((c) => `**${c.name}** (\`${c.address}\`)`)
+        .join(", ")}`
+    );
+  }
+
+  if (relatedInsight) {
+    lines.push(
+      `- **Related Workbench Code:** \`${relatedInsight.filename}\` (${relatedInsight.tradeoff})`
+    );
+  }
+
+  lines.push(...formatProjectLinks(project));
+  lines.push(
+    "",
+    `Want to inspect the **security invariants** or **smart contract architecture** of ${project.shortTitle} next?`
+  );
+  return lines.join("\n");
+}
+
+function formatProjectSecurityDeepDive(project: ProjectItem): string {
+  const relatedInsight = findInsightForProject(project);
+  const deployed = project.smartContracts.filter((c) => Boolean(c.address));
+  const lines: string[] = [
+    `### Security Invariants & Threat Model: ${project.title}`,
+    `In **${project.title}** (${project.network} | ${project.standard}), security invariants are enforced at the contract boundary:`,
+    "",
+    ...project.securityInvariants.map((inv) => `- ${inv}`),
+    "",
+    `- **Architecture Context:** ${project.architecture}`,
+  ];
+
+  if (deployed.length > 0) {
+    lines.push(
+      `- **Deployed Contracts:** ${deployed
+        .map((c) => `**${c.name}** (\`${c.address}\`)`)
+        .join(", ")}`
+    );
+  }
+
+  if (relatedInsight) {
+    lines.push(
+      `- **Related Workbench Guard:** \`${relatedInsight.filename}\` (${relatedInsight.outcome})`
+    );
+  }
+
+  lines.push(...formatProjectLinks(project));
+  lines.push(
+    "",
+    `Ask if you'd like a breakdown of ${project.shortTitle}'s **gas optimizations** or **individual contracts**.`
+  );
+  return lines.join("\n");
+}
+
+function formatProjectArchitectureDeepDive(project: ProjectItem): string {
+  const lines: string[] = [
+    `### Architecture & Smart Contracts: ${project.title}`,
+    `**Network:** ${project.network} | **Standard:** ${project.standard} | **Stack:** ${project.tech.join(", ")}`,
+    "",
+    project.architecture,
+    "",
+    ...formatProjectContracts(project),
+    "",
+    ...formatProjectLinks(project),
+  ];
+  return lines.join("\n");
+}
+
+function formatProjectStoryDeepDive(project: ProjectItem): string {
+  const lines: string[] = [
+    `### Why Amit Built ${project.title}`,
+    project.story,
+    "",
+    `**How It Works:** ${project.architecture}`,
+    "",
+    `- **Highlight:** ${project.metric} (${project.metricDetail})`,
+    ...formatProjectLinks(project),
+  ];
+  return lines.join("\n");
+}
+
+function formatProjectLinksOnly(project: ProjectItem): string {
+  const lines: string[] = [
+    `### Links & Deployed References: ${project.title}`,
+    `**Network:** ${project.network} | **Standard:** ${project.standard}`,
+    "",
+    ...formatProjectLinks(project),
+  ];
+
+  const deployed = project.smartContracts.filter((c) => Boolean(c.address));
+  if (deployed.length > 0) {
+    lines.push("- **Verified Contract Addresses:**");
+    for (const c of deployed) {
+      lines.push(`  - **${c.name}:** \`${c.address}\``);
+    }
+  }
+
+  return lines.join("\n");
+}
+
+function formatProjectForIntent(
+  project: ProjectItem,
+  intent: ProjectIntent
+): string {
+  switch (intent) {
+    case "gas":
+      return formatProjectGasDeepDive(project);
+    case "security":
+      return formatProjectSecurityDeepDive(project);
+    case "architecture":
+      return formatProjectArchitectureDeepDive(project);
+    case "story":
+      return formatProjectStoryDeepDive(project);
+    case "links":
+      return formatProjectLinksOnly(project);
+    case "walkthrough":
+    default:
+      return formatProjectWalkthrough(project);
+  }
+}
+
+function formatProjectComparison(a: ProjectItem, b: ProjectItem): string {
+  const formatContractsBrief = (p: ProjectItem) =>
+    p.smartContracts.map((c) => `\`${c.name}\``).join(", ");
+
+  return [
+    `### Side-by-Side Comparison: ${a.title} vs. ${b.title}`,
+    "",
+    `**1. ${a.title}** (${a.network} | ${a.standard})`,
+    `- **Problem Solved:** ${a.story}`,
+    `- **Core Contracts:** ${formatContractsBrief(a)}`,
+    `- **Top Security Invariant:** ${a.securityInvariants[0] ?? a.metricDetail}`,
+    `- **Top Gas Optimization:** ${a.gasOptimizations[0] ?? a.metric}`,
+    `- **Stack:** ${a.tech.join(", ")}`,
+    ...(a.liveUrl ? [`- **Live App:** ${a.liveUrl}`] : []),
+    `- **GitHub:** ${a.link}`,
+    "",
+    `**2. ${b.title}** (${b.network} | ${b.standard})`,
+    `- **Problem Solved:** ${b.story}`,
+    `- **Core Contracts:** ${formatContractsBrief(b)}`,
+    `- **Top Security Invariant:** ${b.securityInvariants[0] ?? b.metricDetail}`,
+    `- **Top Gas Optimization:** ${b.gasOptimizations[0] ?? b.metric}`,
+    `- **Stack:** ${b.tech.join(", ")}`,
+    ...(b.liveUrl ? [`- **Live App:** ${b.liveUrl}`] : []),
+    `- **GitHub:** ${b.link}`,
+    "",
+    `Ask a follow-up on either **${a.shortTitle}** or **${b.shortTitle}** to drill into its contracts, invariants, or gas benchmarks.`,
+  ].join("\n");
+}
+
+function detectProjectIntent(q: NormalizedQuery): ProjectIntent {
+  const asksWalkthrough =
+    /\b(walkthrough|walk me through|overview|full breakdown|everything about|deep dive|summarize|summary|all details)\b/.test(
+      q.normalized
+    );
+  const asksGas =
+    /\b(gas|yul|assembly|optimi[sz]\w*|sload|sstore|storage pack\w*|cheaper|cost|calldata|efficiency)\b/.test(
+      q.normalized
+    );
+  const asksSecurity =
+    /\b(security|invariants?|audit\w*|vulnerab\w*|attack\w*|threat\w*|risks?|reentrancy|flash ?loan|exploit\w*|safeguard\w*|fuzz\w*|slither|defen[cs]e)\b/.test(
+      q.normalized
+    );
+  const asksArchitecture =
+    /\b(architecture|smart contracts?|contracts?|components?|modules?|tech stack|stack|how does it work|how it works|design)\b/.test(
+      q.normalized
+    );
+  const asksLinks =
+    /\b(github|repo|repository|source code|live app|live demo|demo|url|links?|website|contract address\w*|addresses)\b/.test(
+      q.normalized
+    );
+  const asksStory =
+    /\b(story|why did|motivation|problem solved|what problem|purpose|background)\b/.test(
+      q.normalized
+    );
+
+  const dimensionCount =
+    Number(asksGas) +
+    Number(asksSecurity) +
+    Number(asksArchitecture) +
+    Number(asksStory);
+
+  if (asksWalkthrough || dimensionCount >= 2) {
+    return "walkthrough";
+  }
+  if (asksGas) return "gas";
+  if (asksSecurity) return "security";
+  if (asksArchitecture) return "architecture";
+  if (asksStory) return "story";
+  if (asksLinks) return "links";
+  return "walkthrough";
 }
 
 function matchWorkbenchSnippet(
@@ -1220,6 +1397,14 @@ function formatWorkbenchWalkthrough(insight: ArchitectureInsight): string {
   ].join("\n");
 }
 
+function extractRepoSlug(githubUrl: string): string {
+  const trimmed = githubUrl.replace(/\/+$/, "");
+  const parts = trimmed.split("/");
+  return (parts[parts.length - 1] ?? "").toLowerCase();
+}
+
+const EXPLICIT_PROJECT_THRESHOLD = 70;
+
 function scoreProjects(
   q: NormalizedQuery,
   hasPortfolioContext: boolean
@@ -1229,33 +1414,42 @@ function scoreProjects(
   for (const project of ALL_PROJECTS) {
     let score = 0;
 
-    if (hasPhrase(q, project.title)) score += 26;
+    if (hasPhrase(q, project.title)) score += 220;
     if (project.shortTitle.length >= 4 && hasPhrase(q, project.shortTitle)) {
-      score += 18;
+      score += 150;
     }
 
-    const aliases = PROJECT_ALIASES[project.id] ?? [];
-    for (const alias of aliases) {
+    const repoSlug = extractRepoSlug(project.link);
+    if (repoSlug.length >= 6 && hasPhrase(q, repoSlug)) {
+      score += 160;
+    }
+
+    for (const alias of project.aliases) {
       if (hasPhrase(q, alias)) {
-        score += alias.length >= 6 ? 15 : 11;
+        score += alias.length >= 6 ? 120 : 90;
       }
     }
 
-    if (project.contracts) {
-      for (const c of project.contracts) {
-        if (
-          hasPhrase(q, c.label) ||
-          q.raw.toLowerCase().includes(c.address.toLowerCase())
-        ) {
-          score += 22;
-        }
+    for (const c of project.smartContracts) {
+      const cleanName = c.name.replace(/\.(sol|yul)$/i, "").split(" ")[0] ?? "";
+      if (
+        (cleanName.length >= 5 && hasPhrase(q, cleanName)) ||
+        (c.address && q.raw.toLowerCase().includes(c.address.toLowerCase()))
+      ) {
+        score += 140;
       }
     }
 
     const secondary = PROJECT_STANDARD_SECONDARY[project.id] ?? [];
     for (const term of secondary) {
       if (hasPhrase(q, term)) {
-        score += hasPortfolioContext || score > 0 ? 7 : 3;
+        if (score > 0) {
+          score += 25;
+        } else if (hasPortfolioContext) {
+          score += 45;
+        } else {
+          score += 4;
+        }
       }
     }
 
@@ -1266,6 +1460,56 @@ function scoreProjects(
 
   scored.sort((a, b) => b.score - a.score);
   return scored;
+}
+
+function resolveProjectFromHistory(
+  history?: readonly FallbackHistoryTurn[]
+): ProjectItem | undefined {
+  if (!history || history.length === 0) return undefined;
+  const recent = history.slice(-4).reverse();
+
+  for (const turn of recent) {
+    const text = getTurnText(turn);
+    if (!text) continue;
+
+    // 1. Check exact heading match in recent assistant replies (e.g., "### Nexus Perps v2 (Polkadot Hub)")
+    const firstLine = text.split("\n")[0]?.toLowerCase() ?? "";
+    if (firstLine.startsWith("### ")) {
+      for (const project of ALL_PROJECTS) {
+        if (
+          firstLine.includes(project.title.toLowerCase()) ||
+          (project.shortTitle.length >= 5 &&
+            firstLine.includes(project.shortTitle.toLowerCase()))
+        ) {
+          return project;
+        }
+      }
+    }
+
+    // 2. Otherwise score the turn text against all projects
+    const turnQuery = normalizeQuery(text);
+    const matches = scoreProjects(turnQuery, true);
+    if (matches[0] && matches[0].score >= EXPLICIT_PROJECT_THRESHOLD) {
+      return matches[0].project;
+    }
+  }
+
+  return undefined;
+}
+
+function isLikelyProjectFollowUp(q: NormalizedQuery): boolean {
+  const hasPronounOrDeictic =
+    /\b(it|its|this one|that one|this project|that project|this protocol|that protocol|the project|the protocol|the contract|the contracts|same project|same protocol)\b/.test(
+      q.normalized
+    );
+
+  const isShortDimensionFollowUp =
+    q.tokens.size <= 8 &&
+    /\b(gas|security|invariants?|risks?|contracts?|architecture|stack|github|repo|link|demo|live|story|why|address|addresses|audit|vulnerabilities|tradeoffs?|how does it|what about)\b/.test(
+      q.normalized
+    );
+
+  return hasPronounOrDeictic || isShortDimensionFollowUp;
 }
 
 function scoreKnowledgeBase(
@@ -1280,19 +1524,19 @@ function scoreKnowledgeBase(
     if (entry.exactCompact) {
       for (const compactTerm of entry.exactCompact) {
         if (q.compact === compactTerm || q.tokens.has(compactTerm)) {
-          score += 22;
+          score += 24;
         } else if (
           compactTerm.length >= 4 &&
           q.compact.includes(compactTerm)
         ) {
-          score += 16;
+          score += 18;
         }
       }
     }
 
     for (const phrase of entry.exactPhrases) {
       if (hasPhrase(q, phrase)) {
-        score += phrase.includes(" ") ? 14 : 11;
+        score += phrase.includes(" ") ? 15 : 12;
       }
     }
 
@@ -1303,7 +1547,7 @@ function scoreKnowledgeBase(
     }
 
     if (score > 0 && isConceptualQuestion) {
-      score += 6;
+      score += 8;
     }
 
     if (score > 0) {
@@ -1344,7 +1588,7 @@ function buildFlagshipOverview(): string {
     "",
     `Beyond these flagship protocols, his full-stack gallery includes ${additionalFullStack}, plus core EVM Foundry systems like ${coreHighlights} and more.`,
     "",
-    "Ask about any specific protocol (for example **Nexus RWA**, **On-Chain Automation**, **Sentinel Insurance**, or **Nexus Perpetuals**) to inspect contract addresses, security invariants, and gas mechanics.",
+    "Ask about any specific protocol (for example **Nexus RWA**, **Nexus Perps v2**, **Sentinel Insurance**, or **DSC StableCoin**) to inspect contracts, security invariants, and gas mechanics.",
   ].join("\n");
 }
 
@@ -1406,7 +1650,7 @@ function buildOverviewMenu(isGreeting: boolean): string {
   return [
     opener,
     "",
-    "- **Flagship DeFi Protocols:** Nexus RWA (`ERC-3643`), On-Chain Automation (`O(1) Yul keepers`), Sentinel Insurance (`ERC-4626` + Aave V3), and Nexus Perpetuals DEX (`50x Perps` + `ERC-4337` + Chainlink CCIP).",
+    "- **Flagship & Gallery Protocols:** Ask for a deep dive or comparison on **Nexus RWA**, **On-Chain Automation**, **Sentinel Insurance**, **Nexus Perpetuals DEX**, **Nexus Perps v2 (Polkadot Hub)**, **DSC StableCoin**, **VRF Raffle**, **Merkle-712 Airdrop**, or any other gallery project.",
     "- **ERC / EIP Standards & DeFi Mechanics:** Ask about `ERC-20`, `ERC-721/721A`, `ERC-1155`, `ERC-4337` (AA), `ERC-4626`, `ERC-3643`, `ERC-5484`, `ERC-2612`, `ERC-2981`, `ERC-3156`, `ERC-1967/UUPS`, `ERC-2535` Diamonds, `ERC-6551`, `EIP-7702`, `EIP-712`, `EIP-1153`, `EIP-1559`, `EIP-4844`, `CREATE2`, Uniswap V2/V3/V4, Aave V3, MEV, L2 rollups, or Foundry invariant testing.",
     "- **Workbench & Contact:** Inspect `SwapPopQueue.yul`, `ClaimsGovernor.sol`, `ComplianceHook.sol`, `CCIPMarginReceiver.sol`, or reach Amit at `nextech.amit@gmail.com`.",
     "",
@@ -1414,24 +1658,79 @@ function buildOverviewMenu(isGreeting: boolean): string {
   ].join("\n");
 }
 
+function buildHelpfulOffTopicReply(): string {
+  return [
+    "I'm currently running in local portfolio knowledge mode, where my focus is **Amit Kumar's DeFi protocols, smart contracts, and Web3/EVM engineering**.",
+    "",
+    "Here are a few things I can answer in depth right now:",
+    "- **Project Deep Dives & Comparisons:** Ask about **Nexus Perps v2**, **Nexus RWA**, **Sentinel Insurance**, **On-Chain Automation**, **DSC StableCoin**, or compare any two protocols side by side.",
+    "- **Web3 & Solidity Engineering:** Ask about ERC/EIP standards (`ERC-4337`, `ERC-4626`, `ERC-3643`, `EIP-712`, `EIP-1153`, `EIP-4844`), Foundry invariant testing, Yul gas optimization, MEV, or DeFi security.",
+    "- **Connect Directly with Amit:** Email `nextech.amit@gmail.com` or open his **Resume** in the top navigation bar.",
+  ].join("\n");
+}
+
 /**
- * Comprehensive, keyword-scored, typo-tolerant offline Web3 & Portfolio
- * knowledge engine grounded in `src/data/projects.ts` and EVM/DeFi engineering.
+ * Project-First + Multi-Turn + Sub-Intent offline reasoning engine grounded in
+ * `src/data/projects.ts` and deep EVM/DeFi engineering knowledge.
  */
-export function generateLocalFallbackReply(userMessage: string): string {
+export function generateLocalFallbackReply(
+  userMessage: string,
+  history?: readonly FallbackHistoryTurn[]
+): string {
   const q = normalizeQuery(userMessage);
 
   if (!q.normalized) {
     return sanitizeEditorialCopy(buildOverviewMenu(false));
   }
 
-  // 1. Direct Workbench file or snippet walkthrough
+  // Step 0: Direct Workbench code file walkthrough (e.g. SwapPopQueue.yul, ClaimsGovernor.sol)
   const matchedSnippet = matchWorkbenchSnippet(q);
   if (matchedSnippet) {
     return sanitizeEditorialCopy(formatWorkbenchWalkthrough(matchedSnippet));
   }
 
-  // 2. Pure greeting or "what can you do" capability check
+  const hasPortfolioContext =
+    /\b(amit|nextecharchitect|portfolio|his|your|flagship|built|shipped|deployed|protocol gallery|case study|walkthrough)\b/.test(
+      q.normalized
+    );
+
+  const isConceptualQuestion =
+    /^(what is|what are|whats|explain|define|how does|how do|difference between|compare|tell me about)\b/.test(
+      q.normalized
+    ) && !hasPortfolioContext;
+
+  // Step 1: Project Detection First (10x Priority over generic words like "security" or "gas")
+  const projectMatches = scoreProjects(q, hasPortfolioContext);
+  const explicitProjects = projectMatches.filter(
+    (m) => m.score >= EXPLICIT_PROJECT_THRESHOLD
+  );
+
+  // Side-by-side comparison if 2+ distinct projects are explicitly mentioned
+  const asksComparison =
+    /\b(compare|comparison|vs|versus|difference between|differ|better)\b/.test(
+      q.normalized
+    );
+  if (
+    explicitProjects.length >= 2 &&
+    (asksComparison || explicitProjects[1].score >= 100)
+  ) {
+    return sanitizeEditorialCopy(
+      formatProjectComparison(
+        explicitProjects[0].project,
+        explicitProjects[1].project
+      )
+    );
+  }
+
+  // Single explicit project matched -> tailor answer to user sub-intent
+  if (explicitProjects.length >= 1) {
+    const intent = detectProjectIntent(q);
+    return sanitizeEditorialCopy(
+      formatProjectForIntent(explicitProjects[0].project, intent)
+    );
+  }
+
+  // Step 2: Pure greeting or capability menu
   const isPureGreeting =
     /^(hi|hello|hey|yo|hola|namaste|kaise ho|kya haal|gm|good morning|good afternoon|good evening|sup|greetings)(\s+(there|amit|bro|mate|man|kaise ho|kya haal))?$/.test(
       q.normalized
@@ -1444,12 +1743,7 @@ export function generateLocalFallbackReply(userMessage: string): string {
     return sanitizeEditorialCopy(buildOverviewMenu(isPureGreeting));
   }
 
-  // 3. Explicit Flagship / Portfolio gallery overview
-  const hasPortfolioContext =
-    /\b(amit|nextecharchitect|portfolio|his|your|flagship|built|shipped|deployed|protocol gallery|case study)\b/.test(
-      q.normalized
-    );
-
+  // Step 3: Explicit Flagship / Portfolio gallery overview
   const asksFlagshipOverview =
     /\b(flagship|top projects|best projects|all projects|what projects|his projects|your projects|project gallery|what has amit built|what did amit build|portfolio projects)\b/.test(
       q.normalized
@@ -1458,7 +1752,27 @@ export function generateLocalFallbackReply(userMessage: string): string {
     return sanitizeEditorialCopy(buildFlagshipOverview());
   }
 
-  // 4. Contact, hiring, resume, bio, or credentials
+  // Step 4: Multi-Turn Follow-Up Memory (scan last 4 turns for active project)
+  const knowledgeMatches = scoreKnowledgeBase(q, isConceptualQuestion);
+  const topKnowledge = knowledgeMatches[0];
+  const strongNewWeb3Concept =
+    Boolean(topKnowledge) &&
+    topKnowledge.score >= 22 &&
+    !/\b(it|its|this project|that project|this protocol|that protocol)\b/.test(
+      q.normalized
+    );
+
+  if (!strongNewWeb3Concept && isLikelyProjectFollowUp(q)) {
+    const activeProject = resolveProjectFromHistory(history);
+    if (activeProject) {
+      const intent = detectProjectIntent(q);
+      return sanitizeEditorialCopy(
+        formatProjectForIntent(activeProject, intent)
+      );
+    }
+  }
+
+  // Step 5: Contact, hiring, resume, bio, or credentials (only when not asking for a project's github link)
   if (
     /\b(contact|connect|hire|hiring|email|reach|linkedin|github|twitter|resume|cv|location|where is amit|available|remote|background|education|certif|cyfrin|alchemy|who is amit|about amit)\b/.test(
       q.normalized
@@ -1468,7 +1782,7 @@ export function generateLocalFallbackReply(userMessage: string): string {
     return sanitizeEditorialCopy(buildContactAndBioReply());
   }
 
-  // 5. Security + gas combined overview (e.g., starter prompt #3)
+  // Step 6: General Amit security & gas engineering overview (only when NO project matched)
   if (
     q.normalized.includes("security") &&
     (q.normalized.includes("gas") ||
@@ -1478,26 +1792,16 @@ export function generateLocalFallbackReply(userMessage: string): string {
     return sanitizeEditorialCopy(buildSecurityAndGasReply());
   }
 
-  // 6. Unified scored match across Portfolio Projects & Web3/ERC/DeFi Knowledge Base
-  const isConceptualQuestion =
-    /^(what is|what are|whats|explain|define|how does|how do|difference between|compare|tell me about)\b/.test(
-      q.normalized
-    ) && !hasPortfolioContext;
-
-  const projectMatches = scoreProjects(q, hasPortfolioContext);
-  const knowledgeMatches = scoreKnowledgeBase(q, isConceptualQuestion);
-
+  // Step 7: Portfolio-contextualized secondary project match vs. Deep Web3 Knowledge Base
   const topProject = projectMatches[0];
-  const topKnowledge = knowledgeMatches[0];
-
-  if (topProject && (!topKnowledge || topProject.score > topKnowledge.score)) {
-    const secondProject = projectMatches[1];
-    const selected =
-      secondProject && secondProject.score >= topProject.score - 2
-        ? [topProject.project, secondProject.project]
-        : [topProject.project];
+  if (
+    topProject &&
+    hasPortfolioContext &&
+    (!topKnowledge || topProject.score > topKnowledge.score)
+  ) {
+    const intent = detectProjectIntent(q);
     return sanitizeEditorialCopy(
-      selected.map(formatSingleProject).join("\n\n---\n\n")
+      formatProjectForIntent(topProject.project, intent)
     );
   }
 
@@ -1505,11 +1809,11 @@ export function generateLocalFallbackReply(userMessage: string): string {
     return sanitizeEditorialCopy(topKnowledge.entry.answer());
   }
 
-  // 7. Generic "projects" inquiry with no specific project matched
+  // Step 8: Generic "projects" inquiry with no specific project matched
   if (q.tokens.has("projects") || q.tokens.has("project")) {
     return sanitizeEditorialCopy(buildFlagshipOverview());
   }
 
-  // 8. Intelligent helpful fallback (never an error box)
-  return sanitizeEditorialCopy(buildOverviewMenu(false));
+  // Step 9: Helpful off-topic fallback (never dead-end or unrelated dump)
+  return sanitizeEditorialCopy(buildHelpfulOffTopicReply());
 }

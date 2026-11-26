@@ -128,7 +128,7 @@ export async function streamAmitChat(
   }
 
   console.warn("[Ask Amit] Mode: OFFLINE fallback — reason:", fallbackReason);
-  const fallbackText = generateLocalFallbackReply(message);
+  const fallbackText = generateLocalFallbackReply(message, trimmedHistory);
   await revealProgressively(fallbackText, onDelta);
   return { ok: true, text: fallbackText, mode: "local" };
 }

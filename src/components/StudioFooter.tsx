@@ -35,15 +35,15 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
   return (
     <footer
       id="contact"
-      className="relative bg-[#0A0604] text-[#FAF6F0] silk-grain-dark pt-12 sm:pt-18 pb-14 overflow-hidden scroll-mt-20"
+      className="relative -mt-[2px] bg-[#0A0604] text-[#FAF6F0] silk-grain-dark pt-12 sm:pt-18 pb-14 overflow-hidden scroll-mt-20"
     >
-      {/* Warm burnt-orange & copper top-seam atmospheric illumination */}
+      {/* Warm burnt-orange & copper atmospheric illumination nestled smoothly inside obsidian canvas */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -top-28 left-1/2 -translate-x-1/2 w-[900px] h-[260px] rounded-full opacity-55"
+        className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 w-[820px] h-[240px] rounded-full opacity-45"
         style={{
           background:
-            "radial-gradient(ellipse at center, rgba(232, 93, 4, 0.24) 0%, rgba(200, 90, 23, 0.11) 46%, rgba(10, 6, 4, 0) 76%)",
+            "radial-gradient(ellipse at center, rgba(232, 93, 4, 0.2) 0%, rgba(200, 90, 23, 0.08) 45%, rgba(10, 6, 4, 0) 74%)",
         }}
       />
       <div

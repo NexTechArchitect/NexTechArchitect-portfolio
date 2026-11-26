@@ -163,3 +163,83 @@ test("answers contact, credentials, and casual greetings cleanly without banned 
     assert.equal(text.includes("\u2014"), false, "Found em-dash");
   }
 });
+
+test("project-first priority overrides generic security/gas wording for gallery Ask Amit prompts", () => {
+  const perpsV2 = generateLocalFallbackReply(
+    "Give me a technical walkthrough of Nexus Perps v2 (Polkadot Hub), including its architecture, smart contracts, security invariants, and gas optimizations."
+  );
+  assert.match(perpsV2, /### Nexus Perps v2 \(Polkadot Hub\)/);
+  assert.match(perpsV2, /PerpsEngineV2/);
+  assert.match(perpsV2, /Polkadot Hub EVM/);
+  assert.match(perpsV2, /nexus-polka-perps/);
+
+  const dsc = generateLocalFallbackReply(
+    "Give me a technical walkthrough of Decentralized StableCoin Engine, including its architecture, smart contracts, security invariants, and gas optimizations."
+  );
+  assert.match(dsc, /### Decentralized StableCoin Engine/);
+  assert.match(dsc, /DSCEngine\.sol/);
+  assert.match(dsc, /OracleLib\.sol/);
+  assert.match(dsc, /Foundry-Defi-StableCoin/);
+
+  const raffle = generateLocalFallbackReply(
+    "Give me a technical walkthrough of Automated Provably Fair Raffle, including its architecture, smart contracts, security invariants, and gas optimizations."
+  );
+  assert.match(raffle, /### Automated Provably Fair Raffle/);
+  assert.match(raffle, /Raffle\.sol/);
+  assert.match(raffle, /Chainlink VRF v2\.5/);
+  assert.match(raffle, /Raffle-Lottery-Foundry/);
+});
+
+test("multi-turn follow-up memory stays locked on active project and tailors sub-intent", () => {
+  const history = [
+    {
+      role: "user",
+      text: "Give me a technical walkthrough of Nexus Perps v2 (Polkadot Hub), including its architecture, smart contracts, security invariants, and gas optimizations.",
+    },
+    {
+      role: "assistant",
+      text: generateLocalFallbackReply(
+        "Give me a technical walkthrough of Nexus Perps v2 (Polkadot Hub), including its architecture, smart contracts, security invariants, and gas optimizations."
+      ),
+    },
+  ];
+
+  const securityFollowUp = generateLocalFallbackReply(
+    "how does it handle security?",
+    history
+  );
+  assert.match(securityFollowUp, /Security Invariants & Threat Model: Nexus Perps v2/);
+  assert.match(securityFollowUp, /isolated margin containment/i);
+
+  const gasFollowUp = generateLocalFallbackReply(
+    "how does it save gas?",
+    history
+  );
+  assert.match(gasFollowUp, /Gas Optimizations in Nexus Perps v2/);
+  assert.match(gasFollowUp, /256-bit storage slots/i);
+
+  const linkFollowUp = generateLocalFallbackReply(
+    "give me its github link",
+    history
+  );
+  assert.match(linkFollowUp, /Links & Deployed References: Nexus Perps v2/);
+  assert.match(linkFollowUp, /https:\/\/github\.com\/NexTechArchitect\/nexus-polka-perps/);
+
+  // Switching to a brand-new Web3 standard should NOT get hijacked by previous project
+  const newTopic = generateLocalFallbackReply("what is erc 721", history);
+  assert.match(newTopic, /### ERC-721 & ERC-721A/);
+});
+
+test("supports side-by-side comparison of two projects and smart off-topic fallback", () => {
+  const comparison = generateLocalFallbackReply(
+    "Compare Nexus RWA and Sentinel Insurance"
+  );
+  assert.match(comparison, /Side-by-Side Comparison: Nexus RWA Protocol vs\. Sentinel Insurance Protocol/);
+  assert.match(comparison, /ComplianceEngine/);
+  assert.match(comparison, /CoveragePool/);
+
+  const offTopic = generateLocalFallbackReply("what is the best pasta recipe for dinner");
+  assert.match(offTopic, /local portfolio knowledge mode/i);
+  assert.match(offTopic, /nextech\.amit@gmail\.com/);
+});
+

@@ -10,6 +10,88 @@ interface CurveProps {
 }
 
 /**
+ * Top Hero Framing Canopy: Sleek, Shallow Deep Velvet Espresso (#140E0B) Wave
+ * Frames the floating Navbar aesthetically at the top edge and flows smoothly
+ * into the Warm Ivory (#FAF6F0) Hero via a wide, low-amplitude sculptural wave
+ * traced with a delicate burnt-orange hairline and soft ambient glow beneath.
+ */
+export function TopCanopyWave({
+  idPrefix = "hero-top-canopy",
+}: {
+  idPrefix?: string;
+}) {
+  const strokeId = `${idPrefix}-rim`;
+  const fillId = `${idPrefix}-fill`;
+
+  return (
+    <div
+      data-testid="hero-top-canopy"
+      aria-hidden="true"
+      className="pointer-events-none absolute top-0 inset-x-0 z-0 leading-none overflow-hidden select-none"
+    >
+      {/* Soft warm burnt-orange ambient glow nestled beneath the sculptural wave */}
+      <div
+        className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-[56px] sm:top-[66px] lg:top-[74px] w-[82%] max-w-[1140px] h-[96px] rounded-full opacity-55"
+        style={{
+          background:
+            "radial-gradient(ellipse at 50% 25%, rgba(232, 93, 4, 0.24) 0%, rgba(244, 140, 6, 0.1) 46%, rgba(250, 246, 240, 0) 76%)",
+        }}
+      />
+
+      <svg
+        viewBox="0 0 1440 124"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        preserveAspectRatio="none"
+        shapeRendering="geometricPrecision"
+        className="pointer-events-none relative z-10 block w-full h-[94px] sm:h-[106px] lg:h-[116px]"
+      >
+        <defs>
+          <linearGradient
+            id={fillId}
+            x1="720"
+            y1="0"
+            x2="720"
+            y2="120"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop offset="0%" stopColor="#140E0B" />
+            <stop offset="72%" stopColor="#140E0B" />
+            <stop offset="100%" stopColor="#1A120E" />
+          </linearGradient>
+          <linearGradient
+            id={strokeId}
+            x1="0"
+            y1="0"
+            x2="1440"
+            y2="0"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop offset="0%" stopColor="#C85A17" stopOpacity="0.16" />
+            <stop offset="25%" stopColor="#E85D04" stopOpacity="0.55" />
+            <stop offset="50%" stopColor="#F48C06" stopOpacity="0.68" />
+            <stop offset="75%" stopColor="#E85D04" stopOpacity="0.55" />
+            <stop offset="100%" stopColor="#C85A17" stopOpacity="0.16" />
+          </linearGradient>
+        </defs>
+
+        {/* Shallow, wide low-amplitude architectural wave (zero clunky circle dome) */}
+        <path
+          d="M0 0H1440V80C1120 116 320 116 0 80V0Z"
+          fill={`url(#${fillId})`}
+        />
+        <path
+          d="M0 80C320 116 1120 116 1440 80"
+          stroke={`url(#${strokeId})`}
+          strokeWidth="1.6"
+          vectorEffect="non-scaling-stroke"
+        />
+      </svg>
+    </div>
+  );
+}
+
+/**
  * Transition 1: Scroll-Flattening Sculptural Horizon Sweep
  * Used for Hero (#FAF6F0) -> Architecture (#140E0B).
  * A single graceful sculptural arc that stretches and glides flat smoothly

@@ -33,8 +33,11 @@ export default function Navbar({
       let current = "";
       for (const link of NAV_LINKS) {
         const el = document.getElementById(link.id);
-        if (el && el.offsetTop <= probeY) {
-          current = link.id;
+        if (el) {
+          const docTop = el.getBoundingClientRect().top + window.scrollY;
+          if (docTop <= probeY) {
+            current = link.id;
+          }
         }
       }
       setActiveSection(current);
@@ -75,10 +78,10 @@ export default function Navbar({
     <header className="fixed top-0 inset-x-0 z-40 pointer-events-none pt-3.5 sm:pt-4 lg:pt-5">
       <div
         data-testid="floating-navbar-pill"
-        className={`pointer-events-auto w-[calc(100%-1.5rem)] max-w-6xl mx-auto h-[66px] lg:h-[70px] px-4 sm:px-5 lg:px-6 rounded-full border bg-[rgba(255,253,249,0.88)] backdrop-blur-xl transition-[background-color,border-color,box-shadow] duration-300 hover:bg-[#FFFDF9] hover:border-[#E85D04]/40 hover:shadow-[0_18px_42px_-16px_rgba(232,93,4,0.18)] flex items-center justify-between gap-2.5 sm:gap-4 lg:gap-6 ${
+        className={`pointer-events-auto w-[calc(100%-1.5rem)] max-w-6xl mx-auto h-[66px] lg:h-[70px] px-4 sm:px-5 lg:px-6 rounded-full border bg-[rgba(255,253,249,0.92)] backdrop-blur-xl transition-[background-color,border-color,box-shadow] duration-300 hover:bg-[#FFFDF9] hover:border-[#E85D04]/40 hover:shadow-[0_18px_42px_-16px_rgba(232,93,4,0.22)] flex items-center justify-between gap-2.5 sm:gap-4 lg:gap-6 ${
           scrolled
-            ? "border-[#18110D]/12 shadow-[0_18px_46px_-22px_rgba(24,17,13,0.28)]"
-            : "border-[#18110D]/10 shadow-[0_14px_38px_-22px_rgba(24,17,13,0.16)]"
+            ? "border-[#18110D]/12 shadow-[0_18px_46px_-22px_rgba(24,17,13,0.3)]"
+            : "border-[#FAF6F0]/22 shadow-[0_18px_46px_-20px_rgba(10,6,4,0.5)]"
         }`}
       >
         {/* Left: Refined Copper-Orange Geometric Mark + Wordmark */}

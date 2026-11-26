@@ -73,18 +73,28 @@ export function normalizeConversationContents(
 }
 
 function formatProjectContext(project: ProjectItem): string {
-  const contractsLine = project.contracts?.length
-    ? `\n  Contracts: ${project.contracts
-        .map((c) => `${c.label} (${c.role}, address: ${c.address})`)
+  const smartContractsLine = project.smartContracts.length
+    ? `\n  Smart Contracts: ${project.smartContracts
+        .map(
+          (c) =>
+            `${c.name}${c.address ? ` (${c.address})` : ""}: ${c.responsibility}`
+        )
         .join("; ")}`
+    : "";
+  const securityLine = project.securityInvariants.length
+    ? `\n  Security Invariants: ${project.securityInvariants.join(" | ")}`
+    : "";
+  const gasLine = project.gasOptimizations.length
+    ? `\n  Gas Optimizations: ${project.gasOptimizations.join(" | ")}`
     : "";
   const liveLine = project.liveUrl ? `\n  Live App: ${project.liveUrl}` : "";
 
   return `- [${project.id}] **${project.title}** (${project.category === "fullstack" ? "Full-Stack Web3 Protocol" : "Core EVM Contract"} | Network: ${project.network} | Standard: ${project.standard})
-  Architecture & Summary: ${project.description}
-  Key Engineering Highlight / Invariant / Gas Metric: ${project.metric} (${project.metricDetail})
+  Story & Problem Solved: ${project.story}
+  Architecture: ${project.architecture}
+  Key Engineering Highlight: ${project.metric} (${project.metricDetail})
   Tech Stack: ${project.tech.join(", ")}
-  GitHub Repository: ${project.link}${liveLine}${contractsLine}`;
+  GitHub Repository: ${project.link}${liveLine}${smartContractsLine}${securityLine}${gasLine}`;
 }
 
 function formatWorkbenchSnippet(insight: ArchitectureInsight): string {
