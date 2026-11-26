@@ -220,11 +220,17 @@ export default function WorkbenchStage({
           </div>
 
           {/* Architectural Horizontal File-Switcher Dock */}
-          <div className="mt-9 relative z-30">
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.48, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            className="mt-9 relative z-30"
+          >
             <div
               role="tablist"
               aria-label="Solidity and Yul contract primitives"
-              className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar-hide p-1.5 rounded-2xl lg:rounded-full bg-[#E7DCCE]/85 border border-[#140E0B]/10 shadow-[0_12px_30px_-20px_rgba(20,14,11,0.2)] w-full lg:w-fit"
+              className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar-hide p-1.5 rounded-2xl lg:rounded-full bg-[#E7DCCE]/88 border border-[#140E0B]/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.65),0_12px_30px_-20px_rgba(20,14,11,0.2)] w-full lg:w-fit"
             >
               {ARCHITECTURE_INSIGHTS.map((insight) => {
                 const isSelected = insight.id === activeInsight.id;
@@ -265,7 +271,7 @@ export default function WorkbenchStage({
                 );
               })}
             </div>
-          </div>
+          </motion.div>
 
           {/* Cinematic 2-Column Floating Studio Stage */}
           <div className="mt-9 relative z-20">
@@ -304,7 +310,7 @@ export default function WorkbenchStage({
 
                     {/* Two Tonal Editorial Callout Cards (Zero Straight Divider Lines) */}
                     <div className="mt-7 space-y-3.5">
-                      <div className="rounded-2xl bg-[#EAE0D3]/80 px-5 py-4">
+                      <div className="rounded-2xl bg-[#EAE0D3]/85 border border-[#140E0B]/[0.06] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] px-5 py-4">
                         <p className="font-mono-tabular text-[11px] uppercase tracking-[0.12em] font-semibold text-[#7D6C61]">
                           Engineering Tradeoff
                         </p>
@@ -313,7 +319,7 @@ export default function WorkbenchStage({
                         </p>
                       </div>
 
-                      <div className="rounded-2xl bg-[#EFE5D8] px-5 py-4">
+                      <div className="rounded-2xl bg-[#EFE5D8] border border-[#E85D04]/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] px-5 py-4">
                         <p className="font-mono-tabular text-[11px] uppercase tracking-[0.12em] font-semibold text-[#E85D04]">
                           Verified Outcome
                         </p>
@@ -328,7 +334,7 @@ export default function WorkbenchStage({
                 {/* Right (7 cols): Elevated Deep Espresso (#130D0A) Floating Code Studio */}
                 <div
                   data-testid="workbench-code-panel"
-                  className="lg:col-span-7 rounded-[26px] bg-[#130D0A] text-[#FAF6F0] border border-[#140E0B]/20 flex flex-col overflow-hidden shadow-[0_32px_72px_-28px_rgba(20,14,11,0.52)]"
+                  className="lg:col-span-7 rounded-[26px] bg-[#130D0A] text-[#FAF6F0] border border-[#FAF6F0]/10 flex flex-col overflow-hidden shadow-[inset_0_1px_0_rgba(250,246,240,0.08),0_32px_72px_-28px_rgba(20,14,11,0.56)]"
                 >
                   {/* Tonal Window Header (Zero Straight Hairline Border) */}
                   <div className="px-5 sm:px-6 py-4 bg-[#1C130E] flex flex-wrap items-center justify-between gap-3">

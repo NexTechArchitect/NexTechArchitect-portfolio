@@ -78,25 +78,25 @@ export default function Navbar({
     <header className="fixed top-0 inset-x-0 z-40 pointer-events-none pt-3.5 sm:pt-4 lg:pt-5">
       <div
         data-testid="floating-navbar-pill"
-        className={`pointer-events-auto w-[calc(100%-1.5rem)] max-w-6xl mx-auto h-[66px] lg:h-[70px] px-4 sm:px-5 lg:px-6 rounded-full border bg-[rgba(255,253,249,0.92)] backdrop-blur-xl transition-[background-color,border-color,box-shadow] duration-300 hover:bg-[#FFFDF9] hover:border-[#E85D04]/40 hover:shadow-[0_18px_42px_-16px_rgba(232,93,4,0.22)] flex items-center justify-between gap-2.5 sm:gap-4 lg:gap-6 ${
+        className={`pointer-events-auto w-[calc(100%-1.5rem)] max-w-6xl mx-auto h-[64px] sm:h-[66px] lg:h-[70px] px-3.5 sm:px-5 lg:px-6 rounded-full border bg-[rgba(255,253,249,0.93)] backdrop-blur-xl transition-[background-color,border-color,box-shadow] duration-300 hover:bg-[#FFFDF9] hover:border-[#E85D04]/38 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_18px_42px_-16px_rgba(232,93,4,0.22)] flex items-center justify-between gap-2 sm:gap-4 lg:gap-6 ${
           scrolled
-            ? "border-[#18110D]/12 shadow-[0_18px_46px_-22px_rgba(24,17,13,0.3)]"
-            : "border-[#FAF6F0]/22 shadow-[0_18px_46px_-20px_rgba(10,6,4,0.5)]"
+            ? "border-[#18110D]/12 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_18px_46px_-22px_rgba(24,17,13,0.3)]"
+            : "border-[#FAF6F0]/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.92),0_20px_48px_-20px_rgba(10,6,4,0.52)]"
         }`}
       >
         {/* Left: Refined Copper-Orange Geometric Mark + Wordmark */}
         <a
           href="#top"
           onClick={(e) => handleAnchorClick(e, "#top")}
-          className="inline-flex items-center gap-2.5 min-h-[44px] shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF6F0] rounded-full pr-1"
+          className="group inline-flex items-center gap-2.5 min-h-[44px] shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF6F0] rounded-full pr-1"
         >
           <span
             aria-hidden="true"
-            className="relative w-8 h-8 rounded-lg bg-[#18110D] border border-[#E85D04]/45 flex items-center justify-center shadow-[0_6px_16px_-8px_rgba(232,93,4,0.75)] shrink-0"
+            className="relative w-8 h-8 rounded-lg bg-[#18110D] border border-[#E85D04]/45 flex items-center justify-center shadow-[0_6px_16px_-8px_rgba(232,93,4,0.75)] shrink-0 transition-transform duration-300 group-hover:scale-[1.04]"
           >
-            <span className="w-3 h-3 rotate-45 border-[2px] border-[#E85D04] rounded-[2px]" />
+            <span className="w-3 h-3 rotate-45 group-hover:rotate-[135deg] transition-transform duration-500 ease-out border-[2px] border-[#E85D04] rounded-[2px]" />
           </span>
-          <span className="font-display font-bold text-lg sm:text-xl tracking-tight text-[#18110D] whitespace-nowrap">
+          <span className="font-display font-bold text-[17px] sm:text-xl tracking-tight text-[#18110D] whitespace-nowrap">
             NexTechArchitect
           </span>
         </a>

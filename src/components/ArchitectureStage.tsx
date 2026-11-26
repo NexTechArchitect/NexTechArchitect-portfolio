@@ -350,14 +350,21 @@ export default function ArchitectureStage({
                 aria-label={`${activeDomain.label} capabilities`}
                 className="mt-8 space-y-3"
               >
-                {activeDomain.capabilities.map((item) => (
-                  <li
+                {activeDomain.capabilities.map((item, idx) => (
+                  <motion.li
                     key={item.name}
-                    className="rounded-2xl bg-[#1D140F]/85 px-4 py-3.5 flex items-start gap-3.5"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.34,
+                      delay: idx * 0.045,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
+                    className="rounded-2xl bg-[#1D140F]/88 border border-[#FAF6F0]/[0.07] hover:border-[#E85D04]/38 hover:bg-[#221711] hover:-translate-y-0.5 px-4 py-3.5 flex items-start gap-3.5 shadow-[inset_0_1px_0_rgba(250,246,240,0.04)] transition-[background-color,border-color,transform] duration-200"
                   >
                     <span
                       aria-hidden="true"
-                      className="mt-2 w-2 h-2 rounded-full bg-[#E85D04] shrink-0"
+                      className="mt-2 w-2 h-2 rounded-full bg-[#E85D04] shrink-0 shadow-[0_0_10px_rgba(232,93,4,0.65)]"
                     />
                     <div className="min-w-0">
                       <p className="font-display text-[15px] font-bold text-[#FAF6F0] tracking-[-0.015em]">
@@ -367,7 +374,7 @@ export default function ArchitectureStage({
                         {item.focus}
                       </p>
                     </div>
-                  </li>
+                  </motion.li>
                 ))}
               </ul>
             </div>
@@ -375,10 +382,17 @@ export default function ArchitectureStage({
             {/* Right: Numbered Architectural Principles (01, 02, 03) + Action */}
             <div className="lg:col-span-7">
               <ol className="space-y-4">
-                {activeDomain.principles.map((principle) => (
-                  <li
+                {activeDomain.principles.map((principle, idx) => (
+                  <motion.li
                     key={principle.num}
-                    className="rounded-[24px] bg-[#1B130E]/90 p-5 sm:p-6 flex items-start gap-5 sm:gap-6"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.38,
+                      delay: idx * 0.055,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
+                    className="rounded-[24px] bg-[#1B130E]/92 border border-[#FAF6F0]/[0.08] hover:border-[#E85D04]/38 hover:-translate-y-0.5 p-5 sm:p-6 flex items-start gap-5 sm:gap-6 shadow-[inset_0_1px_0_rgba(250,246,240,0.05),0_18px_38px_-24px_rgba(0,0,0,0.72)] hover:shadow-[inset_0_1px_0_rgba(244,140,6,0.12),0_22px_44px_-22px_rgba(232,93,4,0.18)] transition-[border-color,transform,box-shadow] duration-200"
                   >
                     <span className="font-mono-tabular text-sm sm:text-base font-semibold text-[#F48C06] tracking-[0.06em] pt-0.5 shrink-0">
                       {principle.num}
@@ -391,7 +405,7 @@ export default function ArchitectureStage({
                         {principle.detail}
                       </p>
                     </div>
-                  </li>
+                  </motion.li>
                 ))}
               </ol>
 
@@ -399,7 +413,7 @@ export default function ArchitectureStage({
                 <button
                   type="button"
                   onClick={() => onInspectWorkbench(activeDomain.workbenchId)}
-                  className="inline-flex items-center justify-center gap-2 min-h-[44px] px-6 py-3 rounded-full bg-[#E85D04] hover:bg-[#D14F00] active:scale-[0.98] text-[#FAF6F0] text-sm font-semibold transition-[background-color,transform] duration-150 cursor-pointer shadow-[0_14px_30px_-14px_rgba(232,93,4,0.68)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FAF6F0]"
+                  className="inline-flex items-center justify-center gap-2 min-h-[44px] px-6 py-3 rounded-full bg-[#E85D04] hover:bg-[#D14F00] hover:-translate-y-0.5 active:scale-[0.98] text-[#FAF6F0] text-sm font-semibold transition-[background-color,transform,box-shadow] duration-150 cursor-pointer shadow-[0_14px_30px_-14px_rgba(232,93,4,0.68)] hover:shadow-[0_18px_36px_-14px_rgba(232,93,4,0.78)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FAF6F0]"
                 >
                   <span>Inspect Related Solidity Code</span>
                   <ArrowDown className="w-4 h-4" aria-hidden="true" />

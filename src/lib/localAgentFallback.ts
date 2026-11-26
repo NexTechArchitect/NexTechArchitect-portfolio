@@ -1658,9 +1658,95 @@ function buildOverviewMenu(isGreeting: boolean): string {
   ].join("\n");
 }
 
+function matchConversationalTurn(
+  q: NormalizedQuery,
+  history?: readonly FallbackHistoryTurn[]
+): string | null {
+  const text = q.normalized;
+  const activeProject = resolveProjectFromHistory(history);
+
+  // 1. Check-ins (e.g. "how are you", "what's up", "hey kaise ho")
+  if (
+    /^(?:(?:hi|hey|hello|yo|gm)\s+)?(how are you|how are u|how r u|how are you doing|hows it going|how is it going|how you doing|hows everything|how is everything|whats up|what is up|wassup|sup|kaise ho|kya haal|kya haal hai)(?:\s+(amit|bro|mate|man|today|there))?$/.test(
+      text
+    )
+  ) {
+    return "Doing great, thanks for asking! Always energized to talk DeFi architecture, Solidity internals, and **Amit Kumar's** deployed protocols. What's on your mind today: a walkthrough of a flagship system like **Nexus Perps v2** or **Nexus RWA**, a Solidity/EVM question, or Amit's background?";
+  }
+
+  // 2. Greetings (e.g. "hi", "hello", "gm", "namaste")
+  if (
+    /^(hi|hello|hey|yo|hola|namaste|gm|good morning|good afternoon|good evening|greetings)(?:\s+(there|amit|bro|mate|man|friend|everyone))?$/.test(
+      text
+    )
+  ) {
+    return buildOverviewMenu(true);
+  }
+
+  // 3. Identity questions (e.g. "who are you", "what are you", "tell me about yourself")
+  if (
+    /^(who are you|what are you|tell me about yourself|what is your name|whats your name|who am i talking to|are you amit|are you a bot|are you ai)(?:\s+please)?$/.test(
+      text
+    )
+  ) {
+    return "I'm **Ask Amit**, the protocol assistant for **Amit Kumar (NexTechArchitect)**, a Smart Contract Engineer and DeFi Protocol Architect. Think of me as an interactive engineering guide to his 15 deployed protocols, inline Yul and Solidity primitives, security invariants, and EVM/DeFi architecture. Ask me anything about his work or Web3 engineering!";
+  }
+
+  // 4. Pleasantries (e.g. "nice to meet you", "pleasure meeting you")
+  if (
+    /^(nice to meet you|pleasure meeting you|pleasure to meet you|glad to meet you|good to meet you|happy to meet you|great to meet you)(?:\s+(too|amit|as well))?$/.test(
+      text
+    )
+  ) {
+    return "Likewise, great to meet you! Whether you're evaluating **Amit Kumar** for a Smart Contract Engineer role, reviewing a protocol walkthrough, or exploring EVM and DeFi internals, I'm here to help. Where would you like to start?";
+  }
+
+  // 5. Gratitude (e.g. "thankyou", "thanks", "appreciate it", "ok thanks")
+  if (
+    /^(?:(?:ok|okay|cool|great|awesome|got it|nice)\s+)?(thank you|thanks|thankyou|thx|ty|tysm|appreciate it|much appreciated|cheers|grateful)(?:\s+(so much|very much|a lot|amit|bro|mate|man|again|for that|for explaining|for the info|for helping|for the help))?$/.test(
+      text
+    )
+  ) {
+    if (activeProject) {
+      return `You're very welcome! Glad that helped unpack **${activeProject.title}**. If you want to dig deeper into its smart contracts, gas optimizations, or security invariants, or compare it against another protocol in Amit's gallery, just say the word.`;
+    }
+    return "You're very welcome! Happy to help anytime. If you'd like to walk through any of Amit's DeFi protocols, inspect a Solidity or Yul snippet, or reach out to Amit directly at `nextech.amit@gmail.com`, just let me know.";
+  }
+
+  // 6. Farewells (e.g. "bye", "see you", "take care")
+  if (
+    /^(bye|goodbye|good bye|see you|see ya|cya|take care|later|catch you later|have a good day|have a great day|good night|gn|peace out|peace)(?:\s+(amit|bro|mate|man|soon))?$/.test(
+      text
+    )
+  ) {
+    return "Take care, and thanks for stopping by **Amit Kumar's** portfolio! Whenever you want to connect directly with Amit, you can reach him at `nextech.amit@gmail.com`, check his repositories on [GitHub](https://github.com/NexTechArchitect), or connect on [LinkedIn](https://www.linkedin.com/in/amit-kumar-811a11277). See you around!";
+  }
+
+  // 7. Positive reactions & acknowledgements (e.g. "nice", "cool", "awesome", "got it", "ok")
+  if (
+    /^(nice|cool|awesome|great|amazing|fire|dope|impressive|love it|loved it|sick|sweet|solid|good|sounds good|ok|okay|got it|makes sense|understood|noted|wow|brilliant|clean|neat|super|perfect|fair enough|nice work|good job|great work|awesome work|very nice|so cool|pretty cool|thats cool|that is cool|thats awesome|that is awesome|thats nice|that is nice|thats great|that is great)(?:\s+(work|stuff|job|man|bro|mate|amit))?$/.test(
+      text
+    )
+  ) {
+    if (activeProject) {
+      return `Glad you like how **${activeProject.title}** is put together! Want to inspect its security invariants, check its gas optimizations, or compare it side by side with another protocol in Amit's portfolio?`;
+    }
+    return [
+      "Glad to hear it! Two high-signal places to jump in next:",
+      "",
+      "- **Flagship Protocol Walkthrough:** Ask about **Nexus RWA Protocol** (ERC-3643 institutional compliance) or **On-Chain Automation** (35% Yul gas savings).",
+      "- **Live Code Deep Dive:** Ask me to walk through `SwapPopQueue.yul` or `ClaimsGovernor.sol` line by line.",
+      "",
+      "Which one sounds more interesting?",
+    ].join("\n");
+  }
+
+  return null;
+}
+
 function buildHelpfulOffTopicReply(): string {
   return [
-    "I'm currently running in local portfolio knowledge mode, where my focus is **Amit Kumar's DeFi protocols, smart contracts, and Web3/EVM engineering**.",
+    "That's a bit outside my usual lane. I'm tuned specifically for **Amit Kumar's DeFi protocols, Solidity & Yul architecture, and Web3/EVM engineering**.",
     "",
     "Here are a few things I can answer in depth right now:",
     "- **Project Deep Dives & Comparisons:** Ask about **Nexus Perps v2**, **Nexus RWA**, **Sentinel Insurance**, **On-Chain Automation**, **DSC StableCoin**, or compare any two protocols side by side.",
@@ -1730,17 +1816,18 @@ export function generateLocalFallbackReply(
     );
   }
 
-  // Step 2: Pure greeting or capability menu
-  const isPureGreeting =
-    /^(hi|hello|hey|yo|hola|namaste|kaise ho|kya haal|gm|good morning|good afternoon|good evening|sup|greetings)(\s+(there|amit|bro|mate|man|kaise ho|kya haal))?$/.test(
-      q.normalized
-    );
+  // Step 2: Natural Human Small Talk (Greetings, Check-ins, Identity, Pleasantries, Gratitude, Reactions, Farewells) & Capabilities Menu
+  const conversationalReply = matchConversationalTurn(q, history);
+  if (conversationalReply) {
+    return sanitizeEditorialCopy(conversationalReply);
+  }
+
   const asksCapabilities =
     /\b(what can you do|how can you help|help me|what do you know|menu|options)\b/.test(
       q.normalized
     );
-  if (isPureGreeting || asksCapabilities) {
-    return sanitizeEditorialCopy(buildOverviewMenu(isPureGreeting));
+  if (asksCapabilities) {
+    return sanitizeEditorialCopy(buildOverviewMenu(false));
   }
 
   // Step 3: Explicit Flagship / Portfolio gallery overview
@@ -1814,6 +1901,6 @@ export function generateLocalFallbackReply(
     return sanitizeEditorialCopy(buildFlagshipOverview());
   }
 
-  // Step 9: Helpful off-topic fallback (never dead-end or unrelated dump)
+  // Step 9: Helpful off-topic fallback (never dead-end or robotic disclaimer)
   return sanitizeEditorialCopy(buildHelpfulOffTopicReply());
 }

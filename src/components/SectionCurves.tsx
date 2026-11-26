@@ -10,41 +10,44 @@ interface CurveProps {
 }
 
 /**
- * Top Hero Framing Canopy: Sleek, Shallow Deep Velvet Espresso (#140E0B) Wave
- * Frames the floating Navbar aesthetically at the top edge and flows smoothly
- * into the Warm Ivory (#FAF6F0) Hero via a wide, low-amplitude sculptural wave
- * traced with a delicate burnt-orange hairline and soft ambient glow beneath.
+ * Top Hero Framing Canopy: Bespoke Asymmetric Deep Velvet Espresso (#140E0B) Gallery Arch
+ * Frames the floating frosted-ivory Navbar with soft architectural depth and dissolves
+ * into the Warm Ivory (#FAF6F0) Hero via a wide asymmetric Bezier curve cushioned by
+ * a feathered champagne-amber glow band and silky studio rim sheen.
  */
 export function TopCanopyWave({
   idPrefix = "hero-top-canopy",
 }: {
   idPrefix?: string;
 }) {
-  const strokeId = `${idPrefix}-rim`;
   const fillId = `${idPrefix}-fill`;
+  const sheenId = `${idPrefix}-sheen`;
+  const mistId = `${idPrefix}-mist`;
+  const rimId = `${idPrefix}-rim`;
+  const blurId = `${idPrefix}-blur`;
 
   return (
     <div
       data-testid="hero-top-canopy"
       aria-hidden="true"
-      className="pointer-events-none absolute top-0 inset-x-0 z-0 leading-none overflow-hidden select-none"
+      className="pointer-events-none absolute top-0 inset-x-0 z-0 -mb-[2px] leading-none overflow-hidden select-none"
     >
-      {/* Soft warm burnt-orange ambient glow nestled beneath the sculptural wave */}
+      {/* Silky studio radial warmth blooming gently beneath the asymmetric arch */}
       <div
-        className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-[56px] sm:top-[66px] lg:top-[74px] w-[82%] max-w-[1140px] h-[96px] rounded-full opacity-55"
+        className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-[44px] sm:top-[56px] lg:top-[64px] w-[90%] max-w-[1280px] h-[118px] rounded-full opacity-65"
         style={{
           background:
-            "radial-gradient(ellipse at 50% 25%, rgba(232, 93, 4, 0.24) 0%, rgba(244, 140, 6, 0.1) 46%, rgba(250, 246, 240, 0) 76%)",
+            "radial-gradient(ellipse 68% 58% at 52% 24%, rgba(232, 93, 4, 0.22) 0%, rgba(244, 158, 76, 0.12) 44%, rgba(250, 246, 240, 0) 78%)",
         }}
       />
 
       <svg
-        viewBox="0 0 1440 124"
+        viewBox="0 0 1440 138"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         preserveAspectRatio="none"
         shapeRendering="geometricPrecision"
-        className="pointer-events-none relative z-10 block w-full h-[94px] sm:h-[106px] lg:h-[116px]"
+        className="pointer-events-none relative z-10 block w-full h-[98px] sm:h-[112px] lg:h-[124px]"
       >
         <defs>
           <linearGradient
@@ -52,38 +55,103 @@ export function TopCanopyWave({
             x1="720"
             y1="0"
             x2="720"
-            y2="120"
+            y2="128"
             gradientUnits="userSpaceOnUse"
           >
-            <stop offset="0%" stopColor="#140E0B" />
-            <stop offset="72%" stopColor="#140E0B" />
-            <stop offset="100%" stopColor="#1A120E" />
+            <stop offset="0%" stopColor="#120C09" />
+            <stop offset="68%" stopColor="#140E0B" />
+            <stop offset="100%" stopColor="#1C130E" />
           </linearGradient>
+
+          {/* Feathered warm champagne & copper ambient crescent behind the espresso edge */}
           <linearGradient
-            id={strokeId}
+            id={sheenId}
+            x1="0"
+            y1="96"
+            x2="1440"
+            y2="96"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop offset="0%" stopColor="#E85D04" stopOpacity="0" />
+            <stop offset="22%" stopColor="#E85D04" stopOpacity="0.14" />
+            <stop offset="48%" stopColor="#F4A261" stopOpacity="0.26" />
+            <stop offset="76%" stopColor="#E85D04" stopOpacity="0.16" />
+            <stop offset="100%" stopColor="#C85A17" stopOpacity="0" />
+          </linearGradient>
+
+          {/* Soft vertical atmospheric fade dissolving sheen cleanly into warm ivory */}
+          <linearGradient
+            id={mistId}
+            x1="720"
+            y1="82"
+            x2="720"
+            y2="136"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop offset="0%" stopColor="#E85D04" stopOpacity="0.2" />
+            <stop offset="52%" stopColor="#F4A261" stopOpacity="0.09" />
+            <stop offset="100%" stopColor="#FAF6F0" stopOpacity="0" />
+          </linearGradient>
+
+          {/* Ultra-delicate feathered champagne specular kiss along the crest */}
+          <linearGradient
+            id={rimId}
             x1="0"
             y1="0"
             x2="1440"
             y2="0"
             gradientUnits="userSpaceOnUse"
           >
-            <stop offset="0%" stopColor="#C85A17" stopOpacity="0.16" />
-            <stop offset="25%" stopColor="#E85D04" stopOpacity="0.55" />
-            <stop offset="50%" stopColor="#F48C06" stopOpacity="0.68" />
-            <stop offset="75%" stopColor="#E85D04" stopOpacity="0.55" />
-            <stop offset="100%" stopColor="#C85A17" stopOpacity="0.16" />
+            <stop offset="0%" stopColor="#F4A261" stopOpacity="0" />
+            <stop offset="18%" stopColor="#E85D04" stopOpacity="0.22" />
+            <stop offset="50%" stopColor="#F6BD87" stopOpacity="0.46" />
+            <stop offset="82%" stopColor="#E85D04" stopOpacity="0.22" />
+            <stop offset="100%" stopColor="#F4A261" stopOpacity="0" />
           </linearGradient>
+
+          <filter
+            id={blurId}
+            x="-6%"
+            y="-40%"
+            width="112%"
+            height="180%"
+            colorInterpolationFilters="sRGB"
+          >
+            <feGaussianBlur stdDeviation="5.5" />
+          </filter>
         </defs>
 
-        {/* Shallow, wide low-amplitude architectural wave (zero clunky circle dome) */}
+        {/* Layer 1: Diffused feathered champagne-orange ambient aura following the asymmetric arch */}
         <path
-          d="M0 0H1440V80C1120 116 320 116 0 80V0Z"
+          d="M0 90C190 120 510 126 840 116C1110 108 1310 118 1440 88V122C1260 136 960 132 620 134C320 136 120 124 0 108V90Z"
+          fill={`url(#${mistId})`}
+          filter={`url(#${blurId})`}
+        />
+
+        {/* Layer 2: Soft translucent copper sheen ribbon hugging the arch underside */}
+        <path
+          d="M0 0H1440V92C1240 122 980 114 710 121C430 128 190 124 0 94V0Z"
+          fill={`url(#${sheenId})`}
+        />
+
+        {/* Layer 3: Sculptural asymmetric Deep Velvet Espresso gallery arch */}
+        <path
+          d="M0 0H1440V84C1230 116 970 108 700 115C420 122 185 117 0 86V0Z"
           fill={`url(#${fillId})`}
         />
+
+        {/* Layer 4: Diffused inner champagne sheen glow along the arch edge */}
         <path
-          d="M0 80C320 116 1120 116 1440 80"
-          stroke={`url(#${strokeId})`}
-          strokeWidth="1.6"
+          d="M0 86C185 117 420 122 700 115C970 108 1230 116 1440 84"
+          stroke={`url(#${rimId})`}
+          strokeWidth="3.5"
+          filter={`url(#${blurId})`}
+          opacity="0.7"
+        />
+        <path
+          d="M0 86C185 117 420 122 700 115C970 108 1230 116 1440 84"
+          stroke={`url(#${rimId})`}
+          strokeWidth="1"
           vectorEffect="non-scaling-stroke"
         />
       </svg>

@@ -63,6 +63,7 @@ const PROJECT_ICON_MAP: Record<
 
 interface FlagshipCardProps {
   project: ProjectItem;
+  index: number;
   darkVariant?: boolean;
   onOpenCaseStudy: (project: ProjectItem) => void;
   onAskAmit: (project: ProjectItem) => void;
@@ -70,6 +71,7 @@ interface FlagshipCardProps {
 
 function FlagshipCard({
   project,
+  index,
   darkVariant = false,
   onOpenCaseStudy,
   onAskAmit,
@@ -105,16 +107,27 @@ function FlagshipCard({
   const Icon = PROJECT_ICON_MAP[project.iconKey] || Cpu;
 
   return (
-    <div style={{ perspective: 1200 }} className="h-full">
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.14 }}
+      transition={{
+        duration: 0.54,
+        delay: (index % 2) * 0.08,
+        ease: [0.22, 1, 0.36, 1],
+      }}
+      style={{ perspective: 1200 }}
+      className="h-full"
+    >
       <motion.article
         ref={cardRef}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
         style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-        className={`h-full rounded-[28px] p-6 sm:p-8 flex flex-col justify-between transition-colors duration-200 border ${
+        className={`h-full rounded-[28px] p-6 sm:p-8 flex flex-col justify-between transition-[border-color,box-shadow] duration-250 border ${
           darkVariant
-            ? "bg-[#140E0B] text-[#FAF6F0] border-[#FAF6F0]/12 shadow-[0_24px_64px_-32px_rgba(20,14,11,0.72)]"
-            : "bg-[#FFFDF9] text-[#140E0B] border-[#140E0B]/10 shadow-[0_20px_54px_-36px_rgba(20,14,11,0.22)] hover:border-[#E85D04]/45"
+            ? "bg-[#140E0B] text-[#FAF6F0] border-[#FAF6F0]/12 hover:border-[#E85D04]/45 shadow-[inset_0_1px_0_rgba(250,246,240,0.08),0_24px_64px_-32px_rgba(20,14,11,0.74)] hover:shadow-[inset_0_1px_0_rgba(244,140,6,0.16),0_28px_72px_-28px_rgba(232,93,4,0.22)]"
+            : "bg-[#FFFDF9] text-[#140E0B] border-[#140E0B]/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_20px_54px_-36px_rgba(20,14,11,0.22)] hover:border-[#E85D04]/45 hover:shadow-[0_26px_62px_-32px_rgba(232,93,4,0.2)]"
         }`}
       >
         <div>
@@ -228,7 +241,7 @@ function FlagshipCard({
             <button
               type="button"
               onClick={() => onOpenCaseStudy(project)}
-              className={`inline-flex items-center justify-center gap-1.5 min-h-[44px] px-4 py-2.5 rounded-full text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] ${
+              className={`inline-flex items-center justify-center gap-1.5 min-h-[44px] px-4 py-2.5 rounded-full text-xs font-semibold active:scale-[0.98] transition-[background-color,transform] duration-150 whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] ${
                 darkVariant
                   ? "bg-[#E85D04] hover:bg-[#D14F00] text-[#FAF6F0]"
                   : "bg-[#140E0B] hover:bg-[#E85D04] text-[#FAF6F0]"
@@ -241,7 +254,7 @@ function FlagshipCard({
             <button
               type="button"
               onClick={() => onAskAmit(project)}
-              className={`inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3.5 py-2.5 rounded-full text-xs font-semibold border transition-colors whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] ${
+              className={`inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3.5 py-2.5 rounded-full text-xs font-semibold border active:scale-[0.98] transition-[border-color,color,transform] duration-150 whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] ${
                 darkVariant
                   ? "border-[#FAF6F0]/18 bg-[#221813] text-[#FAF6F0] hover:border-[#E85D04] hover:text-[#E85D04]"
                   : "border-[#140E0B]/15 bg-[#FAF6F0] text-[#140E0B] hover:border-[#E85D04] hover:text-[#E85D04]"
@@ -284,7 +297,7 @@ function FlagshipCard({
           </div>
         </div>
       </motion.article>
-    </div>
+    </motion.div>
   );
 }
 
@@ -377,6 +390,7 @@ export default function ProtocolShowcase({
                 <FlagshipCard
                   key={project.id}
                   project={project}
+                  index={index}
                   darkVariant={index === 1 || index === 2}
                   onOpenCaseStudy={onSelectProject}
                   onAskAmit={(item) => explainProtocol(item.id)}
@@ -453,7 +467,13 @@ export default function ProtocolShowcase({
 
           <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
             {/* Portal 1: Full-Stack Web3 Protocols */}
-            <div className="group rounded-[28px] bg-[#FBF8F3] text-[#140E0B] border border-[#FAF6F0]/20 hover:border-[#E85D04]/70 p-6 sm:p-8 lg:p-9 flex flex-col justify-between transition-[border-color,box-shadow] duration-200 shadow-[0_28px_68px_-30px_rgba(0,0,0,0.68)] hover:shadow-[0_32px_74px_-28px_rgba(232,93,4,0.28)]">
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.16 }}
+              transition={{ duration: 0.54, ease: [0.22, 1, 0.36, 1] }}
+              className="group rounded-[28px] bg-[#FBF8F3] text-[#140E0B] border border-[#FAF6F0]/25 hover:border-[#E85D04]/70 hover:-translate-y-1 p-6 sm:p-8 lg:p-9 flex flex-col justify-between transition-[border-color,box-shadow,transform] duration-250 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_28px_68px_-30px_rgba(0,0,0,0.68)] hover:shadow-[0_34px_76px_-28px_rgba(232,93,4,0.3)]"
+            >
               <div>
                 <div className="flex items-center justify-between gap-3">
                   <div className="w-11 h-11 rounded-2xl bg-[#EFE6DA] border border-[#140E0B]/10 flex items-center justify-center text-[#E85D04]">
@@ -488,10 +508,20 @@ export default function ProtocolShowcase({
                   <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
                 </button>
               </div>
-            </div>
+            </motion.div>
 
             {/* Portal 2: Core EVM Contracts */}
-            <div className="group rounded-[28px] bg-[#110B08] text-[#FAF6F0] border border-[#E85D04]/25 hover:border-[#E85D04]/70 p-6 sm:p-8 lg:p-9 flex flex-col justify-between transition-[border-color,box-shadow] duration-200 shadow-[0_28px_68px_-30px_rgba(0,0,0,0.8)] hover:shadow-[0_32px_74px_-28px_rgba(232,93,4,0.32)]">
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.16 }}
+              transition={{
+                duration: 0.54,
+                delay: 0.08,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+              className="group rounded-[28px] bg-[#110B08] text-[#FAF6F0] border border-[#E85D04]/25 hover:border-[#E85D04]/70 hover:-translate-y-1 p-6 sm:p-8 lg:p-9 flex flex-col justify-between transition-[border-color,box-shadow,transform] duration-250 shadow-[inset_0_1px_0_rgba(250,246,240,0.08),0_28px_68px_-30px_rgba(0,0,0,0.8)] hover:shadow-[inset_0_1px_0_rgba(244,140,6,0.18),0_34px_76px_-28px_rgba(232,93,4,0.34)]"
+            >
               <div>
                 <div className="flex items-center justify-between gap-3">
                   <div className="w-11 h-11 rounded-2xl bg-[#221610] border border-[#E85D04]/25 flex items-center justify-center text-[#F48C06]">
@@ -511,7 +541,7 @@ export default function ProtocolShowcase({
                   smart accounts, UUPS proxies, and Merkle-712 claim vaults.
                 </p>
 
-                <p className="mt-5 rounded-2xl bg-[#1D130E] px-4 py-3 text-xs font-mono-tabular text-[#B8A89B] leading-relaxed">
+                <p className="mt-5 rounded-2xl bg-[#1D130E] border border-[#FAF6F0]/[0.05] px-4 py-3 text-xs font-mono-tabular text-[#B8A89B] leading-relaxed">
                   {coreProjects.map((p) => p.shortTitle).join(" · ")}
                 </p>
               </div>
@@ -526,7 +556,7 @@ export default function ProtocolShowcase({
                   <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
                 </button>
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>

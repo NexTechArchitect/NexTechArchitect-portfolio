@@ -87,13 +87,23 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
             </motion.p>
           </div>
 
-          <div className="lg:col-span-5 flex flex-col items-start lg:items-end gap-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{
+              duration: 0.55,
+              delay: 0.12,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+            className="lg:col-span-5 flex flex-col items-start lg:items-end gap-4"
+          >
             {/* One-Click Copyable Email Pill (Zero Straight Divider Line) */}
             <button
               type="button"
               onClick={handleCopyEmail}
               aria-label="Copy email address nextech.amit@gmail.com"
-              className="inline-flex items-center gap-2.5 max-w-full min-h-[44px] px-4 sm:px-5 py-2.5 rounded-full bg-[#160F0B] border border-[#FAF6F0]/16 hover:border-[#E85D04] text-[#FAF6F0] text-xs sm:text-sm font-mono-tabular transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04]"
+              className="inline-flex items-center gap-2.5 max-w-full min-h-[44px] px-4 sm:px-5 py-2.5 rounded-full bg-[#160F0B] border border-[#FAF6F0]/16 hover:border-[#E85D04] hover:-translate-y-0.5 active:scale-[0.98] text-[#FAF6F0] text-xs sm:text-sm font-mono-tabular shadow-[inset_0_1px_0_rgba(250,246,240,0.06)] transition-[border-color,transform] duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04]"
             >
               <span className="truncate">{CONTACT_EMAIL}</span>
               <span aria-hidden="true" className="text-[#FAF6F0]/25">
@@ -118,7 +128,7 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
             <div className="flex flex-wrap items-center gap-2.5">
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
-                className="inline-flex items-center justify-center gap-2 min-h-[44px] px-6 py-3 rounded-full bg-[#E85D04] hover:bg-[#D14F00] text-[#FAF6F0] text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap shadow-[0_14px_32px_-14px_rgba(232,93,4,0.65)]"
+                className="inline-flex items-center justify-center gap-2 min-h-[44px] px-6 py-3 rounded-full bg-[#E85D04] hover:bg-[#D14F00] hover:-translate-y-0.5 active:scale-[0.98] text-[#FAF6F0] text-xs sm:text-sm font-semibold transition-[background-color,transform,box-shadow] duration-150 whitespace-nowrap shadow-[0_14px_32px_-14px_rgba(232,93,4,0.65)] hover:shadow-[0_18px_36px_-14px_rgba(232,93,4,0.78)]"
               >
                 <Mail className="w-4 h-4" aria-hidden="true" />
                 <span>Send Email</span>
@@ -127,7 +137,7 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
               <button
                 type="button"
                 onClick={onOpenResume}
-                className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-5 py-3 rounded-full bg-[#FAF6F0] hover:bg-[#F5EFE6] text-[#140E0B] text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap cursor-pointer"
+                className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-5 py-3 rounded-full bg-[#FAF6F0] hover:bg-[#F5EFE6] hover:-translate-y-0.5 active:scale-[0.98] text-[#140E0B] text-xs sm:text-sm font-semibold transition-[background-color,transform] duration-150 whitespace-nowrap cursor-pointer"
               >
                 <FileText
                   className="w-3.5 h-3.5 text-[#E85D04]"
@@ -139,7 +149,7 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
               <button
                 type="button"
                 onClick={openAgent}
-                className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-5 py-3 rounded-full bg-[#160F0B] border border-[#FAF6F0]/16 hover:border-[#E85D04] text-[#FAF6F0] text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap cursor-pointer"
+                className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-5 py-3 rounded-full bg-[#160F0B] border border-[#FAF6F0]/16 hover:border-[#E85D04] hover:-translate-y-0.5 active:scale-[0.98] text-[#FAF6F0] text-xs sm:text-sm font-semibold transition-[border-color,transform] duration-150 whitespace-nowrap cursor-pointer"
               >
                 <MessageSquare
                   className="w-3.5 h-3.5 text-[#E85D04]"
@@ -148,11 +158,17 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
                 <span>Ask Amit</span>
               </button>
             </div>
-          </div>
+          </motion.div>
         </div>
 
         {/* Bottom Tonal Identity & Verified Links Bar (Zero Straight Divider Line) */}
-        <div className="rounded-3xl bg-[#130C08]/85 px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs font-medium text-[#B8A89B]">
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.5, delay: 0.14, ease: [0.22, 1, 0.36, 1] }}
+          className="rounded-3xl bg-[#130C08]/88 border border-[#FAF6F0]/[0.07] shadow-[inset_0_1px_0_rgba(250,246,240,0.05)] px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs font-medium text-[#B8A89B]"
+        >
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <span className="font-display font-bold text-[#FAF6F0] text-sm tracking-[-0.02em]">
               NexTechArchitect
@@ -194,7 +210,7 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
               <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
             </a>
           </div>
-        </div>
+        </motion.div>
       </div>
     </footer>
   );

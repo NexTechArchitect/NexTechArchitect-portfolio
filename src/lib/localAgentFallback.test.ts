@@ -239,7 +239,69 @@ test("supports side-by-side comparison of two projects and smart off-topic fallb
   assert.match(comparison, /CoveragePool/);
 
   const offTopic = generateLocalFallbackReply("what is the best pasta recipe for dinner");
-  assert.match(offTopic, /local portfolio knowledge mode/i);
+  assert.doesNotMatch(offTopic, /local portfolio knowledge mode/i);
+  assert.match(offTopic, /Amit Kumar/);
   assert.match(offTopic, /nextech\.amit@gmail\.com/);
+});
+
+test("handles natural human small talk warmly with and without active project history", () => {
+  const history = [
+    {
+      role: "user",
+      text: "Give me a technical walkthrough of Nexus Perps v2 (Polkadot Hub)",
+    },
+    {
+      role: "assistant",
+      text: generateLocalFallbackReply("Give me a technical walkthrough of Nexus Perps v2 (Polkadot Hub)"),
+    },
+  ];
+
+  const thanksNoHistory = generateLocalFallbackReply("thankyou");
+  assert.match(thanksNoHistory, /welcome/i);
+  assert.doesNotMatch(thanksNoHistory, /local portfolio knowledge mode/i);
+
+  const thanksWithHistory = generateLocalFallbackReply("thanks!", history);
+  assert.match(thanksWithHistory, /welcome/i);
+  assert.match(thanksWithHistory, /Nexus Perps v2/);
+
+  const niceNoHistory = generateLocalFallbackReply("nice");
+  assert.match(niceNoHistory, /Nexus RWA Protocol/);
+  assert.doesNotMatch(niceNoHistory, /local portfolio knowledge mode/i);
+
+  const niceWithHistory = generateLocalFallbackReply("awesome", history);
+  assert.match(niceWithHistory, /Nexus Perps v2/);
+  assert.match(niceWithHistory, /security invariants/i);
+
+  const checkIn = generateLocalFallbackReply("how are you?");
+  assert.match(checkIn, /Amit Kumar/);
+  assert.match(checkIn, /Nexus Perps v2/);
+
+  const identity = generateLocalFallbackReply("who are you?");
+  assert.match(identity, /Ask Amit/);
+  assert.match(identity, /Amit Kumar/);
+
+  const pleasantry = generateLocalFallbackReply("nice to meet you");
+  assert.match(pleasantry, /great to meet you/i);
+
+  const farewell = generateLocalFallbackReply("bye!");
+  assert.match(farewell, /nextech\.amit@gmail\.com/);
+  assert.match(farewell, /GitHub/);
+
+  for (const text of [
+    thanksNoHistory,
+    thanksWithHistory,
+    niceNoHistory,
+    niceWithHistory,
+    checkIn,
+    identity,
+    pleasantry,
+    farewell,
+  ]) {
+    const lower = text.toLowerCase();
+    for (const banned of BANNED_BUZZWORDS) {
+      assert.equal(lower.includes(banned), false, `Found banned buzzword: ${banned}`);
+    }
+    assert.equal(text.includes("\u2014"), false, "Found em-dash");
+  }
 });
 

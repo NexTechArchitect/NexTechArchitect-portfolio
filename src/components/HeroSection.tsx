@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { motion } from "framer-motion";
 import { ArrowDownRight, ArrowUpRight, Mail } from "lucide-react";
 import AmitAvatar3D from "@/components/AmitAvatar3D";
 import { ScrollHorizonSweep, TopCanopyWave } from "@/components/SectionCurves";
@@ -27,6 +28,8 @@ const CORE_SKILLS = [
   "Hardhat, Tenderly & Alchemy SDK",
 ] as const;
 
+const HERO_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
+
 export default function HeroSection({
   onOpenResume,
   onOpenGallery,
@@ -44,9 +47,9 @@ export default function HeroSection({
   return (
     <section
       id="top"
-      className="relative bg-[#FAF6F0] silk-grain overflow-x-clip pt-[112px] sm:pt-[122px] lg:pt-[132px]"
+      className="relative bg-[#FAF6F0] silk-grain overflow-x-clip pt-[114px] sm:pt-[124px] lg:pt-[134px]"
     >
-      {/* Sleek, Shallow Deep Velvet Espresso Architectural Canopy Framing Floating Navbar */}
+      {/* Bespoke Asymmetric Deep Velvet Espresso Gallery Arch Framing Floating Navbar */}
       <TopCanopyWave idPrefix="hero-top-canopy" />
 
       {/* Subtle Sculptural Warm-Amber Studio Ambient Light */}
@@ -73,8 +76,11 @@ export default function HeroSection({
           {/* Left Column: Proud Executive Identity Lockup + Refined Editorial Sora Headline */}
           <div className="lg:col-span-7 flex flex-col justify-center">
             {/* Unmistakable Executive Identity Lockup */}
-            <div
+            <motion.div
               data-testid="hero-identity-lockup"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.48, ease: HERO_EASE }}
               className="flex flex-wrap items-center gap-x-3 gap-y-2"
             >
               <span className="font-display text-xl sm:text-2xl font-semibold tracking-tight text-[#1A130F]">
@@ -84,20 +90,30 @@ export default function HeroSection({
                 aria-hidden="true"
                 className="hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-[#E85D04] shrink-0"
               />
-              <span className="inline-flex items-center px-3.5 py-1 rounded-full bg-[#E85D04]/[0.08] border border-[#E85D04]/20 text-[13.5px] sm:text-[15px] font-medium text-[#8C4A1C]">
+              <span className="inline-flex items-center px-3.5 py-1 rounded-full bg-[#E85D04]/[0.08] border border-[#E85D04]/20 text-[13.5px] sm:text-[15px] font-medium text-[#8C4A1C] shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]">
                 Smart Contract Engineer &amp; DeFi Protocol Architect
               </span>
-            </div>
+            </motion.div>
 
-            <h1 className="mt-4 font-display font-bold text-[#140E0B] text-[34px] sm:text-[42px] lg:text-[48px] leading-[1.08] tracking-[-0.03em]">
+            <motion.h1
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.54, delay: 0.06, ease: HERO_EASE }}
+              className="mt-4 font-display font-bold text-[#140E0B] text-[34px] sm:text-[42px] lg:text-[48px] leading-[1.08] tracking-[-0.03em]"
+            >
               <span className="block">I Architect DeFi</span>
               <span className="block mt-1">
                 Protocols Built to{" "}
                 <span className="text-[#E85D04]">Hold Under Fire.</span>
               </span>
-            </h1>
+            </motion.h1>
 
-            <div className="mt-4 space-y-2.5 text-[15px] sm:text-[16px] leading-[1.64] text-[#4E4039] max-w-[60ch]">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.54, delay: 0.12, ease: HERO_EASE }}
+              className="mt-4 space-y-2.5 text-[15px] sm:text-[16px] leading-[1.64] text-[#4E4039] max-w-[60ch]"
+            >
               <p>
                 I&apos;m Amit Kumar, a Smart Contract Engineer shipping complete
                 DeFi systems across Ethereum and EVM-compatible mainnets, from
@@ -111,13 +127,18 @@ export default function HeroSection({
                 consistent under adversarial conditions, and closing attack
                 paths at design time rather than patching them after.
               </p>
-            </div>
+            </motion.div>
 
             {/* Primary Actions (Cleanly Above the Fold on 1280x720 & 1440x900) */}
-            <div className="mt-5 flex flex-wrap items-center gap-3.5">
+            <motion.div
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.18, ease: HERO_EASE }}
+              className="mt-5 flex flex-wrap items-center gap-3.5"
+            >
               <a
                 href="#protocols"
-                className="inline-flex items-center justify-center gap-2 min-h-[44px] px-6 py-2.5 rounded-full text-sm font-semibold text-[#FAF6F0] bg-[#E85D04] hover:bg-[#D14F00] active:scale-[0.98] transition-[background-color,transform] duration-150 whitespace-nowrap shrink-0 shadow-[0_14px_30px_-14px_rgba(232,93,4,0.62)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF6F0]"
+                className="inline-flex items-center justify-center gap-2 min-h-[44px] px-6 py-2.5 rounded-full text-sm font-semibold text-[#FAF6F0] bg-[#E85D04] hover:bg-[#D14F00] hover:-translate-y-0.5 active:scale-[0.98] transition-[background-color,transform,box-shadow] duration-150 whitespace-nowrap shrink-0 shadow-[0_14px_30px_-14px_rgba(232,93,4,0.62)] hover:shadow-[0_18px_34px_-14px_rgba(232,93,4,0.72)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF6F0]"
               >
                 <span>Explore Protocols</span>
                 <ArrowDownRight className="w-4 h-4" aria-hidden="true" />
@@ -127,7 +148,7 @@ export default function HeroSection({
                 href="https://github.com/NexTechArchitect"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-6 py-2.5 rounded-full text-sm font-semibold text-[#140E0B] border border-[#140E0B]/16 bg-[#FFFCF7]/90 hover:border-[#140E0B]/40 hover:bg-[#F5EFE6] active:scale-[0.98] transition-[background-color,border-color,transform] duration-150 whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF6F0]"
+                className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-6 py-2.5 rounded-full text-sm font-semibold text-[#140E0B] border border-[#140E0B]/16 bg-[#FFFCF7]/95 hover:border-[#E85D04]/45 hover:bg-[#F5EFE6] hover:-translate-y-0.5 active:scale-[0.98] transition-[background-color,border-color,transform,box-shadow] duration-150 whitespace-nowrap shrink-0 shadow-[0_10px_24px_-18px_rgba(20,14,11,0.3)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF6F0]"
               >
                 <span>GitHub</span>
                 <ArrowUpRight
@@ -135,10 +156,15 @@ export default function HeroSection({
                   aria-hidden="true"
                 />
               </a>
-            </div>
+            </motion.div>
 
             {/* Clean Direct Social & Contact Row */}
-            <div className="mt-5 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-x-5 gap-y-2 text-[13.5px] font-medium text-[#594A42]">
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.48, delay: 0.24, ease: HERO_EASE }}
+              className="mt-5 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-x-5 gap-y-2 text-[13.5px] font-medium text-[#594A42]"
+            >
               <div className="flex items-center gap-4">
                 <a
                   href="https://www.linkedin.com/in/amit-kumar-811a11277"
@@ -184,11 +210,16 @@ export default function HeroSection({
                 />
                 <span>nextech.amit@gmail.com</span>
               </a>
-            </div>
+            </motion.div>
           </div>
 
           {/* Right Column: Floating 3D Character + Dynamic Rotating Prompts */}
-          <div className="lg:col-span-5 flex flex-col items-center">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1, ease: HERO_EASE }}
+            className="lg:col-span-5 flex flex-col items-center"
+          >
             <div className="relative w-full flex flex-col items-center justify-center">
               <AmitAvatar3D
                 onOpenGallery={onOpenGallery}
@@ -198,20 +229,24 @@ export default function HeroSection({
                 onScrollToContact={handleScrollToContact}
               />
             </div>
-          </div>
+          </motion.div>
         </div>
 
         {/* Symmetrical 3-Row x 4-Column Core Skills Grid (12 High-Signal Skills, Zero Half-Empty Row) */}
-        <div
+        <motion.div
           data-testid="hero-core-skills"
           aria-label="Core engineering skills"
-          className="mt-8 lg:mt-10 rounded-[28px] bg-[#F3EAE0]/75 p-4 sm:p-5 lg:p-6 shadow-[0_18px_48px_-34px_rgba(20,14,11,0.2)]"
+          initial={{ opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.55, ease: HERO_EASE }}
+          className="mt-8 lg:mt-10 rounded-[28px] bg-[#F3EAE0]/80 border border-[#140E0B]/[0.06] p-4 sm:p-5 lg:p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_18px_48px_-34px_rgba(20,14,11,0.2)]"
         >
           <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {CORE_SKILLS.map((skill) => (
               <li
                 key={skill}
-                className="flex items-center justify-center text-center gap-2 min-h-[44px] px-3.5 py-2.5 rounded-full bg-[#FFFDF9]/95 border border-[#140E0B]/[0.06] text-[12px] sm:text-[12.5px] font-medium text-[#4A3B32] leading-snug shadow-[0_6px_18px_-12px_rgba(20,14,11,0.24)]"
+                className="flex items-center justify-center text-center gap-2 min-h-[44px] px-3.5 py-2.5 rounded-full bg-[#FFFDF9]/95 border border-[#140E0B]/[0.07] hover:border-[#E85D04]/38 hover:-translate-y-0.5 text-[12px] sm:text-[12.5px] font-medium text-[#4A3B32] leading-snug shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_6px_18px_-12px_rgba(20,14,11,0.24)] hover:shadow-[0_12px_26px_-14px_rgba(232,93,4,0.28)] transition-[transform,border-color,box-shadow] duration-200"
               >
                 <span
                   aria-hidden="true"
@@ -221,7 +256,7 @@ export default function HeroSection({
               </li>
             ))}
           </ul>
-        </div>
+        </motion.div>
       </div>
 
       {/* Transition #1: Scroll-Flattening Sculptural Horizon Sweep (#FAF6F0 -> #140E0B) */}
