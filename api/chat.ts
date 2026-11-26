@@ -1,19 +1,15 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { GoogleGenAI } from "@google/genai";
 import {
   buildAmitSystemPrompt,
   normalizeConversationContents,
 } from "../src/lib/agentSystemPrompt";
-import { generateLocalFallbackReply } from "../src/lib/localAgentFallback";
+import { callGeminiRest } from "../src/lib/geminiRest";
 import {
-  GEMINI_MODELS,
   InMemoryRateLimiter,
   MAX_BODY_BYTES,
   RATE_LIMIT_MAX_REQUESTS,
   RATE_LIMIT_WINDOW_MS,
-  buildModelGenerateConfig,
   extractClientIp,
-  extractGeminiText,
   extractUpstreamErrorInfo,
   resolveApiKey,
   validateChatPayload,
@@ -27,17 +23,6 @@ const rateLimiter = new InMemoryRateLimiter(
   RATE_LIMIT_MAX_REQUESTS,
   RATE_LIMIT_WINDOW_MS
 );
-
-function isRetryableError(err: unknown): boolean {
-  const { status, message } = extractUpstreamErrorInfo(err);
-  return /\b(429|500|502|503|504|UNAVAILABLE|RESOURCE_EXHAUSTED)\b/i.test(
-    `${status} ${message}`
-  );
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 function sendJson(
   res: ServerResponse,
@@ -58,23 +43,44 @@ function sendJson(
 
 async function readBoundedBody(
   req: ServerlessRequest
-): Promise<{ ok: true; payload: unknown } | { ok: false; status: 400 | 413; error: string }> {
-  if (req.body !== undefined) {
+): Promise<
+  | { ok: true; payload: unknown }
+  | { ok: false; status: 400 | 413; error: string }
+> {
+  if (req.body !== undefined && req.body !== null) {
     if (typeof req.body === "string") {
-      if (Buffer.byteLength(req.body, "utf8") > MAX_BODY_BYTES) {
-        return { ok: false, status: 413, error: "Request payload is too large." };
+      const trimmed = req.body.trim();
+      if (trimmed.length > 0) {
+        if (Buffer.byteLength(req.body, "utf8") > MAX_BODY_BYTES) {
+          return {
+            ok: false,
+            status: 413,
+            error: "Request payload is too large.",
+          };
+        }
+        try {
+          return { ok: true, payload: JSON.parse(req.body) };
+        } catch {
+          return {
+            ok: false,
+            status: 400,
+            error: "Malformed JSON request body.",
+          };
+        }
       }
-      try {
-        return { ok: true, payload: JSON.parse(req.body || "{}") };
-      } catch {
-        return { ok: false, status: 400, error: "Malformed JSON request body." };
+    } else if (typeof req.body === "object") {
+      const serialized = JSON.stringify(req.body);
+      if (serialized !== "{}" && serialized !== "[]") {
+        if (Buffer.byteLength(serialized, "utf8") > MAX_BODY_BYTES) {
+          return {
+            ok: false,
+            status: 413,
+            error: "Request payload is too large.",
+          };
+        }
+        return { ok: true, payload: req.body };
       }
     }
-    const serializedBytes = Buffer.byteLength(JSON.stringify(req.body ?? {}), "utf8");
-    if (serializedBytes > MAX_BODY_BYTES) {
-      return { ok: false, status: 413, error: "Request payload is too large." };
-    }
-    return { ok: true, payload: req.body };
   }
 
   return new Promise((resolve) => {
@@ -87,7 +93,11 @@ async function readBoundedBody(
       totalBytes += chunk.length;
       if (totalBytes > MAX_BODY_BYTES) {
         settled = true;
-        resolve({ ok: false, status: 413, error: "Request payload is too large." });
+        resolve({
+          ok: false,
+          status: 413,
+          error: "Request payload is too large.",
+        });
         return;
       }
       chunks.push(chunk);
@@ -100,14 +110,22 @@ async function readBoundedBody(
       try {
         resolve({ ok: true, payload: JSON.parse(raw || "{}") });
       } catch {
-        resolve({ ok: false, status: 400, error: "Malformed JSON request body." });
+        resolve({
+          ok: false,
+          status: 400,
+          error: "Malformed JSON request body.",
+        });
       }
     });
 
     req.on("error", () => {
       if (settled) return;
       settled = true;
-      resolve({ ok: false, status: 400, error: "Failed to read request body." });
+      resolve({
+        ok: false,
+        status: 400,
+        error: "Failed to read request body.",
+      });
     });
   });
 }
@@ -136,7 +154,7 @@ export default async function handler(
     return;
   }
 
-  // 2. Bounded JSON body read & payload validation
+  // 2. Bounded JSON body read (pre-parsed object, raw string, or stream) & validation
   const bodyResult = await readBoundedBody(req);
   if (!bodyResult.ok) {
     sendJson(res, bodyResult.status, { error: bodyResult.error });
@@ -149,75 +167,49 @@ export default async function handler(
     return;
   }
 
-  // 3. Resolve valid AIza API key (prioritizing API_KEY over GEMINI_API_KEY and ignoring placeholders)
-  const apiKey = resolveApiKey(process.env.API_KEY, process.env.GEMINI_API_KEY);
+  // 3. Resolve valid AIza API key (ignoring placeholder values like "Gemini")
+  const apiKey = resolveApiKey(
+    process.env.API_KEY,
+    process.env.GEMINI_API_KEY
+  );
   if (!apiKey) {
     sendJson(res, 200, {
-      reply: generateLocalFallbackReply(validated.message),
-      mode: "local",
+      error: "No valid Gemini API key configured in environment.",
+      upstreamStatus: 503,
     });
     return;
   }
 
   try {
-    const ai = new GoogleGenAI({
-      apiKey,
-      httpOptions: {
-        headers: {
-          "User-Agent": "aistudio-build",
-        },
-      },
-    });
-
     const contents = normalizeConversationContents(
       validated.history,
       validated.message
     );
-    const systemInstruction = buildAmitSystemPrompt();
+    const result = await callGeminiRest({
+      apiKey,
+      systemPrompt: buildAmitSystemPrompt(),
+      contents,
+    });
 
-    for (const model of GEMINI_MODELS) {
-      const maxAttempts = 2;
-      for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-        try {
-          const response = await ai.models.generateContent({
-            model,
-            contents,
-            config: buildModelGenerateConfig(model, systemInstruction),
-          });
-          const text = extractGeminiText(response)
-            .replace(/\u2014/g, ", ")
-            .trim();
-          if (text) {
-            sendJson(res, 200, { reply: text, mode: "gemini", model });
-            return;
-          }
-        } catch (err) {
-          const info = extractUpstreamErrorInfo(err);
-          console.error(
-            `[Ask Amit /api/chat] Model "${model}" attempt ${attempt + 1} failed (status=${info.status}): ${info.message}`
-          );
-          if (isRetryableError(err) && attempt + 1 < maxAttempts) {
-            await sleep(450 * (attempt + 1));
-            continue;
-          }
-          break;
-        }
-      }
+    if (result.ok) {
+      sendJson(res, 200, {
+        reply: result.reply,
+        source: "live",
+        model: result.model,
+      });
+      return;
     }
 
     sendJson(res, 200, {
-      reply: generateLocalFallbackReply(validated.message),
-      mode: "local",
+      error: result.error,
+      upstreamStatus: result.upstreamStatus,
     });
   } catch (err) {
     const info = extractUpstreamErrorInfo(err);
-    console.error(
-      `[Ask Amit /api/chat] Unexpected server error (status=${info.status}): ${info.message}`
-    );
     if (!res.headersSent) {
       sendJson(res, 200, {
-        reply: generateLocalFallbackReply(""),
-        mode: "local",
+        error: info.message,
+        upstreamStatus: info.status === "unknown" ? 500 : info.status,
       });
     }
   }

@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowDown } from "lucide-react";
+
 interface DomainSpec {
   id: string;
   label: string;
@@ -26,10 +27,22 @@ const ARCHITECTURE_DOMAINS: DomainSpec[] = [
     summary:
       "Storage slot packing, constant-time swap-and-pop queues, and collision-safe EIP-1822 UUPS proxy architectures engineered for Ethereum and EVM-compatible mainnets.",
     capabilities: [
-      { name: "Solidity 0.8+", focus: "Custom errors, checked math, modular interfaces" },
-      { name: "Yul & EVM Internals", focus: "Inline assembly, slot packing, calldata layout" },
-      { name: "Ethereum & EVM Mainnets", focus: "Production multi-contract DeFi deployments" },
-      { name: "UUPS & Proxies", focus: "EIP-1822 storage gaps and safe upgrades" },
+      {
+        name: "Solidity 0.8+",
+        focus: "Custom errors, checked math, modular interfaces",
+      },
+      {
+        name: "Yul & EVM Internals",
+        focus: "Inline assembly, slot packing, calldata layout",
+      },
+      {
+        name: "Ethereum & EVM Mainnets",
+        focus: "Production multi-contract DeFi deployments",
+      },
+      {
+        name: "UUPS & Proxies",
+        focus: "EIP-1822 storage gaps and safe upgrades",
+      },
     ],
     principles: [
       {
@@ -62,10 +75,22 @@ const ARCHITECTURE_DOMAINS: DomainSpec[] = [
     summary:
       "Stateful Foundry handler fuzzing, Slither static sweeps, prior-block voting checkpoints, and Checks-Effects-Interactions isolation across every value-bearing state transition.",
     capabilities: [
-      { name: "Foundry & Anvil", focus: "Stateful handler-based invariant fuzzing and fork tests" },
-      { name: "Slither Static Analysis", focus: "Automated vulnerability sweeps and CI security gates" },
-      { name: "Flash-Loan & Replay Defense", focus: "Prior-block snapshots, Timelocks, and nonce locks" },
-      { name: "Oracle Circuit Breakers", focus: "Chainlink staleness guards and 15% NAV deviation halts" },
+      {
+        name: "Foundry & Anvil",
+        focus: "Stateful handler-based invariant fuzzing and fork tests",
+      },
+      {
+        name: "Slither Static Analysis",
+        focus: "Automated vulnerability sweeps and CI security gates",
+      },
+      {
+        name: "Flash-Loan & Replay Defense",
+        focus: "Prior-block snapshots, Timelocks, and nonce locks",
+      },
+      {
+        name: "Oracle Circuit Breakers",
+        focus: "Chainlink staleness guards and 15% NAV deviation halts",
+      },
     ],
     principles: [
       {
@@ -98,10 +123,22 @@ const ARCHITECTURE_DOMAINS: DomainSpec[] = [
     summary:
       "Production primitives combining ERC-3643 permissioned transfers, ERC-4626 Aave V3 vaults, ERC-4337 smart account paymasters, and Chainlink CCIP, VRF, and NAV feeds.",
     capabilities: [
-      { name: "ERC-3643 RWA Compliance", focus: "On-chain KYC/OFAC registries inside transfer hooks" },
-      { name: "ERC-4626 & Aave V3 Vaults", focus: "Tokenized yield strategies with share inflation guards" },
-      { name: "ERC-4337 Account Abstraction", focus: "EntryPoint validation and gasless Paymaster flows" },
-      { name: "Chainlink CCIP, VRF & Oracles", focus: "Cross-chain margin relays, randomness, and NAV feeds" },
+      {
+        name: "ERC-3643 RWA Compliance",
+        focus: "On-chain KYC/OFAC registries inside transfer hooks",
+      },
+      {
+        name: "ERC-4626 & Aave V3 Vaults",
+        focus: "Tokenized yield strategies with share inflation guards",
+      },
+      {
+        name: "ERC-4337 Account Abstraction",
+        focus: "EntryPoint validation and gasless Paymaster flows",
+      },
+      {
+        name: "Chainlink CCIP, VRF & Oracles",
+        focus: "Cross-chain margin relays, randomness, and NAV feeds",
+      },
     ],
     principles: [
       {
@@ -134,10 +171,22 @@ const ARCHITECTURE_DOMAINS: DomainSpec[] = [
     summary:
       "Strict TypeScript contract bindings wired to Next.js App Router, Wagmi, and Viem so traders, keepers, and compliance operators interact with live on-chain state cleanly.",
     capabilities: [
-      { name: "Next.js & TypeScript", focus: "App Router protocol interfaces with strict ABI typing" },
-      { name: "Wagmi & Viem", focus: "Simulated writes, multicall reads, and wallet sessions" },
-      { name: "EIP-712 & Gasless UX", focus: "Typed domain signing and sponsored UserOperation relays" },
-      { name: "Keeper & Telemetry Views", focus: "Live vault utilization, oracle health, and batch status" },
+      {
+        name: "Next.js & TypeScript",
+        focus: "App Router protocol interfaces with strict ABI typing",
+      },
+      {
+        name: "Wagmi & Viem",
+        focus: "Simulated writes, multicall reads, and wallet sessions",
+      },
+      {
+        name: "EIP-712 & Gasless UX",
+        focus: "Typed domain signing and sponsored UserOperation relays",
+      },
+      {
+        name: "Keeper & Telemetry Views",
+        focus: "Live vault utilization, oracle health, and batch status",
+      },
     ],
     principles: [
       {
@@ -183,50 +232,61 @@ export default function ArchitectureStage({
   return (
     <section
       id="architecture"
-      className="relative bg-[#140E0B] text-[#FAF6F0] silk-grain-dark pt-12 sm:pt-16 lg:pt-20 scroll-mt-12 overflow-x-clip"
+      className="relative bg-[#140E0B] text-[#FAF6F0] silk-grain-dark pt-12 sm:pt-16 lg:pt-20 pb-24 sm:pb-32 scroll-mt-12 overflow-x-clip"
     >
-      {/* Warm copper studio radial illumination */}
+      {/* Subtle edge-hugging warm copper vertical ambient washes */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute top-10 left-[6%] w-[520px] h-[520px] rounded-full opacity-35"
+        className="pointer-events-none absolute top-12 left-[-8%] w-[460px] h-[640px] rounded-full opacity-35"
         style={{
           background:
-            "radial-gradient(circle, rgba(232, 93, 4, 0.22) 0%, rgba(217, 107, 39, 0.08) 44%, rgba(20, 14, 11, 0) 74%)",
+            "radial-gradient(ellipse at center, rgba(232, 93, 4, 0.22) 0%, rgba(217, 107, 39, 0.08) 46%, rgba(20, 14, 11, 0) 74%)",
         }}
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute bottom-20 right-[4%] w-[440px] h-[440px] rounded-full opacity-28"
+        className="pointer-events-none absolute bottom-20 right-[-8%] w-[440px] h-[580px] rounded-full opacity-30"
         style={{
           background:
-            "radial-gradient(circle, rgba(217, 107, 39, 0.16) 0%, rgba(20, 14, 11, 0) 72%)",
+            "radial-gradient(ellipse at center, rgba(244, 140, 6, 0.16) 0%, rgba(20, 14, 11, 0) 72%)",
         }}
       />
 
       <div className="max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        {/* Clean Direct Editorial Header (Zero Eyebrow Kicker) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end pb-9 border-b border-[#FAF6F0]/10">
-          <div className="lg:col-span-7">
-            <h2
-              className="font-display font-bold text-[#FAF6F0] text-3xl sm:text-4xl lg:text-[2.95rem] leading-[1.05] tracking-[-0.032em]"
-              style={{ textWrap: "balance" }}
-            >
-              Built for Adversarial{" "}
-              <span className="text-[#E85D04]">Mainnet Execution.</span>
-            </h2>
-          </div>
+        {/* Left-Aligned Editorial Header with Staggered Entrance (Zero Straight Line) */}
+        <div className="max-w-3xl">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+            className="font-display font-bold text-[#FAF6F0] text-3xl sm:text-4xl lg:text-[3rem] leading-[1.05] tracking-[-0.032em]"
+            style={{ textWrap: "balance" }}
+          >
+            Built for Adversarial{" "}
+            <span className="text-[#E85D04]">Mainnet Execution.</span>
+          </motion.h2>
 
-          <div className="lg:col-span-5 lg:text-right">
-            <p className="text-sm sm:text-[15px] leading-[1.7] text-[#C9BDB3] lg:ml-auto max-w-[44ch]">
-              The core engineering disciplines governing how every smart
-              contract system is specified, verified, and deployed across
-              Ethereum and EVM networks.
-            </p>
-          </div>
+          <motion.p
+            data-testid="section-subtitle-architecture"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{
+              duration: 0.55,
+              delay: 0.08,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+            className="mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#D9CEC2]"
+          >
+            The core engineering disciplines governing how every smart contract
+            system is specified, verified, and deployed across Ethereum and EVM
+            networks.
+          </motion.p>
         </div>
 
         {/* Single Sleek Segmented Interactive Tab Bar with Sliding Burnt-Orange Pill */}
-        <div className="mt-9 flex justify-start">
+        <div className="mt-10 flex justify-start">
           <div
             role="tablist"
             aria-label="Engineering architecture domains"
@@ -267,7 +327,7 @@ export default function ArchitectureStage({
           </div>
         </div>
 
-        {/* Open, High-Contrast Editorial Split (Zero Nested Box-Inside-Box Clutter) */}
+        {/* Open, High-Contrast Tonal Editorial Split (Zero Straight Divider Lines) */}
         <AnimatePresence mode="wait">
           <motion.div
             key={activeDomain.id}
@@ -275,25 +335,25 @@ export default function ArchitectureStage({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-            className="mt-10 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start"
+            className="mt-10 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start"
           >
-            {/* Left: Large Domain Statement + 4 Minimal Inline Capability Rows */}
+            {/* Left: Large Domain Statement + 4 Tonal Capability Pills */}
             <div className="lg:col-span-5">
               <h3 className="font-display text-2xl sm:text-[1.75rem] font-bold text-[#FAF6F0] tracking-[-0.028em] leading-[1.2]">
                 {activeDomain.headline}
               </h3>
-              <p className="mt-3.5 text-sm sm:text-[15px] leading-[1.72] text-[#C9BDB3]">
+              <p className="mt-3.5 text-sm sm:text-[15.5px] leading-[1.72] text-[#D9CEC2]">
                 {activeDomain.summary}
               </p>
 
               <ul
                 aria-label={`${activeDomain.label} capabilities`}
-                className="mt-8 border-t border-[#FAF6F0]/10 divide-y divide-[#FAF6F0]/10"
+                className="mt-8 space-y-3"
               >
                 {activeDomain.capabilities.map((item) => (
                   <li
                     key={item.name}
-                    className="py-4 flex items-start gap-3.5"
+                    className="rounded-2xl bg-[#1D140F]/85 px-4 py-3.5 flex items-start gap-3.5"
                   >
                     <span
                       aria-hidden="true"
@@ -303,7 +363,7 @@ export default function ArchitectureStage({
                       <p className="font-display text-[15px] font-bold text-[#FAF6F0] tracking-[-0.015em]">
                         {item.name}
                       </p>
-                      <p className="mt-0.5 text-[13px] leading-relaxed text-[#A8988B]">
+                      <p className="mt-0.5 text-[13px] leading-relaxed text-[#B5A598]">
                         {item.focus}
                       </p>
                     </div>
@@ -312,22 +372,22 @@ export default function ArchitectureStage({
               </ul>
             </div>
 
-            {/* Right: Numbered Architectural Principles (01, 02, 03) + Single Clear Action */}
-            <div className="lg:col-span-7 lg:pl-8 lg:border-l lg:border-[#FAF6F0]/10">
-              <ol className="divide-y divide-[#FAF6F0]/10">
+            {/* Right: Numbered Architectural Principles (01, 02, 03) + Action */}
+            <div className="lg:col-span-7">
+              <ol className="space-y-4">
                 {activeDomain.principles.map((principle) => (
                   <li
                     key={principle.num}
-                    className="py-6 first:pt-0 flex items-start gap-5 sm:gap-6"
+                    className="rounded-[24px] bg-[#1B130E]/90 p-5 sm:p-6 flex items-start gap-5 sm:gap-6"
                   >
-                    <span className="font-mono-tabular text-sm sm:text-base font-semibold text-[#D96B27] tracking-[0.06em] pt-0.5 shrink-0">
+                    <span className="font-mono-tabular text-sm sm:text-base font-semibold text-[#F48C06] tracking-[0.06em] pt-0.5 shrink-0">
                       {principle.num}
                     </span>
                     <div className="min-w-0">
                       <h4 className="font-display text-lg sm:text-xl font-bold text-[#FAF6F0] tracking-[-0.02em]">
                         {principle.title}
                       </h4>
-                      <p className="mt-2 text-sm sm:text-[15px] leading-[1.7] text-[#C9BDB3]">
+                      <p className="mt-2 text-sm sm:text-[15px] leading-[1.7] text-[#D9CEC2]">
                         {principle.detail}
                       </p>
                     </div>
@@ -335,7 +395,7 @@ export default function ArchitectureStage({
                 ))}
               </ol>
 
-              <div className="mt-8 pt-6 border-t border-[#FAF6F0]/10 flex flex-wrap items-center justify-between gap-4">
+              <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
                 <button
                   type="button"
                   onClick={() => onInspectWorkbench(activeDomain.workbenchId)}
@@ -345,53 +405,13 @@ export default function ArchitectureStage({
                   <ArrowDown className="w-4 h-4" aria-hidden="true" />
                 </button>
 
-                <span className="font-mono-tabular text-xs text-[#9C8B7E]">
+                <span className="font-mono-tabular text-xs text-[#A8988B]">
                   Opens {activeDomain.workbenchFile}
                 </span>
               </div>
             </div>
           </motion.div>
         </AnimatePresence>
-      </div>
-
-      {/* Transition #2: Clean Sculpted Curved Horizon Arc (#140E0B -> #FAF6F0 Crisp Warm Porcelain) */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none relative w-full mt-16 sm:mt-20 leading-none overflow-hidden"
-      >
-        <svg
-          viewBox="0 0 1440 124"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          preserveAspectRatio="none"
-          className="block w-full h-[64px] sm:h-[92px] lg:h-[118px]"
-        >
-          <defs>
-            <linearGradient
-              id="archHorizonStroke"
-              x1="0"
-              y1="0"
-              x2="1440"
-              y2="0"
-              gradientUnits="userSpaceOnUse"
-            >
-              <stop offset="0%" stopColor="#D96B27" stopOpacity="0.12" />
-              <stop offset="30%" stopColor="#E85D04" stopOpacity="0.58" />
-              <stop offset="50%" stopColor="#F48C06" stopOpacity="0.78" />
-              <stop offset="70%" stopColor="#E85D04" stopOpacity="0.58" />
-              <stop offset="100%" stopColor="#D96B27" stopOpacity="0.12" />
-            </linearGradient>
-          </defs>
-          <path
-            d="M0 124V92C360 10 1080 10 1440 92V124H0Z"
-            fill="#FAF6F0"
-          />
-          <path
-            d="M0 92C360 10 1080 10 1440 92"
-            stroke="url(#archHorizonStroke)"
-            strokeWidth="1.6"
-          />
-        </svg>
       </div>
     </section>
   );

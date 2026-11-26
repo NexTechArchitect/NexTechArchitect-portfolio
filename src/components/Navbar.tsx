@@ -75,10 +75,10 @@ export default function Navbar({
     <header className="fixed top-0 inset-x-0 z-40 pointer-events-none pt-3.5 sm:pt-4 lg:pt-5">
       <div
         data-testid="floating-navbar-pill"
-        className={`pointer-events-auto w-[calc(100%-1.5rem)] max-w-6xl mx-auto h-[66px] lg:h-[70px] px-4 sm:px-5 lg:px-6 rounded-full border bg-[rgba(251,248,243,0.96)] backdrop-blur-md transition-[background-color,border-color,box-shadow] duration-300 hover:bg-[#FFFDF9] hover:border-[#E85D04]/45 hover:shadow-[0_16px_38px_rgba(232,93,4,0.14)] flex items-center justify-between gap-2.5 sm:gap-4 lg:gap-6 ${
+        className={`pointer-events-auto w-[calc(100%-1.5rem)] max-w-6xl mx-auto h-[66px] lg:h-[70px] px-4 sm:px-5 lg:px-6 rounded-full border bg-[rgba(255,253,249,0.88)] backdrop-blur-xl transition-[background-color,border-color,box-shadow] duration-300 hover:bg-[#FFFDF9] hover:border-[#E85D04]/40 hover:shadow-[0_18px_42px_-16px_rgba(232,93,4,0.18)] flex items-center justify-between gap-2.5 sm:gap-4 lg:gap-6 ${
           scrolled
-            ? "border-[#18110D]/14 shadow-[0_18px_46px_-20px_rgba(24,17,13,0.32)]"
-            : "border-[#E85D04]/24 shadow-[0_16px_42px_-16px_rgba(0,0,0,0.58)]"
+            ? "border-[#18110D]/12 shadow-[0_18px_46px_-22px_rgba(24,17,13,0.28)]"
+            : "border-[#18110D]/10 shadow-[0_14px_38px_-22px_rgba(24,17,13,0.16)]"
         }`}
       >
         {/* Left: Refined Copper-Orange Geometric Mark + Wordmark */}
@@ -192,7 +192,7 @@ export default function Navbar({
               </a>
             ))}
           </nav>
-          <div className="mt-4 pt-4 border-t border-[#18110D]/10 flex flex-wrap items-center justify-between gap-3 sm:hidden">
+          <div className="mt-4 pt-2 flex flex-wrap items-center justify-between gap-3 sm:hidden">
             <button
               type="button"
               onClick={() => {

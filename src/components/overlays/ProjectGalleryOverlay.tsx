@@ -224,12 +224,8 @@ function GalleryCard({
             {project.tech.join(" · ")}
           </p>
 
-          {/* Action Bar */}
-          <div
-            className={`pt-4 border-t flex flex-col gap-3 ${
-              isDarkLab ? "border-[#FAF6F0]/10" : "border-[#140E0B]/10"
-            }`}
-          >
+          {/* Action Bar (Zero Straight Divider Line) */}
+          <div className="pt-2 flex flex-col gap-3">
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
@@ -387,12 +383,12 @@ export default function ProjectGalleryOverlay({
           className="relative z-10 h-full w-full overflow-y-auto overscroll-contain"
           style={{ WebkitOverflowScrolling: "touch" }}
         >
-          {/* Sticky Header */}
+          {/* Sticky Header (Tonal Shadow Separation, Zero Straight Hairline) */}
           <div
-            className={`sticky top-0 z-20 backdrop-blur-md border-b ${
+            className={`sticky top-0 z-20 backdrop-blur-md ${
               isDarkLab
-                ? "bg-[#120B07]/94 border-[#FAF6F0]/10"
-                : "bg-[#FAF5EE]/94 border-[#140E0B]/10"
+                ? "bg-[#120B07]/94 shadow-[0_14px_32px_-20px_rgba(0,0,0,0.85)]"
+                : "bg-[#FAF5EE]/94 shadow-[0_14px_32px_-22px_rgba(20,14,11,0.16)]"
             }`}
           >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4">

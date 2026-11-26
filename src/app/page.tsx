@@ -82,6 +82,10 @@ function PortfolioShell() {
 
   return (
     <div className="min-h-screen bg-[#FAF6F0] text-[#140E0B] relative overflow-x-clip">
+      <div
+        aria-hidden="true"
+        className="editorial-grain-overlay pointer-events-none fixed inset-0 z-30"
+      />
       <Navbar
         onOpenResume={() => setResumeOpen(true)}
         onOpenAgent={openAgent}

@@ -7,16 +7,13 @@ import {
   buildAmitSystemPrompt,
   normalizeConversationContents,
 } from "./src/lib/agentSystemPrompt";
-import { generateLocalFallbackReply } from "./src/lib/localAgentFallback";
+import { callGeminiRest } from "./src/lib/geminiRest";
 import {
-  GEMINI_MODELS,
   InMemoryRateLimiter,
   MAX_BODY_BYTES,
   RATE_LIMIT_MAX_REQUESTS,
   RATE_LIMIT_WINDOW_MS,
-  buildModelGenerateConfig,
   extractClientIp,
-  extractGeminiText,
   extractUpstreamErrorInfo,
   resolveApiKey,
   validateChatPayload,
@@ -26,27 +23,6 @@ const rateLimiter = new InMemoryRateLimiter(
   RATE_LIMIT_MAX_REQUESTS,
   RATE_LIMIT_WINDOW_MS
 );
-
-function resolveServerApiKey(mode: string): string {
-  const fileEnv = loadEnv(mode, process.cwd(), "");
-  return resolveApiKey(
-    process.env.API_KEY,
-    process.env.GEMINI_API_KEY,
-    fileEnv.API_KEY,
-    fileEnv.GEMINI_API_KEY
-  );
-}
-
-function isRetryableError(err: unknown): boolean {
-  const { status, message } = extractUpstreamErrorInfo(err);
-  return /\b(429|500|502|503|504|UNAVAILABLE|RESOURCE_EXHAUSTED)\b/i.test(
-    `${status} ${message}`
-  );
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 function sendJson(
   res: ServerResponse,
@@ -65,7 +41,7 @@ function sendJson(
   res.end(JSON.stringify(body));
 }
 
-function createChatHandler(mode: string) {
+function createChatHandler(env: Record<string, string>) {
   return async (
     req: IncomingMessage,
     res: ServerResponse,
@@ -96,7 +72,7 @@ function createChatHandler(mode: string) {
       return;
     }
 
-    // 2. Enforce strict 32KB raw payload byte limit while reading body
+    // 2. Enforce strict 32KB raw payload byte limit while buffering request body
     const chunks: Buffer[] = [];
     let totalBytes = 0;
     let payloadTooLarge = false;
@@ -132,75 +108,52 @@ function createChatHandler(mode: string) {
           return;
         }
 
-        // 4. Resolve valid AIza API key (ignoring placeholder values like "Gemini")
-        const apiKey = resolveServerApiKey(mode);
+        // 4. Resolve valid AIza API key from process.env + loadEnv closure
+        const apiKey = resolveApiKey(
+          process.env.API_KEY,
+          process.env.GEMINI_API_KEY,
+          env.API_KEY,
+          env.GEMINI_API_KEY
+        );
+
         if (!apiKey) {
           sendJson(res, 200, {
-            reply: generateLocalFallbackReply(validated.message),
-            mode: "local",
+            error: "No valid Gemini API key configured in environment.",
+            upstreamStatus: 503,
           });
           return;
         }
 
-        const { GoogleGenAI } = await import("@google/genai");
-        const ai = new GoogleGenAI({
-          apiKey,
-          httpOptions: {
-            headers: {
-              "User-Agent": "aistudio-build",
-            },
-          },
-        });
-
+        // 5. Call Gemini REST v1beta directly via native fetch
         const contents = normalizeConversationContents(
           validated.history,
           validated.message
         );
-        const systemInstruction = buildAmitSystemPrompt();
+        const result = await callGeminiRest({
+          apiKey,
+          systemPrompt: buildAmitSystemPrompt(),
+          contents,
+        });
 
-        for (const model of GEMINI_MODELS) {
-          const maxAttempts = 2;
-          for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-            try {
-              const response = await ai.models.generateContent({
-                model,
-                contents,
-                config: buildModelGenerateConfig(model, systemInstruction),
-              });
-              const text = extractGeminiText(response)
-                .replace(/\u2014/g, ", ")
-                .trim();
-              if (text) {
-                sendJson(res, 200, { reply: text, mode: "gemini", model });
-                return;
-              }
-            } catch (err) {
-              const info = extractUpstreamErrorInfo(err);
-              console.error(
-                `[Ask Amit /api/chat] Model "${model}" attempt ${attempt + 1} failed (status=${info.status}): ${info.message}`
-              );
-              if (isRetryableError(err) && attempt + 1 < maxAttempts) {
-                await sleep(450 * (attempt + 1));
-                continue;
-              }
-              break;
-            }
-          }
+        if (result.ok) {
+          sendJson(res, 200, {
+            reply: result.reply,
+            source: "live",
+            model: result.model,
+          });
+          return;
         }
 
         sendJson(res, 200, {
-          reply: generateLocalFallbackReply(validated.message),
-          mode: "local",
+          error: result.error,
+          upstreamStatus: result.upstreamStatus,
         });
       } catch (err) {
         const info = extractUpstreamErrorInfo(err);
-        console.error(
-          `[Ask Amit /api/chat] Unexpected server error (status=${info.status}): ${info.message}`
-        );
         if (!res.headersSent) {
           sendJson(res, 200, {
-            reply: generateLocalFallbackReply(""),
-            mode: "local",
+            error: info.message,
+            upstreamStatus: info.status === "unknown" ? 500 : info.status,
           });
         }
       }
@@ -208,21 +161,23 @@ function createChatHandler(mode: string) {
   };
 }
 
-function geminiChatApiPlugin(mode: string): Plugin {
+function geminiChatApiPlugin(env: Record<string, string>): Plugin {
   return {
     name: "amit-gemini-chat-middleware",
     configureServer(server) {
-      server.middlewares.use(createChatHandler(mode));
+      server.middlewares.use(createChatHandler(env));
     },
     configurePreviewServer(server) {
-      server.middlewares.use(createChatHandler(mode));
+      server.middlewares.use(createChatHandler(env));
     },
   };
 }
 
 export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), "");
+
   return {
-    plugins: [react(), tailwindcss(), geminiChatApiPlugin(mode)],
+    plugins: [react(), tailwindcss(), geminiChatApiPlugin(env)],
     server: {
       port: 3000,
     },

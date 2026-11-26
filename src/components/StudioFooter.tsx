@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { motion } from "framer-motion";
 import {
   ArrowUpRight,
   Check,
@@ -34,7 +35,7 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
   return (
     <footer
       id="contact"
-      className="relative bg-[#0B0705] text-[#FAF6F0] silk-grain-dark pt-12 sm:pt-18 pb-16 overflow-hidden scroll-mt-20"
+      className="relative bg-[#0A0604] text-[#FAF6F0] silk-grain-dark pt-12 sm:pt-18 pb-14 overflow-hidden scroll-mt-20"
     >
       {/* Warm burnt-orange & copper top-seam atmospheric illumination */}
       <div
@@ -42,7 +43,7 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
         className="pointer-events-none absolute -top-28 left-1/2 -translate-x-1/2 w-[900px] h-[260px] rounded-full opacity-55"
         style={{
           background:
-            "radial-gradient(ellipse at center, rgba(232, 93, 4, 0.24) 0%, rgba(200, 90, 23, 0.11) 46%, rgba(11, 7, 5, 0) 76%)",
+            "radial-gradient(ellipse at center, rgba(232, 93, 4, 0.24) 0%, rgba(200, 90, 23, 0.11) 46%, rgba(10, 6, 4, 0) 76%)",
         }}
       />
       <div
@@ -50,37 +51,55 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
         className="pointer-events-none absolute -bottom-32 left-1/2 -translate-x-1/2 w-[780px] h-[340px] rounded-full opacity-40"
         style={{
           background:
-            "radial-gradient(ellipse at center, rgba(232, 93, 4, 0.26) 0%, rgba(200, 90, 23, 0.1) 42%, rgba(11, 7, 5, 0) 74%)",
+            "radial-gradient(ellipse at center, rgba(232, 93, 4, 0.26) 0%, rgba(200, 90, 23, 0.1) 42%, rgba(10, 6, 4, 0) 74%)",
         }}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-end pb-14 border-b border-[#FAF6F0]/10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-end pb-12">
           <div className="lg:col-span-7">
-            <h2
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
               className="font-display font-bold text-[#FAF6F0] text-4xl sm:text-5xl lg:text-[3.5rem] leading-[1.02] tracking-[-0.035em]"
               style={{ textWrap: "balance" }}
             >
               Let&apos;s Architect Your Next{" "}
               <span className="text-[#E85D04]">Protocol.</span>
-            </h2>
-            <p className="mt-5 text-sm sm:text-[15.5px] leading-[1.72] text-[#C9BDB3] max-w-[54ch]">
+            </motion.h2>
+            <motion.p
+              data-testid="section-subtitle-footer"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{
+                duration: 0.55,
+                delay: 0.08,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+              className="mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#D9CEC2]"
+            >
               Available for remote Smart Contract Engineer roles, DeFi protocol
               architecture, Foundry invariant hardening, and full-stack EVM
               system engineering.
-            </p>
+            </motion.p>
           </div>
 
           <div className="lg:col-span-5 flex flex-col items-start lg:items-end gap-4">
-            {/* One-Click Copyable Email Pill */}
+            {/* One-Click Copyable Email Pill (Zero Straight Divider Line) */}
             <button
               type="button"
               onClick={handleCopyEmail}
               aria-label="Copy email address nextech.amit@gmail.com"
-              className="inline-flex items-center gap-2.5 max-w-full min-h-[44px] px-4 sm:px-5 py-2.5 rounded-full bg-[#17100B] border border-[#FAF6F0]/16 hover:border-[#E85D04] text-[#FAF6F0] text-xs sm:text-sm font-mono-tabular transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04]"
+              className="inline-flex items-center gap-2.5 max-w-full min-h-[44px] px-4 sm:px-5 py-2.5 rounded-full bg-[#160F0B] border border-[#FAF6F0]/16 hover:border-[#E85D04] text-[#FAF6F0] text-xs sm:text-sm font-mono-tabular transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04]"
             >
               <span className="truncate">{CONTACT_EMAIL}</span>
-              <span className="inline-flex items-center gap-1 shrink-0 text-xs font-sans font-semibold text-[#E85D04] pl-2.5 border-l border-[#FAF6F0]/14">
+              <span aria-hidden="true" className="text-[#FAF6F0]/25">
+                ·
+              </span>
+              <span className="inline-flex items-center gap-1 shrink-0 text-xs font-sans font-semibold text-[#E85D04]">
                 {copied ? (
                   <>
                     <Check className="w-3.5 h-3.5" aria-hidden="true" />
@@ -120,7 +139,7 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
               <button
                 type="button"
                 onClick={openAgent}
-                className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-5 py-3 rounded-full bg-[#17100B] border border-[#FAF6F0]/16 hover:border-[#E85D04] text-[#FAF6F0] text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap cursor-pointer"
+                className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-5 py-3 rounded-full bg-[#160F0B] border border-[#FAF6F0]/16 hover:border-[#E85D04] text-[#FAF6F0] text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap cursor-pointer"
               >
                 <MessageSquare
                   className="w-3.5 h-3.5 text-[#E85D04]"
@@ -132,8 +151,8 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
           </div>
         </div>
 
-        {/* Bottom Legal & Verified Links Row */}
-        <div className="pt-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs font-medium text-[#A8988B]">
+        {/* Bottom Tonal Identity & Verified Links Bar (Zero Straight Divider Line) */}
+        <div className="rounded-3xl bg-[#130C08]/85 px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs font-medium text-[#B8A89B]">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <span className="font-display font-bold text-[#FAF6F0] text-sm tracking-[-0.02em]">
               NexTechArchitect

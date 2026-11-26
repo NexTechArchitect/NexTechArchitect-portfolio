@@ -33,8 +33,12 @@ test("resolveApiKey ignores placeholder values like 'Gemini' and selects valid A
   );
 });
 
-test("GEMINI_MODELS uses only production-stable gemini-2.5-flash and gemini-2.0-flash", () => {
-  assert.deepEqual([...GEMINI_MODELS], ["gemini-2.5-flash", "gemini-2.0-flash"]);
+test("GEMINI_MODELS uses production-stable gemini-2.5-flash, gemini-2.5-flash-lite, and gemini-2.0-flash", () => {
+  assert.deepEqual([...GEMINI_MODELS], [
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
+    "gemini-2.0-flash",
+  ]);
 });
 
 test("extractGeminiText ignores thought parts and falls back cleanly from getter to candidates parts", () => {

@@ -1,19 +1,15 @@
-import { GoogleGenAI } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
 import {
   buildAmitSystemPrompt,
   normalizeConversationContents,
 } from "@/lib/agentSystemPrompt";
-import { generateLocalFallbackReply } from "@/lib/localAgentFallback";
+import { callGeminiRest } from "@/lib/geminiRest";
 import {
-  GEMINI_MODELS,
   InMemoryRateLimiter,
   MAX_BODY_BYTES,
   RATE_LIMIT_MAX_REQUESTS,
   RATE_LIMIT_WINDOW_MS,
-  buildModelGenerateConfig,
   extractClientIp,
-  extractGeminiText,
   extractUpstreamErrorInfo,
   resolveApiKey,
   validateChatPayload,
@@ -23,17 +19,6 @@ const rateLimiter = new InMemoryRateLimiter(
   RATE_LIMIT_MAX_REQUESTS,
   RATE_LIMIT_WINDOW_MS
 );
-
-function isRetryableError(err: unknown): boolean {
-  const { status, message } = extractUpstreamErrorInfo(err);
-  return /\b(429|500|502|503|504|UNAVAILABLE|RESOURCE_EXHAUSTED)\b/i.test(
-    `${status} ${message}`
-  );
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -102,8 +87,8 @@ export async function POST(req: NextRequest) {
     if (!apiKey) {
       return NextResponse.json(
         {
-          reply: generateLocalFallbackReply(validated.message),
-          mode: "local",
+          error: "No valid Gemini API key configured in environment.",
+          upstreamStatus: 503,
         },
         {
           status: 200,
@@ -112,62 +97,34 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const ai = new GoogleGenAI({
-      apiKey,
-      httpOptions: {
-        headers: {
-          "User-Agent": "aistudio-build",
-        },
-      },
-    });
-
     const contents = normalizeConversationContents(
       validated.history,
       validated.message
     );
-    const systemInstruction = buildAmitSystemPrompt();
+    const result = await callGeminiRest({
+      apiKey,
+      systemPrompt: buildAmitSystemPrompt(),
+      contents,
+    });
 
-    for (const model of GEMINI_MODELS) {
-      const maxAttempts = 2;
-      for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-        try {
-          const response = await ai.models.generateContent({
-            model,
-            contents,
-            config: buildModelGenerateConfig(model, systemInstruction),
-          });
-          const text = extractGeminiText(response)
-            .replace(/\u2014/g, ", ")
-            .trim();
-          if (text) {
-            return NextResponse.json(
-              { reply: text, mode: "gemini", model },
-              {
-                status: 200,
-                headers: {
-                  "X-Content-Type-Options": "nosniff",
-                },
-              }
-            );
-          }
-        } catch (err) {
-          const info = extractUpstreamErrorInfo(err);
-          console.error(
-            `[Ask Amit /api/chat] Model "${model}" attempt ${attempt + 1} failed (status=${info.status}): ${info.message}`
-          );
-          if (isRetryableError(err) && attempt + 1 < maxAttempts) {
-            await sleep(450 * (attempt + 1));
-            continue;
-          }
-          break;
+    if (result.ok) {
+      return NextResponse.json(
+        {
+          reply: result.reply,
+          source: "live",
+          model: result.model,
+        },
+        {
+          status: 200,
+          headers: { "X-Content-Type-Options": "nosniff" },
         }
-      }
+      );
     }
 
     return NextResponse.json(
       {
-        reply: generateLocalFallbackReply(validated.message),
-        mode: "local",
+        error: result.error,
+        upstreamStatus: result.upstreamStatus,
       },
       {
         status: 200,
@@ -176,13 +133,10 @@ export async function POST(req: NextRequest) {
     );
   } catch (err) {
     const info = extractUpstreamErrorInfo(err);
-    console.error(
-      `[Ask Amit /api/chat] Unexpected request error (status=${info.status}): ${info.message}`
-    );
     return NextResponse.json(
       {
-        reply: generateLocalFallbackReply(""),
-        mode: "local",
+        error: info.message,
+        upstreamStatus: info.status === "unknown" ? 500 : info.status,
       },
       {
         status: 200,

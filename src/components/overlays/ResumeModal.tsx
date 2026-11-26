@@ -36,7 +36,7 @@ export default function ResumeModal({ isOpen, onClose }: ResumeModalProps) {
             className="relative z-10 w-full max-w-4xl h-[88vh] flex flex-col overflow-hidden rounded-3xl bg-[#FAF6F0] border border-[#140E0B]/15 shadow-[0_28px_80px_rgba(15,10,8,0.48)]"
           >
             {/* Header Bar */}
-            <div className="flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 py-3.5 sm:py-4 bg-[#140E0B] text-[#FAF6F0] border-b border-[#FAF6F0]/10 shrink-0">
+            <div className="flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 py-3.5 sm:py-4 bg-[#140E0B] text-[#FAF6F0] shrink-0">
               <div className="min-w-0">
                 <p className="text-[11px] font-mono-tabular uppercase tracking-[0.12em] text-[#D96B27] font-semibold">
                   Curriculum Vitae

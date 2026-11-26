@@ -55,10 +55,8 @@ async function revealProgressively(
 }
 
 /**
- * Requests a clean JSON response from `/api/chat` (`application/json`).
- * If `/api/chat` fails, times out, returns non-JSON, or hits rate limits,
- * transparently serves a sharp context-aware reply from `generateLocalFallbackReply`
- * so visitors never encounter error boxes.
+ * Requests a clean JSON response from server-side `/api/chat` (`application/json`).
+ * Logs clear LIVE vs OFFLINE mode diagnostics without ever exposing keys or showing error boxes.
  */
 export async function streamAmitChat(
   message: string,
@@ -74,6 +72,7 @@ export async function streamAmitChat(
 
   let liveText = "";
   let resolvedModel: string | undefined;
+  let fallbackReason = "Live endpoint unavailable";
 
   try {
     const response = await fetch("/api/chat", {
@@ -90,27 +89,45 @@ export async function streamAmitChat(
     });
 
     const contentType = response.headers.get("content-type") ?? "";
-    if (response.ok && contentType.includes("application/json")) {
+    if (contentType.includes("application/json")) {
       const data = (await response.json()) as {
         reply?: string;
+        source?: string;
         model?: string;
+        error?: string;
+        upstreamStatus?: number | string;
       };
-      if (typeof data.reply === "string" && data.reply.trim().length > 0) {
+
+      if (
+        response.ok &&
+        typeof data.reply === "string" &&
+        data.reply.trim().length > 0
+      ) {
         liveText = sanitizeEditorialCopy(data.reply);
         resolvedModel = data.model;
+      } else {
+        fallbackReason = `${data.upstreamStatus ?? response.status}: ${
+          data.error ?? "No live reply returned"
+        }`;
       }
+    } else {
+      fallbackReason = `HTTP ${response.status} non-JSON response (${
+        contentType || "unknown"
+      })`;
     }
-  } catch {
-    // Transparently fall through to built-in local portfolio & EVM assistant
+  } catch (err) {
+    fallbackReason = err instanceof Error ? err.message : "Network error";
   } finally {
     window.clearTimeout(timeoutId);
   }
 
   if (liveText) {
+    console.info("[Ask Amit] Mode: LIVE");
     await revealProgressively(liveText, onDelta);
     return { ok: true, text: liveText, model: resolvedModel, mode: "gemini" };
   }
 
+  console.warn("[Ask Amit] Mode: OFFLINE fallback — reason:", fallbackReason);
   const fallbackText = generateLocalFallbackReply(message);
   await revealProgressively(fallbackText, onDelta);
   return { ok: true, text: fallbackText, mode: "local" };

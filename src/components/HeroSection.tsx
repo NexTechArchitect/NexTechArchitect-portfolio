@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import React from "react";
 import { ArrowDownRight, ArrowUpRight, Mail } from "lucide-react";
 import AmitAvatar3D from "@/components/AmitAvatar3D";
+import { ScrollHorizonSweep } from "@/components/SectionCurves";
 import { useAgent } from "@/context/AgentContext";
 
 interface HeroSectionProps {
@@ -12,12 +12,17 @@ interface HeroSectionProps {
   onInspectYulGas: () => void;
 }
 
-const CAPABILITY_ITEMS = [
-  "Solidity & Yul",
-  "Threat Modeling & Invariant Testing",
-  "ERC-3643 / ERC-4626 / ERC-4337",
-  "Chainlink & Aave V3",
-  "Next.js & Wagmi",
+const CORE_SKILLS = [
+  "Solidity & Yul Assembly",
+  "Foundry & Stateful Invariant Fuzzing",
+  "Threat Modeling, Slither & Echidna",
+  "ERC-3643 / ERC-4626 / ERC-4337 / ERC-5484",
+  "UUPS & EIP-1967 Upgradeable Proxies",
+  "Chainlink CCIP, VRF & Data Feeds",
+  "Aave V3 & Flash-Loan / MEV Defense",
+  "EVM Gas Optimization & Storage Packing",
+  "Next.js, TypeScript, Wagmi v2 & Viem",
+  "The Graph & IPFS",
 ] as const;
 
 export default function HeroSection({
@@ -26,15 +31,6 @@ export default function HeroSection({
   onInspectYulGas,
 }: HeroSectionProps) {
   const { openAgent } = useAgent();
-  const heroRef = useRef<HTMLElement | null>(null);
-
-  // Transition #1: Scroll-Reactive Dynamic Horizon Curve that subtly flattens & widens
-  const { scrollYProgress } = useScroll({
-    target: heroRef,
-    offset: ["start start", "end start"],
-  });
-  const horizonScaleY = useTransform(scrollYProgress, [0, 1], [1.14, 0.48]);
-  const horizonScaleX = useTransform(scrollYProgress, [0, 1], [1.0, 1.07]);
 
   const handleScrollToContact = () => {
     const el = document.getElementById("contact");
@@ -46,96 +42,57 @@ export default function HeroSection({
   return (
     <section
       id="top"
-      ref={heroRef}
-      className="relative bg-[#FAF6F0] silk-grain overflow-x-clip"
+      className="relative bg-[#FAF6F0] silk-grain overflow-x-clip pt-[106px] sm:pt-[118px] lg:pt-[128px]"
     >
-      {/* Top Architectural Canopy: Deep Obsidian Espresso (#140E0B) -> Warm Ivory (#FAF6F0) Concave Curve & Burnt-Orange Rim */}
+      {/* Subtle Sculptural Warm-Amber & Champagne Studio Light Wash Framing the Top Edge */}
       <div
         aria-hidden="true"
-        data-testid="hero-top-canopy"
-        className="pointer-events-none relative w-full bg-[#140E0B] silk-grain-dark overflow-hidden"
-      >
-        <div
-          className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 w-[72%] max-w-[980px] h-[170px] rounded-full opacity-45"
-          style={{
-            background:
-              "radial-gradient(ellipse at center, rgba(232, 93, 4, 0.28) 0%, rgba(217, 107, 39, 0.1) 48%, rgba(20, 14, 11, 0) 76%)",
-          }}
-        />
-        {/* Upper Dark Espresso Band Framing the Floating Navbar */}
-        <div className="h-[92px] sm:h-[104px] lg:h-[110px]" />
-
-        {/* Concave Dark-to-Light Curve & Glowing Burnt-Orange Hairline */}
-        <div className="pointer-events-none relative w-full leading-none">
-          <svg
-            viewBox="0 0 1440 124"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            preserveAspectRatio="none"
-            className="pointer-events-none block w-full h-[46px] sm:h-[58px] lg:h-[68px]"
-          >
-            <defs>
-              <linearGradient
-                id="topCanopyRimStroke"
-                x1="0"
-                y1="0"
-                x2="1440"
-                y2="0"
-                gradientUnits="userSpaceOnUse"
-              >
-                <stop offset="0%" stopColor="#D96B27" stopOpacity="0.16" />
-                <stop offset="28%" stopColor="#E85D04" stopOpacity="0.72" />
-                <stop offset="50%" stopColor="#F48C06" stopOpacity="0.95" />
-                <stop offset="72%" stopColor="#E85D04" stopOpacity="0.72" />
-                <stop offset="100%" stopColor="#D96B27" stopOpacity="0.16" />
-              </linearGradient>
-            </defs>
-            <path
-              d="M0 124V92C360 10 1080 10 1440 92V124H0Z"
-              fill="#FAF6F0"
-            />
-            <path
-              d="M0 92C360 10 1080 10 1440 92"
-              stroke="url(#topCanopyRimStroke)"
-              strokeWidth="2.2"
-              vectorEffect="non-scaling-stroke"
-            />
-          </svg>
-        </div>
-      </div>
-
-      {/* Organic layered apricot & warm amber studio light diffusion */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute top-28 right-[-6%] w-[640px] h-[640px] rounded-full opacity-70"
+        className="pointer-events-none absolute -top-28 left-1/2 -translate-x-1/2 w-[92%] max-w-[1220px] h-[340px] rounded-full opacity-80"
         style={{
           background:
-            "radial-gradient(circle, rgba(244, 140, 6, 0.15) 0%, rgba(232, 93, 4, 0.07) 38%, rgba(250, 246, 240, 0) 72%)",
+            "radial-gradient(ellipse at 50% 30%, rgba(244, 140, 6, 0.16) 0%, rgba(232, 93, 4, 0.08) 38%, rgba(243, 234, 224, 0.25) 60%, rgba(250, 246, 240, 0) 78%)",
         }}
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute bottom-24 left-[-10%] w-[520px] h-[520px] rounded-full opacity-55"
+        className="pointer-events-none absolute top-28 right-[-8%] w-[640px] h-[640px] rounded-full opacity-70"
         style={{
           background:
-            "radial-gradient(circle, rgba(217, 107, 39, 0.11) 0%, rgba(250, 246, 240, 0) 70%)",
+            "radial-gradient(circle, rgba(244, 140, 6, 0.14) 0%, rgba(232, 93, 4, 0.06) 40%, rgba(250, 246, 240, 0) 72%)",
+        }}
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute top-[30%] left-[-12%] w-[480px] h-[620px] rounded-full opacity-55"
+        style={{
+          background:
+            "radial-gradient(ellipse at center, rgba(217, 107, 39, 0.11) 0%, rgba(250, 246, 240, 0) 72%)",
         }}
       />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 lg:pt-8 pb-4 sm:pb-6">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 sm:pt-4 pb-6 sm:pb-8">
         {/* 2-Column Editorial Hero Split */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center min-h-[460px] lg:min-h-[500px]">
-          {/* Left Column: Commanding Upright Sora Typography & Humanized Senior Narrative */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center min-h-[440px] lg:min-h-[480px]">
+          {/* Left Column: Proud Executive Identity Lockup + Balanced Sora Headline */}
           <div className="lg:col-span-7 flex flex-col justify-center">
-            <p className="text-[13px] sm:text-sm font-mono-tabular tracking-[0.04em] text-[#7D6C61]">
-              Amit Kumar{" "}
-              <span aria-hidden="true" className="mx-1.5 text-[#E85D04]">
-                ·
-              </span>{" "}
-              Smart Contract Engineer &amp; DeFi Protocol Architect
-            </p>
+            {/* Unmistakable Executive Identity Lockup */}
+            <div
+              data-testid="hero-identity-lockup"
+              className="flex flex-wrap items-center gap-x-3 gap-y-2"
+            >
+              <span className="font-display text-xl sm:text-2xl font-semibold tracking-tight text-[#1A130F]">
+                Amit Kumar
+              </span>
+              <span
+                aria-hidden="true"
+                className="w-1.5 h-1.5 rounded-full bg-[#E85D04] shrink-0"
+              />
+              <span className="inline-flex items-center px-3.5 py-1 rounded-full bg-[#E85D04]/[0.08] border border-[#E85D04]/20 text-sm sm:text-[15.5px] font-medium text-[#8C4A1C]">
+                Smart Contract Engineer &amp; DeFi Protocol Architect
+              </span>
+            </div>
 
-            <h1 className="mt-4 font-display font-bold text-[#140E0B] text-[2.35rem] sm:text-5xl md:text-6xl lg:text-[68px] xl:text-[76px] leading-[1.03] lg:leading-[1.01] tracking-[-0.035em]">
+            <h1 className="mt-5 font-display font-bold text-[#140E0B] text-4xl sm:text-5xl lg:text-[56px] leading-[1.06] tracking-[-0.032em]">
               <span className="block">I Architect DeFi</span>
               <span className="block mt-1">
                 Protocols Built to{" "}
@@ -183,13 +140,8 @@ export default function HeroSection({
               </a>
             </div>
 
-            {/* Unboxed Capability Strip */}
-            <p className="mt-6 pt-4 border-t border-[#140E0B]/10 text-[12.5px] sm:text-[13px] font-mono-tabular leading-relaxed text-[#6C5B52]">
-              {CAPABILITY_ITEMS.join(" · ")}
-            </p>
-
             {/* Clean Direct Social & Contact Row */}
-            <div className="mt-3.5 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-x-5 gap-y-2 text-[13px] font-medium text-[#594A42]">
+            <div className="mt-6 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-x-5 gap-y-2 text-[13.5px] font-medium text-[#594A42]">
               <div className="flex items-center gap-4">
                 <a
                   href="https://www.linkedin.com/in/amit-kumar-811a11277"
@@ -203,7 +155,7 @@ export default function HeroSection({
                     aria-hidden="true"
                   />
                 </a>
-                <span aria-hidden="true" className="text-[#140E0B]/20">
+                <span aria-hidden="true" className="text-[#E85D04]/60">
                   ·
                 </span>
                 <a
@@ -221,7 +173,7 @@ export default function HeroSection({
               </div>
               <span
                 aria-hidden="true"
-                className="hidden sm:inline text-[#140E0B]/20"
+                className="hidden sm:inline text-[#E85D04]/60"
               >
                 ·
               </span>
@@ -230,7 +182,7 @@ export default function HeroSection({
                 className="inline-flex items-center gap-1.5 hover:text-[#E85D04] transition-colors whitespace-nowrap"
               >
                 <Mail
-                  className="w-3.5 h-3.5 text-[#7D6C61]"
+                  className="w-3.5 h-3.5 text-[#8C4A1C]"
                   aria-hidden="true"
                 />
                 <span>nextech.amit@gmail.com</span>
@@ -238,7 +190,7 @@ export default function HeroSection({
             </div>
           </div>
 
-          {/* Right Column: Floating 3D Character + Dynamic Rotating Spotlight Card */}
+          {/* Right Column: Floating 3D Character + Dynamic Rotating Prompts */}
           <div className="lg:col-span-5 flex flex-col items-center">
             <div className="relative w-full flex flex-col items-center justify-center">
               <AmitAvatar3D
@@ -251,56 +203,36 @@ export default function HeroSection({
             </div>
           </div>
         </div>
+
+        {/* Expanded Senior Core Skills Strip (10 High-Signal Skills, Zero Straight Lines) */}
+        <div
+          data-testid="hero-core-skills"
+          aria-label="Core engineering skills"
+          className="mt-10 lg:mt-12 rounded-[28px] bg-[#F3EAE0]/70 px-5 sm:px-7 py-5 shadow-[0_18px_48px_-34px_rgba(20,14,11,0.2)]"
+        >
+          <ul className="flex flex-wrap items-center gap-x-3.5 gap-y-2.5">
+            {CORE_SKILLS.map((skill) => (
+              <li
+                key={skill}
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FFFDF9]/90 text-[12.5px] sm:text-[13px] font-medium text-[#4A3B32] shadow-[0_4px_14px_-10px_rgba(20,14,11,0.28)]"
+              >
+                <span
+                  aria-hidden="true"
+                  className="w-1.5 h-1.5 rounded-full bg-[#E85D04] shrink-0"
+                />
+                <span>{skill}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
 
-      {/* Transition #1: Scroll-Reactive Dynamic Horizon Curve (#FAF6F0 -> #140E0B) */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none relative w-full mt-4 sm:mt-8 leading-none overflow-hidden"
-      >
-        <motion.div
-          style={{
-            scaleY: horizonScaleY,
-            scaleX: horizonScaleX,
-            transformOrigin: "bottom center",
-          }}
-          className="w-full will-change-transform"
-        >
-          <svg
-            viewBox="0 0 1440 132"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            preserveAspectRatio="none"
-            className="block w-full h-[68px] sm:h-[98px] lg:h-[126px]"
-          >
-            <defs>
-              <linearGradient
-                id="heroCopperSheen"
-                x1="0"
-                y1="0"
-                x2="1440"
-                y2="0"
-                gradientUnits="userSpaceOnUse"
-              >
-                <stop offset="0%" stopColor="#D96B27" stopOpacity="0.1" />
-                <stop offset="32%" stopColor="#E85D04" stopOpacity="0.65" />
-                <stop offset="50%" stopColor="#F48C06" stopOpacity="0.88" />
-                <stop offset="68%" stopColor="#E85D04" stopOpacity="0.65" />
-                <stop offset="100%" stopColor="#D96B27" stopOpacity="0.1" />
-              </linearGradient>
-            </defs>
-            <path
-              d="M0 132V104C340 12 1100 12 1440 104V132H0Z"
-              fill="#140E0B"
-            />
-            <path
-              d="M0 104C340 12 1100 12 1440 104"
-              stroke="url(#heroCopperSheen)"
-              strokeWidth="1.6"
-            />
-          </svg>
-        </motion.div>
-      </div>
+      {/* Transition #1: Scroll-Flattening Sculptural Horizon Sweep (#FAF6F0 -> #140E0B) */}
+      <ScrollHorizonSweep
+        idPrefix="hero-to-arch"
+        bottomFill="#140E0B"
+        className="mt-6 sm:mt-10"
+      />
     </section>
   );
 }

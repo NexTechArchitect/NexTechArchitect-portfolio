@@ -2,12 +2,12 @@
 
 @theme inline {
   --color-ivory: #FAF6F0;
-  --color-porcelain: #F5EFE6;
-  --color-sand: #ECE2D4;
+  --color-porcelain: #FBF8F3;
+  --color-sand: #F3EAE0;
   --color-obsidian: #140E0B;
-  --color-roasted: #1E1510;
-  --color-midnight: #0F0A08;
-  --color-umber: #594A42;
+  --color-roasted: #1B120D;
+  --color-midnight: #0A0604;
+  --color-umber: #4D4139;
   --color-bronze: #8B786B;
   --color-burnt: #E85D04;
   --color-copper: #D96B27;
@@ -19,17 +19,16 @@
 :root {
   color-scheme: light;
   --bg-ivory: #FAF6F0;
-  --bg-porcelain: #F5EFE6;
+  --bg-porcelain: #FBF8F3;
+  --bg-sand: #F3EAE0;
   --bg-obsidian: #140E0B;
-  --bg-roasted: #1E1510;
-  --bg-midnight: #0F0A08;
+  --bg-roasted: #1B120D;
+  --bg-midnight: #0A0604;
   --ink-espresso: #140E0B;
-  --ink-umber: #594A42;
+  --ink-umber: #4D4139;
   --ink-bronze: #8B786B;
   --accent-burnt: #E85D04;
   --accent-copper: #D96B27;
-  --hairline-light: rgba(20, 14, 11, 0.1);
-  --hairline-dark: rgba(250, 246, 240, 0.1);
   --font-display: "Sora", system-ui, -apple-system, sans-serif;
   --font-sans: "Manrope", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
@@ -59,25 +58,37 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* Ultra-subtle museum-grade tactile editorial paper & brushed obsidian grain */
+.editorial-grain-overlay {
+  opacity: 0.025;
+  background-image: radial-gradient(
+      rgba(20, 14, 11, 0.72) 0.55px,
+      transparent 0.55px
+    ),
+    radial-gradient(rgba(232, 93, 4, 0.42) 0.45px, transparent 0.45px);
+  background-size: 6px 6px, 9px 9px;
+  background-position: 0 0, 3px 4px;
+}
+
 /* Frosted Cream Glass for floating light surfaces */
 .cream-glass {
-  background: rgba(250, 246, 240, 0.9);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(20, 14, 11, 0.1);
+  background: rgba(251, 248, 243, 0.9);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(20, 14, 11, 0.09);
 }
 
 .cream-glass-solid {
-  background: rgba(250, 246, 240, 0.97);
-  border: 1px solid rgba(20, 14, 11, 0.12);
+  background: rgba(251, 248, 243, 0.97);
+  border: 1px solid rgba(20, 14, 11, 0.11);
 }
 
 /* Dark Espresso luxury glass surfaces */
 .espresso-glass {
   background: rgba(20, 14, 11, 0.96);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(250, 246, 240, 0.12);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(250, 246, 240, 0.11);
 }
 
 .roast-surface {
@@ -85,20 +96,20 @@ body {
   border: 1px solid rgba(250, 246, 240, 0.1);
 }
 
-/* Zero-filter subtle tonal studio surfaces (no SVG feTurbulence scroll overhead) */
+/* Zero-filter subtle tonal studio sheen (preserves exact base hex at edges for zero-seam transitions) */
 .silk-grain {
-  background-image: linear-gradient(
-    180deg,
-    rgba(255, 252, 247, 0.28) 0%,
-    rgba(236, 226, 212, 0.08) 100%
+  background-image: radial-gradient(
+    ellipse 80% 55% at 50% 0%,
+    rgba(255, 253, 249, 0.24) 0%,
+    rgba(255, 253, 249, 0) 70%
   );
 }
 
 .silk-grain-dark {
-  background-image: linear-gradient(
-    180deg,
+  background-image: radial-gradient(
+    ellipse 80% 50% at 50% 0%,
     rgba(250, 246, 240, 0.025) 0%,
-    rgba(0, 0, 0, 0) 100%
+    rgba(0, 0, 0, 0) 70%
   );
 }
 
