@@ -11,6 +11,7 @@
   --color-bronze: #8B786B;
   --color-burnt: #E85D04;
   --color-copper: #D96B27;
+  --color-copper-warm: #D97736;
   --font-display: "Sora", system-ui, -apple-system, sans-serif;
   --font-sans: "Manrope", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
@@ -29,6 +30,7 @@
   --ink-bronze: #8B786B;
   --accent-burnt: #E85D04;
   --accent-copper: #D96B27;
+  --accent-copper-warm: #D97736;
   --font-display: "Sora", system-ui, -apple-system, sans-serif;
   --font-sans: "Manrope", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
@@ -58,7 +60,7 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* Ultra-subtle museum-grade tactile editorial paper & brushed obsidian grain */
+/* Ultra-subtle museum-grade tactile editorial paper & brushed obsidian micro film-grain */
 .editorial-grain-overlay {
   opacity: 0.025;
   background-image: radial-gradient(
@@ -118,6 +120,121 @@ body {
   transform-style: preserve-3d;
 }
 
+/* Lightweight 60fps GPU-only ambient radial light drift */
+@keyframes ambientSilkDrift {
+  0% {
+    transform: translate3d(0px, 0px, 0) scale(1);
+    opacity: 0.42;
+  }
+  50% {
+    transform: translate3d(24px, -16px, 0) scale(1.06);
+    opacity: 0.62;
+  }
+  100% {
+    transform: translate3d(-18px, 14px, 0) scale(0.97);
+    opacity: 0.46;
+  }
+}
+
+@keyframes ambientSilkDriftReverse {
+  0% {
+    transform: translate3d(0px, 0px, 0) scale(1);
+    opacity: 0.36;
+  }
+  50% {
+    transform: translate3d(-22px, 18px, 0) scale(1.07);
+    opacity: 0.56;
+  }
+  100% {
+    transform: translate3d(16px, -14px, 0) scale(0.96);
+    opacity: 0.4;
+  }
+}
+
+@keyframes portalCoreBreath {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.84;
+  }
+  50% {
+    transform: translate3d(0, -4px, 0) scale(1.09);
+    opacity: 1;
+  }
+}
+
+@keyframes portalOrbitalSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.ambient-silk-drift {
+  animation: ambientSilkDrift 20s ease-in-out infinite alternate;
+  will-change: transform, opacity;
+}
+
+.ambient-silk-drift-reverse {
+  animation: ambientSilkDriftReverse 24s ease-in-out infinite alternate;
+  will-change: transform, opacity;
+}
+
+.portal-core-breath {
+  animation: portalCoreBreath 8.5s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.portal-orbital-spin {
+  animation: portalOrbitalSpin 28s linear infinite;
+  will-change: transform;
+}
+
+/* Zero-rerender 60fps cursor-following warm copper specular sheen */
+.specular-surface,
+.specular-surface-dark {
+  position: relative;
+  --mx: 50%;
+  --my: 50%;
+}
+
+.specular-surface::before,
+.specular-surface-dark::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 1;
+}
+
+.specular-surface::before {
+  background: radial-gradient(
+    360px circle at var(--mx) var(--my),
+    rgba(232, 93, 4, 0.11) 0%,
+    rgba(217, 119, 54, 0.05) 38%,
+    rgba(255, 253, 249, 0) 72%
+  );
+}
+
+.specular-surface-dark::before {
+  background: radial-gradient(
+    380px circle at var(--mx) var(--my),
+    rgba(232, 93, 4, 0.2) 0%,
+    rgba(217, 119, 54, 0.09) 38%,
+    rgba(20, 14, 11, 0) 72%
+  );
+}
+
+.specular-surface:hover::before,
+.specular-surface-dark:hover::before {
+  opacity: 1;
+}
+
 /* Typing indicator dots inside the AI Agent */
 @keyframes agentTypingBounce {
   0%,
@@ -166,6 +283,10 @@ body {
   html {
     scroll-behavior: auto;
   }
+  .ambient-silk-drift,
+  .ambient-silk-drift-reverse,
+  .portal-core-breath,
+  .portal-orbital-spin,
   .typing-dot-1,
   .typing-dot-2,
   .typing-dot-3 {

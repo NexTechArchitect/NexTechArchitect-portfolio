@@ -1,7 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
-import { motion } from "framer-motion";
+import React, { useCallback, useRef, useState } from "react";
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from "framer-motion";
 import {
   ArrowUpRight,
   Check,
@@ -19,8 +24,17 @@ interface StudioFooterProps {
 const CONTACT_EMAIL = "nextech.amit@gmail.com";
 
 export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
+  const prefersReducedMotion = useReducedMotion();
   const { openAgent } = useAgent();
   const [copied, setCopied] = useState(false);
+
+  const footerRef = useRef<HTMLElement | null>(null);
+  const { scrollYProgress } = useScroll({
+    target: footerRef,
+    offset: ["start end", "start 0.4"],
+  });
+  const footerY = useTransform(scrollYProgress, [0, 1], [28, 0]);
+  const footerScale = useTransform(scrollYProgress, [0, 1], [0.975, 1]);
 
   const handleCopyEmail = async () => {
     try {
@@ -32,30 +46,51 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
     }
   };
 
+  const handleBarSpecular = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      e.currentTarget.style.setProperty("--mx", `${e.clientX - rect.left}px`);
+      e.currentTarget.style.setProperty("--my", `${e.clientY - rect.top}px`);
+    },
+    []
+  );
+
   return (
     <footer
+      ref={footerRef}
       id="contact"
       className="relative -mt-[2px] bg-[#0A0604] text-[#FAF6F0] silk-grain-dark pt-12 sm:pt-18 pb-14 overflow-hidden scroll-mt-20"
     >
       {/* Warm burnt-orange & copper atmospheric illumination nestled smoothly inside obsidian canvas */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 w-[820px] h-[240px] rounded-full opacity-45"
+        className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 w-[820px] h-[240px] rounded-full opacity-45 ambient-silk-drift"
         style={{
           background:
-            "radial-gradient(ellipse at center, rgba(232, 93, 4, 0.2) 0%, rgba(200, 90, 23, 0.08) 45%, rgba(10, 6, 4, 0) 74%)",
+            "radial-gradient(ellipse at center, rgba(232, 93, 4, 0.2) 0%, rgba(217, 119, 54, 0.08) 45%, rgba(10, 6, 4, 0) 74%)",
         }}
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -bottom-32 left-1/2 -translate-x-1/2 w-[780px] h-[340px] rounded-full opacity-40"
+        className="pointer-events-none absolute -bottom-32 left-1/2 -translate-x-1/2 w-[780px] h-[340px] rounded-full opacity-40 ambient-silk-drift-reverse"
         style={{
           background:
             "radial-gradient(ellipse at center, rgba(232, 93, 4, 0.26) 0%, rgba(200, 90, 23, 0.1) 42%, rgba(10, 6, 4, 0) 74%)",
         }}
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <motion.div
+        style={
+          prefersReducedMotion
+            ? undefined
+            : {
+                y: footerY,
+                scale: footerScale,
+                transformOrigin: "top center",
+              }
+        }
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 will-change-transform"
+      >
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-end pb-12">
           <div className="lg:col-span-7">
             <motion.h2
@@ -167,9 +202,10 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.5, delay: 0.14, ease: [0.22, 1, 0.36, 1] }}
-          className="rounded-3xl bg-[#130C08]/88 border border-[#FAF6F0]/[0.07] shadow-[inset_0_1px_0_rgba(250,246,240,0.05)] px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs font-medium text-[#B8A89B]"
+          onMouseMove={handleBarSpecular}
+          className="specular-surface-dark overflow-hidden rounded-3xl bg-[#130C08]/88 border border-[#FAF6F0]/[0.07] hover:border-[#E85D04]/32 transition-colors duration-250 shadow-[inset_0_1px_0_rgba(250,246,240,0.05)] px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs font-medium text-[#B8A89B]"
         >
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <div className="relative z-10 flex flex-wrap items-center gap-x-3 gap-y-1">
             <span className="font-display font-bold text-[#FAF6F0] text-sm tracking-[-0.02em]">
               NexTechArchitect
             </span>
@@ -181,7 +217,7 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-5">
+          <div className="relative z-10 flex flex-wrap items-center gap-5">
             <a
               href="https://github.com/NexTechArchitect"
               target="_blank"
@@ -211,7 +247,7 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
             </a>
           </div>
         </motion.div>
-      </div>
+      </motion.div>
     </footer>
   );
 }

@@ -1,7 +1,12 @@
 "use client";
 
 import React, { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from "framer-motion";
 
 interface CurveProps {
   idPrefix: string;
@@ -34,7 +39,7 @@ export function TopCanopyWave({
     >
       {/* Silky studio radial warmth blooming gently beneath the asymmetric arch */}
       <div
-        className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-[44px] sm:top-[56px] lg:top-[64px] w-[90%] max-w-[1280px] h-[118px] rounded-full opacity-65"
+        className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-[44px] sm:top-[56px] lg:top-[64px] w-[90%] max-w-[1280px] h-[118px] rounded-full opacity-65 ambient-silk-drift"
         style={{
           background:
             "radial-gradient(ellipse 68% 58% at 52% 24%, rgba(232, 93, 4, 0.22) 0%, rgba(244, 158, 76, 0.12) 44%, rgba(250, 246, 240, 0) 78%)",
@@ -161,7 +166,7 @@ export function TopCanopyWave({
 
 /**
  * Transition 1: Scroll-Flattening Sculptural Horizon Sweep
- * Used for Hero (#FAF6F0) -> Architecture (#140E0B).
+ * Used for Aperture Bridge (#FAF6F0) -> Architecture (#140E0B).
  * A single graceful sculptural arc that stretches and glides flat smoothly
  * on scroll (GPU scaleY only), traced with a soft burnt-orange ambient glow.
  */
@@ -170,6 +175,7 @@ export function ScrollHorizonSweep({
   bottomFill,
   className = "",
 }: CurveProps) {
+  const prefersReducedMotion = useReducedMotion();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -196,7 +202,11 @@ export function ScrollHorizonSweep({
       />
 
       <motion.div
-        style={{ scaleY, transformOrigin: "bottom center" }}
+        style={
+          prefersReducedMotion
+            ? undefined
+            : { scaleY, transformOrigin: "bottom center" }
+        }
         className="w-full will-change-transform"
       >
         <svg
@@ -227,11 +237,11 @@ export function ScrollHorizonSweep({
               y2="0"
               gradientUnits="userSpaceOnUse"
             >
-              <stop offset="0%" stopColor="#D96B27" stopOpacity="0.1" />
-              <stop offset="28%" stopColor="#E85D04" stopOpacity="0.52" />
-              <stop offset="50%" stopColor="#F48C06" stopOpacity="0.72" />
-              <stop offset="72%" stopColor="#E85D04" stopOpacity="0.52" />
-              <stop offset="100%" stopColor="#D96B27" stopOpacity="0.1" />
+              <stop offset="0%" stopColor="#D97736" stopOpacity="0.12" />
+              <stop offset="28%" stopColor="#E85D04" stopOpacity="0.54" />
+              <stop offset="50%" stopColor="#F48C06" stopOpacity="0.74" />
+              <stop offset="72%" stopColor="#E85D04" stopOpacity="0.54" />
+              <stop offset="100%" stopColor="#D97736" stopOpacity="0.12" />
             </linearGradient>
           </defs>
 
@@ -266,6 +276,7 @@ export function SweepingRibbonCurve({
   bottomFill,
   className = "",
 }: CurveProps) {
+  const prefersReducedMotion = useReducedMotion();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -283,7 +294,11 @@ export function SweepingRibbonCurve({
       className={`pointer-events-none relative w-full -mt-[2px] -mb-[2px] leading-none overflow-hidden select-none ${className}`}
     >
       <motion.div
-        style={{ scaleY, transformOrigin: "bottom center" }}
+        style={
+          prefersReducedMotion
+            ? undefined
+            : { scaleY, transformOrigin: "bottom center" }
+        }
         className="w-full will-change-transform"
       >
         <svg
@@ -303,7 +318,7 @@ export function SweepingRibbonCurve({
               y2="132"
               gradientUnits="userSpaceOnUse"
             >
-              <stop offset="0%" stopColor="#D96B27" stopOpacity="0.1" />
+              <stop offset="0%" stopColor="#D97736" stopOpacity="0.1" />
               <stop offset="48%" stopColor="#E85D04" stopOpacity="0.22" />
               <stop offset="100%" stopColor="#F48C06" stopOpacity="0.14" />
             </linearGradient>
@@ -359,11 +374,20 @@ export function SolarHorizonArch({
   bottomFill?: string;
   className?: string;
 }) {
+  const prefersReducedMotion = useReducedMotion();
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start end", "end start"],
+  });
+  const scaleY = useTransform(scrollYProgress, [0, 0.55, 1], [1.1, 0.96, 0.72]);
+
   const strokeId = `${idPrefix}-stroke`;
   const fillId = `${idPrefix}-fill`;
 
   return (
     <div
+      ref={containerRef}
       aria-hidden="true"
       className={`pointer-events-none relative w-full -mt-[2px] -mb-[2px] leading-none overflow-hidden select-none ${className}`}
     >
@@ -374,53 +398,62 @@ export function SolarHorizonArch({
             "radial-gradient(ellipse at center, rgba(232, 93, 4, 0.36) 0%, rgba(244, 140, 6, 0.16) 46%, rgba(243, 234, 224, 0) 76%)",
         }}
       />
-      <svg
-        viewBox="0 0 1440 152"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        preserveAspectRatio="none"
-        shapeRendering="geometricPrecision"
-        className="pointer-events-none relative z-10 block w-full h-[78px] sm:h-[112px] lg:h-[144px]"
+      <motion.div
+        style={
+          prefersReducedMotion
+            ? undefined
+            : { scaleY, transformOrigin: "bottom center" }
+        }
+        className="w-full will-change-transform"
       >
-        <defs>
-          <linearGradient
-            id={strokeId}
-            x1="0"
-            y1="0"
-            x2="1440"
-            y2="0"
-            gradientUnits="userSpaceOnUse"
-          >
-            <stop offset="0%" stopColor="#C85A17" stopOpacity="0.22" />
-            <stop offset="28%" stopColor="#E85D04" stopOpacity="0.9" />
-            <stop offset="50%" stopColor="#F48C06" stopOpacity="1" />
-            <stop offset="72%" stopColor="#E85D04" stopOpacity="0.9" />
-            <stop offset="100%" stopColor="#C85A17" stopOpacity="0.22" />
-          </linearGradient>
-          <linearGradient
-            id={fillId}
-            x1="720"
-            y1="16"
-            x2="720"
-            y2="152"
-            gradientUnits="userSpaceOnUse"
-          >
-            <stop offset="0%" stopColor="#190F0A" />
-            <stop offset="40%" stopColor="#100906" />
-            <stop offset="100%" stopColor={bottomFill} />
-          </linearGradient>
-        </defs>
-        <path
-          d="M0 152V116C360 16 1080 16 1440 116V152H0Z"
-          fill={`url(#${fillId})`}
-        />
-        <path
-          d="M0 116C360 16 1080 16 1440 116"
-          stroke={`url(#${strokeId})`}
-          strokeWidth="2.5"
-          vectorEffect="non-scaling-stroke"
-        />
-      </svg>
+        <svg
+          viewBox="0 0 1440 152"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          preserveAspectRatio="none"
+          shapeRendering="geometricPrecision"
+          className="pointer-events-none relative z-10 block w-full h-[78px] sm:h-[112px] lg:h-[144px]"
+        >
+          <defs>
+            <linearGradient
+              id={strokeId}
+              x1="0"
+              y1="0"
+              x2="1440"
+              y2="0"
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop offset="0%" stopColor="#C85A17" stopOpacity="0.22" />
+              <stop offset="28%" stopColor="#E85D04" stopOpacity="0.9" />
+              <stop offset="50%" stopColor="#F48C06" stopOpacity="1" />
+              <stop offset="72%" stopColor="#E85D04" stopOpacity="0.9" />
+              <stop offset="100%" stopColor="#C85A17" stopOpacity="0.22" />
+            </linearGradient>
+            <linearGradient
+              id={fillId}
+              x1="720"
+              y1="16"
+              x2="720"
+              y2="152"
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop offset="0%" stopColor="#190F0A" />
+              <stop offset="40%" stopColor="#100906" />
+              <stop offset="100%" stopColor={bottomFill} />
+            </linearGradient>
+          </defs>
+          <path
+            d="M0 152V116C360 16 1080 16 1440 116V152H0Z"
+            fill={`url(#${fillId})`}
+          />
+          <path
+            d="M0 116C360 16 1080 16 1440 116"
+            stroke={`url(#${strokeId})`}
+            strokeWidth="2.5"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
+      </motion.div>
     </div>
   );
 }

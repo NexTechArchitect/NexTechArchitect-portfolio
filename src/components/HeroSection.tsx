@@ -4,7 +4,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { ArrowDownRight, ArrowUpRight, Mail } from "lucide-react";
 import AmitAvatar3D from "@/components/AmitAvatar3D";
-import { ScrollHorizonSweep, TopCanopyWave } from "@/components/SectionCurves";
+import { ScrollHorizonSweep } from "@/components/SectionCurves";
 import { useAgent } from "@/context/AgentContext";
 
 interface HeroSectionProps {
@@ -47,15 +47,22 @@ export default function HeroSection({
   return (
     <section
       id="top"
-      className="relative bg-[#FAF6F0] silk-grain overflow-x-clip pt-[114px] sm:pt-[124px] lg:pt-[134px]"
+      className="relative bg-[#FAF6F0] silk-grain overflow-x-clip pt-[100px] sm:pt-[110px] lg:pt-[118px]"
     >
-      {/* Bespoke Asymmetric Deep Velvet Espresso Gallery Arch Framing Floating Navbar */}
-      <TopCanopyWave idPrefix="hero-top-canopy" />
-
-      {/* Subtle Sculptural Warm-Amber Studio Ambient Light */}
+      {/* Airy Warm-Champagne & Apricot Studio Light Wash at Top Edge */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute top-28 right-[-8%] w-[640px] h-[640px] rounded-full opacity-70"
+        className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-[94%] max-w-[1320px] h-[230px] rounded-full opacity-75 ambient-silk-drift"
+        style={{
+          background:
+            "radial-gradient(ellipse 68% 64% at 50% 20%, rgba(244, 162, 97, 0.16) 0%, rgba(232, 93, 4, 0.08) 42%, rgba(250, 246, 240, 0) 76%)",
+        }}
+      />
+
+      {/* Subtle Sculptural Warm-Amber Studio Ambient Light with GPU-only Silk Drift */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute top-28 right-[-8%] w-[640px] h-[640px] rounded-full opacity-70 ambient-silk-drift"
         style={{
           background:
             "radial-gradient(circle, rgba(244, 140, 6, 0.14) 0%, rgba(232, 93, 4, 0.06) 40%, rgba(250, 246, 240, 0) 72%)",
@@ -63,14 +70,14 @@ export default function HeroSection({
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute top-[30%] left-[-12%] w-[480px] h-[620px] rounded-full opacity-55"
+        className="pointer-events-none absolute top-[30%] left-[-12%] w-[480px] h-[620px] rounded-full opacity-55 ambient-silk-drift-reverse"
         style={{
           background:
-            "radial-gradient(ellipse at center, rgba(217, 107, 39, 0.11) 0%, rgba(250, 246, 240, 0) 72%)",
+            "radial-gradient(ellipse at center, rgba(217, 119, 54, 0.11) 0%, rgba(250, 246, 240, 0) 72%)",
         }}
       />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 sm:pt-3 pb-6 sm:pb-8">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 sm:pt-4 pb-6 sm:pb-8">
         {/* 2-Column Editorial Hero Split */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center min-h-[390px] lg:min-h-[430px]">
           {/* Left Column: Proud Executive Identity Lockup + Refined Editorial Sora Headline */}
@@ -99,11 +106,11 @@ export default function HeroSection({
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.54, delay: 0.06, ease: HERO_EASE }}
-              className="mt-4 font-display font-bold text-[#140E0B] text-[34px] sm:text-[42px] lg:text-[48px] leading-[1.08] tracking-[-0.03em]"
+              className="mt-4 font-display font-bold text-[#140E0B] text-[30px] sm:text-[36px] lg:text-[40px] xl:text-[42px] leading-[1.12] tracking-[-0.025em] max-w-[26ch]"
             >
-              <span className="block">I Architect DeFi</span>
-              <span className="block mt-1">
-                Protocols Built to{" "}
+              <span className="block">I Architect DeFi Protocols</span>
+              <span className="block mt-0.5">
+                Built to{" "}
                 <span className="text-[#E85D04]">Hold Under Fire.</span>
               </span>
             </motion.h1>
@@ -259,7 +266,7 @@ export default function HeroSection({
         </motion.div>
       </div>
 
-      {/* Transition #1: Scroll-Flattening Sculptural Horizon Sweep (#FAF6F0 -> #140E0B) */}
+      {/* Transition #1: Direct Scroll-Flattening Sculptural Horizon Sweep (#FAF6F0 -> #140E0B) */}
       <ScrollHorizonSweep
         idPrefix="hero-to-arch"
         bottomFill="#140E0B"

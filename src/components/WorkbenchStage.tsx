@@ -1,7 +1,13 @@
 "use client";
 
-import React, { useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
+import React, { useCallback, useMemo, useRef, useState } from "react";
+import {
+  AnimatePresence,
+  motion,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from "framer-motion";
 import { Check, Copy, FileCode2, MessageSquare } from "lucide-react";
 import { ARCHITECTURE_INSIGHTS } from "@/data/projects";
 import { SolarHorizonArch } from "@/components/SectionCurves";
@@ -96,6 +102,7 @@ export default function WorkbenchStage({
   selectedTabId,
   onSelectTabId,
 }: WorkbenchStageProps) {
+  const prefersReducedMotion = useReducedMotion();
   const { openAgent, sendMessage } = useAgent();
   const [internalId, setInternalId] = useState<string>(
     ARCHITECTURE_INSIGHTS[0].id
@@ -103,13 +110,23 @@ export default function WorkbenchStage({
   const [direction, setDirection] = useState<number>(1);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // Transition #4: Curved Studio Folio Reveal (#1B120D -> #F3EAE0) with smooth upward parallax
+  // Transition #4: Curved Studio Folio Reveal (#1B120D -> #F3EAE0) with rising architectural scale & y
   const folioOuterRef = useRef<HTMLDivElement | null>(null);
   const { scrollYProgress: folioScroll } = useScroll({
     target: folioOuterRef,
     offset: ["start end", "start 0.35"],
   });
-  const folioY = useTransform(folioScroll, [0, 1], [28, 0]);
+  const folioY = useTransform(folioScroll, [0, 1], [36, 0]);
+  const folioScale = useTransform(folioScroll, [0, 1], [0.975, 1]);
+
+  const handleStudioSpecular = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      e.currentTarget.style.setProperty("--mx", `${e.clientX - rect.left}px`);
+      e.currentTarget.style.setProperty("--my", `${e.clientY - rect.top}px`);
+    },
+    []
+  );
 
   const selectedId = selectedTabId ?? internalId;
 
@@ -166,13 +183,17 @@ export default function WorkbenchStage({
     >
       <motion.section
         id="workbench"
-        style={{ y: folioY }}
+        style={
+          prefersReducedMotion
+            ? undefined
+            : { y: folioY, scale: folioScale, transformOrigin: "top center" }
+        }
         className="relative z-20 bg-[#F3EAE0] text-[#140E0B] silk-grain rounded-t-[44px] md:rounded-t-[72px] pt-14 sm:pt-20 scroll-mt-20 overflow-x-clip shadow-[0_-28px_72px_-26px_rgba(10,6,4,0.55)] will-change-transform"
       >
-        {/* Subtle warm-amber edge ambient light over Soft Champagne Sand canvas */}
+        {/* Subtle warm-amber edge ambient light over Soft Champagne Sand canvas with GPU silk drift */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -top-20 right-[-6%] w-[560px] h-[560px] rounded-full opacity-65"
+          className="pointer-events-none absolute -top-20 right-[-6%] w-[560px] h-[560px] rounded-full opacity-65 ambient-silk-drift"
           style={{
             background:
               "radial-gradient(ellipse at center, rgba(244, 140, 6, 0.14) 0%, rgba(232, 93, 4, 0.06) 44%, rgba(243, 234, 224, 0) 74%)",
@@ -180,10 +201,10 @@ export default function WorkbenchStage({
         />
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute bottom-32 left-[-8%] w-[480px] h-[520px] rounded-full opacity-45"
+          className="pointer-events-none absolute bottom-32 left-[-8%] w-[480px] h-[520px] rounded-full opacity-45 ambient-silk-drift-reverse"
           style={{
             background:
-              "radial-gradient(ellipse at center, rgba(217, 107, 39, 0.1) 0%, rgba(243, 234, 224, 0) 72%)",
+              "radial-gradient(ellipse at center, rgba(217, 119, 54, 0.1) 0%, rgba(243, 234, 224, 0) 72%)",
           }}
         />
 
@@ -334,10 +355,11 @@ export default function WorkbenchStage({
                 {/* Right (7 cols): Elevated Deep Espresso (#130D0A) Floating Code Studio */}
                 <div
                   data-testid="workbench-code-panel"
-                  className="lg:col-span-7 rounded-[26px] bg-[#130D0A] text-[#FAF6F0] border border-[#FAF6F0]/10 flex flex-col overflow-hidden shadow-[inset_0_1px_0_rgba(250,246,240,0.08),0_32px_72px_-28px_rgba(20,14,11,0.56)]"
+                  onMouseMove={handleStudioSpecular}
+                  className="specular-surface-dark lg:col-span-7 rounded-[26px] bg-[#130D0A] text-[#FAF6F0] border border-[#FAF6F0]/10 hover:border-[#E85D04]/38 transition-[border-color,box-shadow] duration-250 flex flex-col overflow-hidden shadow-[inset_0_1px_0_rgba(250,246,240,0.08),0_32px_72px_-28px_rgba(20,14,11,0.56)]"
                 >
                   {/* Tonal Window Header (Zero Straight Hairline Border) */}
-                  <div className="px-5 sm:px-6 py-4 bg-[#1C130E] flex flex-wrap items-center justify-between gap-3">
+                  <div className="relative z-10 px-5 sm:px-6 py-4 bg-[#1C130E] flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-3.5 min-w-0">
                       <div
                         aria-hidden="true"

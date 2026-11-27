@@ -11,6 +11,22 @@ import {
   SUGGESTED_QUESTIONS_POOL,
   type KnowledgeEntry,
 } from "./offlineKnowledgeBase";
+import {
+  WEB3_KNOWLEDGE_EXTENDED,
+  EXTENDED_SUGGESTED_QUESTIONS,
+} from "./offlineKnowledgeExtended";
+import { WEB3_KNOWLEDGE_SECURITY } from "./offlineKnowledgeSecurity";
+
+const ALL_KNOWLEDGE_ENTRIES: readonly KnowledgeEntry[] = [
+  ...WEB3_KNOWLEDGE_BASE,
+  ...WEB3_KNOWLEDGE_EXTENDED,
+  ...WEB3_KNOWLEDGE_SECURITY,
+];
+
+const ALL_SUGGESTED_QUESTIONS: readonly string[] = [
+  ...SUGGESTED_QUESTIONS_POOL,
+  ...EXTENDED_SUGGESTED_QUESTIONS,
+];
 
 const ALL_PROJECTS: readonly ProjectItem[] = [
   ...fullStackProjects,
@@ -22,6 +38,7 @@ const FLAGSHIP_PROJECTS: readonly ProjectItem[] = fullStackProjects.filter(
 );
 
 const KNOWN_STANDARD_NUMBERS = new Set<string>([
+  "150",
   "155",
   "165",
   "170",
@@ -32,14 +49,18 @@ const KNOWN_STANDARD_NUMBERS = new Set<string>([
   "1115",
   "1153",
   "1155",
+  "1167",
   "1559",
   "1822",
   "1967",
+  "2098",
   "2535",
+  "2537",
   "2612",
   "2929",
   "2981",
   "3156",
+  "3529",
   "3643",
   "4337",
   "4626",
@@ -47,12 +68,26 @@ const KNOWN_STANDARD_NUMBERS = new Set<string>([
   "5192",
   "5484",
   "5626",
+  "6110",
   "6551",
   "6909",
+  "7002",
+  "7201",
+  "7212",
+  "7251",
   "7540",
   "7579",
+  "7594",
   "7683",
+  "7691",
+  "7692",
   "7702",
+  "7732",
+  "7825",
+  "7883",
+  "7892",
+  "7935",
+  "7951",
   "19000",
 ]);
 
@@ -909,7 +944,7 @@ function scoreKnowledgeBase(
 ): Array<{ entry: KnowledgeEntry; score: number }> {
   const scored: Array<{ entry: KnowledgeEntry; score: number }> = [];
 
-  for (const entry of WEB3_KNOWLEDGE_BASE) {
+  for (const entry of ALL_KNOWLEDGE_ENTRIES) {
     let score = 0;
 
     // 1. Noise-resistant ERC/EIP standard number extraction (handles "ercccccccc 20", "e.r.c 4626", "5626", "1115", "19000", "aa")
@@ -939,8 +974,8 @@ function scoreKnowledgeBase(
         ) {
           compactBoost = Math.max(compactBoost, 22);
         } else if (
-          compactTerm.length >= 4 &&
-          (q.compact.includes(compactTerm) || q.hardCompact.includes(hardTerm))
+          (compactTerm.length >= 4 && q.compact.includes(compactTerm)) ||
+          (hardTerm.length >= 5 && q.hardCompact.includes(hardTerm))
         ) {
           compactBoost = Math.max(compactBoost, 18);
         }
@@ -1191,7 +1226,30 @@ function matchConversationalTurn(
     return "Take care, and thanks for stopping by **Amit Kumar's** portfolio! Whenever you want to connect directly with Amit, you can reach him at `nextech.amit@gmail.com`, check his repositories on [GitHub](https://github.com/NexTechArchitect), or connect on [LinkedIn](https://www.linkedin.com/in/amit-kumar-811a11277). See you around!";
   }
 
-  // 7. Short positive reactions & acknowledgments (English + Hinglish)
+  // 7. Conversational Affirmations & Short Continuation Nudges (e.g. "yes", "sure", "haan", "go ahead", "more")
+  const affirmationRe =
+    /^(?:(?:oh|o|ah|ok|okay)\s+)?(yes|ye|yeah|yea|yep|yup|ya|yah|sure|of course|ofcourse|definitely|def|absolutely|please|pls|plz|han|haan|ha|ji|go ahead|go on|tel me|tell me|show me|continue|more|next|tel me more|tell me more|show me more|proced|proceed|lets go|let us go|do it)(?:\s+(please|pls|plz|amit|bro|bhai|man|mate|sure|ahead|on|more))?$/;
+  if (variants.some((v) => affirmationRe.test(v))) {
+    if (activeProject) {
+      const nextIntent = detectNextProjectIntentFromHistory(history);
+      return formatProjectForIntent(activeProject, nextIntent);
+    }
+    const picked = pickRandomSuggestions(history, 3);
+    return [
+      "Awesome, let's dive right in! Pick any of these or ask me anything directly:",
+      "",
+      ...picked.map((item) => `- ${item}`),
+    ].join("\n");
+  }
+
+  // 8. Polite Declines (e.g. "no", "nope", "nah", "nahi", "not now", "maybe")
+  const declineRe =
+    /^(no|nope|nah|nahi|na|not now|not right now|maybe|maybe later|no thanks|no thank you|nah bro|nahi bhai|im good|i am good|all set|al set)(?:\s+(thanks|thank you|amit|bro|bhai|man|mate))?$/;
+  if (variants.some((v) => declineRe.test(v))) {
+    return "No problem at all. Feel free to explore the page, and ping me anytime if a question comes up about Amit's protocols or Solidity.";
+  }
+
+  // 9. Short positive reactions & acknowledgments (English + Hinglish)
   const reactionRe =
     /^(nice|cool|col|awesome|great|amazing|fire|dope|impressive|impresive|love it|loved it|sick|sweet|swet|solid|good|god|sounds good|sounds god|ok|okay|k|got it|makes sense|makes sence|understood|understod|noted|wow|brilliant|briliant|clean|neat|super|superb|perfect|fair enough|interesting|mast|badiya|badhiya|sahi|sahi hai|lol|haha|hahaha|hehe|nice work|good job|great work|awesome work|very nice|so cool|pretty cool|thats cool|that is cool|thats awesome|that is awesome|thats nice|that is nice|thats great|that is great)(?:\s+(work|stuff|stuf|job|man|bro|bhai|mate|amit))?$/;
   if (variants.some((v) => reactionRe.test(v))) {
@@ -1209,6 +1267,94 @@ function matchConversationalTurn(
   }
 
   return null;
+}
+
+function detectNextProjectIntentFromHistory(
+  history?: readonly FallbackHistoryTurn[]
+): ProjectIntent {
+  if (!history || history.length === 0) return "security";
+  const lastAssistant = [...history]
+    .reverse()
+    .find((turn) => turn.role === "assistant");
+  if (!lastAssistant) return "security";
+
+  const firstLine = getTurnText(lastAssistant).split("\n")[0]?.toLowerCase() ?? "";
+  if (firstLine.includes("security invariants")) return "gas";
+  if (firstLine.includes("gas optimizations")) return "architecture";
+  if (firstLine.includes("architecture & smart contracts")) return "security";
+  return "security";
+}
+
+function pickRandomSuggestions(
+  history?: readonly FallbackHistoryTurn[],
+  count = 3
+): string[] {
+  const recentText = (history ?? [])
+    .slice(-6)
+    .map((turn) => getTurnText(turn).toLowerCase())
+    .join(" ");
+
+  const freshPool = ALL_SUGGESTED_QUESTIONS.filter(
+    (question) => !recentText.includes(question.toLowerCase())
+  );
+  const sourcePool =
+    freshPool.length >= count ? [...freshPool] : [...ALL_SUGGESTED_QUESTIONS];
+
+  // Fisher-Yates shuffle for true randomized suggestions
+  for (let i = sourcePool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = sourcePool[i];
+    sourcePool[i] = sourcePool[j];
+    sourcePool[j] = tmp;
+  }
+
+  return sourcePool.slice(0, count);
+}
+
+export interface ExtractedSuggestions {
+  leadText: string;
+  suggestedQuestions: string[];
+  trailingText: string;
+}
+
+const SUGGESTION_HEADER_RE =
+  /^(?:Here are \d+ things you can ask me instead:|Awesome, let's dive right in! Pick any of these or ask me anything directly:|Pick any of these or ask me anything directly:)$/i;
+
+/**
+ * Extracts clickable suggested-question blocks from assistant replies so UI
+ * components can render them as interactive buttons without duplicating text.
+ */
+export function extractSuggestedQuestions(text: string): ExtractedSuggestions {
+  const lines = text.replace(/\r\n/g, "\n").split("\n");
+  const headerIdx = lines.findIndex((line) =>
+    SUGGESTION_HEADER_RE.test(line.trim())
+  );
+
+  if (headerIdx === -1) {
+    return { leadText: text, suggestedQuestions: [], trailingText: "" };
+  }
+
+  let cursor = headerIdx + 1;
+  while (cursor < lines.length && lines[cursor].trim() === "") {
+    cursor++;
+  }
+
+  const suggestedQuestions: string[] = [];
+  while (cursor < lines.length) {
+    const match = lines[cursor].trim().match(/^-\s+(.+)$/);
+    if (!match) break;
+    suggestedQuestions.push(match[1].trim());
+    cursor++;
+  }
+
+  if (suggestedQuestions.length === 0) {
+    return { leadText: text, suggestedQuestions: [], trailingText: "" };
+  }
+
+  const leadText = lines.slice(0, headerIdx + 1).join("\n").trim();
+  const trailingText = lines.slice(cursor).join("\n").trim();
+
+  return { leadText, suggestedQuestions, trailingText };
 }
 
 function matchRecruiterQuestion(q: NormalizedQuery): string | null {
@@ -1283,26 +1429,7 @@ function matchRecruiterQuestion(q: NormalizedQuery): string | null {
 function buildDataUnavailableReply(
   history?: readonly FallbackHistoryTurn[]
 ): string {
-  const recentText = (history ?? [])
-    .slice(-6)
-    .map((turn) => getTurnText(turn).toLowerCase())
-    .join(" ");
-
-  const freshPool = SUGGESTED_QUESTIONS_POOL.filter(
-    (question) => !recentText.includes(question.toLowerCase())
-  );
-  const sourcePool =
-    freshPool.length >= 3 ? [...freshPool] : [...SUGGESTED_QUESTIONS_POOL];
-
-  // Fisher-Yates shuffle for true randomized suggestions
-  for (let i = sourcePool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    const tmp = sourcePool[i];
-    sourcePool[i] = sourcePool[j];
-    sourcePool[j] = tmp;
-  }
-
-  const picked = sourcePool.slice(0, 3);
+  const picked = pickRandomSuggestions(history, 3);
 
   return [
     "I don't have offline data available for that specific question right now.",

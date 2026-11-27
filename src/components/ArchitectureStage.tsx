@@ -1,7 +1,13 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import React, { useCallback, useMemo, useRef, useState } from "react";
+import {
+  AnimatePresence,
+  motion,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from "framer-motion";
 import { ArrowDown } from "lucide-react";
 
 interface DomainSpec {
@@ -218,6 +224,15 @@ interface ArchitectureStageProps {
 export default function ArchitectureStage({
   onInspectWorkbench,
 }: ArchitectureStageProps) {
+  const prefersReducedMotion = useReducedMotion();
+  const stageRef = useRef<HTMLElement | null>(null);
+  const { scrollYProgress } = useScroll({
+    target: stageRef,
+    offset: ["start end", "start 0.3"],
+  });
+  const stageScale = useTransform(scrollYProgress, [0, 1], [0.975, 1]);
+  const stageY = useTransform(scrollYProgress, [0, 1], [36, 0]);
+
   const [activeDomainId, setActiveDomainId] = useState<string>(
     ARCHITECTURE_DOMAINS[0].id
   );
@@ -229,30 +244,47 @@ export default function ArchitectureStage({
     [activeDomainId]
   );
 
+  const handleSpecularMove = useCallback(
+    (e: React.MouseEvent<HTMLLIElement>) => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      e.currentTarget.style.setProperty("--mx", `${e.clientX - rect.left}px`);
+      e.currentTarget.style.setProperty("--my", `${e.clientY - rect.top}px`);
+    },
+    []
+  );
+
   return (
     <section
+      ref={stageRef}
       id="architecture"
       className="relative bg-[#140E0B] text-[#FAF6F0] silk-grain-dark pt-12 sm:pt-16 lg:pt-20 pb-24 sm:pb-32 scroll-mt-12 overflow-x-clip"
     >
-      {/* Subtle edge-hugging warm copper vertical ambient washes */}
+      {/* Subtle edge-hugging warm copper vertical ambient washes with GPU silk drift */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute top-12 left-[-8%] w-[460px] h-[640px] rounded-full opacity-35"
+        className="pointer-events-none absolute top-12 left-[-8%] w-[460px] h-[640px] rounded-full opacity-35 ambient-silk-drift"
         style={{
           background:
-            "radial-gradient(ellipse at center, rgba(232, 93, 4, 0.22) 0%, rgba(217, 107, 39, 0.08) 46%, rgba(20, 14, 11, 0) 74%)",
+            "radial-gradient(ellipse at center, rgba(232, 93, 4, 0.22) 0%, rgba(217, 119, 54, 0.08) 46%, rgba(20, 14, 11, 0) 74%)",
         }}
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute bottom-20 right-[-8%] w-[440px] h-[580px] rounded-full opacity-30"
+        className="pointer-events-none absolute bottom-20 right-[-8%] w-[440px] h-[580px] rounded-full opacity-30 ambient-silk-drift-reverse"
         style={{
           background:
             "radial-gradient(ellipse at center, rgba(244, 140, 6, 0.16) 0%, rgba(20, 14, 11, 0) 72%)",
         }}
       />
 
-      <div className="max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <motion.div
+        style={
+          prefersReducedMotion
+            ? undefined
+            : { scale: stageScale, y: stageY, transformOrigin: "top center" }
+        }
+        className="max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10 will-change-transform"
+      >
         {/* Left-Aligned Editorial Header with Staggered Entrance (Zero Straight Line) */}
         <div className="max-w-3xl">
           <motion.h2
@@ -392,12 +424,13 @@ export default function ArchitectureStage({
                       delay: idx * 0.055,
                       ease: [0.22, 1, 0.36, 1],
                     }}
-                    className="rounded-[24px] bg-[#1B130E]/92 border border-[#FAF6F0]/[0.08] hover:border-[#E85D04]/38 hover:-translate-y-0.5 p-5 sm:p-6 flex items-start gap-5 sm:gap-6 shadow-[inset_0_1px_0_rgba(250,246,240,0.05),0_18px_38px_-24px_rgba(0,0,0,0.72)] hover:shadow-[inset_0_1px_0_rgba(244,140,6,0.12),0_22px_44px_-22px_rgba(232,93,4,0.18)] transition-[border-color,transform,box-shadow] duration-200"
+                    onMouseMove={handleSpecularMove}
+                    className="specular-surface-dark overflow-hidden rounded-[24px] bg-[#1B130E]/92 border border-[#FAF6F0]/[0.08] hover:border-[#E85D04]/42 hover:-translate-y-0.5 p-5 sm:p-6 flex items-start gap-5 sm:gap-6 shadow-[inset_0_1px_0_rgba(250,246,240,0.05),0_18px_38px_-24px_rgba(0,0,0,0.72)] hover:shadow-[inset_0_1px_0_rgba(244,140,6,0.14),0_22px_44px_-22px_rgba(232,93,4,0.2)] transition-[border-color,transform,box-shadow] duration-200"
                   >
-                    <span className="font-mono-tabular text-sm sm:text-base font-semibold text-[#F48C06] tracking-[0.06em] pt-0.5 shrink-0">
+                    <span className="relative z-10 font-mono-tabular text-sm sm:text-base font-semibold text-[#F48C06] tracking-[0.06em] pt-0.5 shrink-0">
                       {principle.num}
                     </span>
-                    <div className="min-w-0">
+                    <div className="relative z-10 min-w-0">
                       <h4 className="font-display text-lg sm:text-xl font-bold text-[#FAF6F0] tracking-[-0.02em]">
                         {principle.title}
                       </h4>
@@ -426,7 +459,7 @@ export default function ArchitectureStage({
             </div>
           </motion.div>
         </AnimatePresence>
-      </div>
+      </motion.div>
     </section>
   );
 }

@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  ArrowUpRight,
   Check,
   Copy,
   Maximize2,
@@ -15,7 +16,13 @@ import {
   X,
 } from "lucide-react";
 import { useAgent } from "@/context/AgentContext";
-import { parseAssistantBlocks, parseInlineTokens } from "@/lib/markdownParser";
+import { extractSuggestedQuestions } from "@/lib/localAgentFallback";
+import {
+  parseAssistantBlocks,
+  parseInlineTokens,
+} from "@/lib/markdownParser";
+
+type ParsedAssistantBlock = ReturnType<typeof parseAssistantBlocks>[number];
 
 function StudioMonogramBadge() {
   return (
@@ -149,79 +156,127 @@ function renderInlineFormatted(text: string): React.ReactNode[] {
   });
 }
 
-function RichAssistantMessage({ text }: { text: string }) {
-  const blocks = useMemo(() => parseAssistantBlocks(text), [text]);
+function renderAssistantBlockList(
+  blocks: readonly ParsedAssistantBlock[],
+  keyPrefix: string
+) {
+  return blocks.map((block, idx) => {
+    const key = `${keyPrefix}-${idx}`;
+    if (block.type === "code") {
+      return (
+        <CopyableCodeBlock key={key} lang={block.lang} code={block.code} />
+      );
+    }
+
+    if (block.type === "divider") {
+      return (
+        <hr
+          key={key}
+          className="my-2.5 border-0 border-t border-[#140E0B]/12"
+        />
+      );
+    }
+
+    if (block.type === "heading") {
+      const headingSize =
+        block.level <= 2
+          ? "text-[14.5px] font-bold mt-2.5 first:mt-0"
+          : "text-[13.5px] font-bold mt-2 first:mt-0";
+      return (
+        <h3
+          key={key}
+          className={`font-display tracking-[-0.015em] text-[#140E0B] leading-snug ${headingSize}`}
+        >
+          {renderInlineFormatted(block.text)}
+        </h3>
+      );
+    }
+
+    if (block.type === "bullet") {
+      return (
+        <div key={key} className="flex items-start gap-2">
+          <span
+            aria-hidden="true"
+            className="mt-2 w-1.5 h-1.5 rounded-full bg-[#E85D04] shrink-0"
+          />
+          <span className="min-w-0 break-words">
+            {renderInlineFormatted(block.text)}
+          </span>
+        </div>
+      );
+    }
+
+    if (block.type === "ordered") {
+      return (
+        <div key={key} className="flex items-start gap-2">
+          <span className="font-mono-tabular text-[11.5px] font-semibold text-[#C84B00] mt-0.5 shrink-0 min-w-[1.25rem]">
+            {block.index}.
+          </span>
+          <span className="min-w-0 break-words">
+            {renderInlineFormatted(block.text)}
+          </span>
+        </div>
+      );
+    }
+
+    return (
+      <p key={key} className="break-words">
+        {renderInlineFormatted(block.text)}
+      </p>
+    );
+  });
+}
+
+function RichAssistantMessage({
+  text,
+  onSelectSuggestion,
+  isDisabled,
+}: {
+  text: string;
+  onSelectSuggestion?: (question: string) => void;
+  isDisabled?: boolean;
+}) {
+  const { leadBlocks, suggestedQuestions, trailingBlocks } = useMemo(() => {
+    const parsed = extractSuggestedQuestions(text);
+    return {
+      leadBlocks: parsed.leadText ? parseAssistantBlocks(parsed.leadText) : [],
+      suggestedQuestions: parsed.suggestedQuestions,
+      trailingBlocks: parsed.trailingText
+        ? parseAssistantBlocks(parsed.trailingText)
+        : [],
+    };
+  }, [text]);
 
   return (
     <div className="space-y-2">
-      {blocks.map((block, idx) => {
-        if (block.type === "code") {
-          return (
-            <CopyableCodeBlock
-              key={idx}
-              lang={block.lang}
-              code={block.code}
-            />
-          );
-        }
+      {renderAssistantBlockList(leadBlocks, "lead")}
 
-        if (block.type === "divider") {
-          return (
-            <hr
-              key={idx}
-              className="my-2.5 border-0 border-t border-[#140E0B]/12"
-            />
-          );
-        }
-
-        if (block.type === "heading") {
-          const headingSize =
-            block.level <= 2
-              ? "text-[14.5px] font-bold mt-2.5 first:mt-0"
-              : "text-[13.5px] font-bold mt-2 first:mt-0";
-          return (
-            <h3
-              key={idx}
-              className={`font-display tracking-[-0.015em] text-[#140E0B] leading-snug ${headingSize}`}
+      {suggestedQuestions.length > 0 && (
+        <div
+          data-testid="agent-suggested-questions"
+          className="my-2.5 flex flex-col gap-2"
+        >
+          {suggestedQuestions.map((question) => (
+            <button
+              key={question}
+              type="button"
+              disabled={isDisabled}
+              onClick={() => onSelectSuggestion?.(question)}
+              data-testid="agent-suggested-question"
+              className="group w-full text-left flex items-center justify-between gap-2.5 px-3.5 py-2.5 rounded-xl border border-[#E85D04]/32 bg-[#FFFDF9] hover:bg-[#E85D04] hover:border-[#E85D04] hover:text-[#FAF6F0] disabled:opacity-55 text-[#140E0B] text-[12.5px] font-medium leading-snug shadow-[0_2px_10px_-6px_rgba(20,14,11,0.18)] transition-[background-color,border-color,color,transform] duration-150 active:scale-[0.99] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04]"
             >
-              {renderInlineFormatted(block.text)}
-            </h3>
-          );
-        }
-
-        if (block.type === "bullet") {
-          return (
-            <div key={idx} className="flex items-start gap-2">
-              <span
+              <span className="min-w-0 break-words">{question}</span>
+              <ArrowUpRight
+                className="w-3.5 h-3.5 shrink-0 text-[#E85D04] group-hover:text-[#FAF6F0] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-150"
                 aria-hidden="true"
-                className="mt-2 w-1.5 h-1.5 rounded-full bg-[#E85D04] shrink-0"
               />
-              <span className="min-w-0 break-words">
-                {renderInlineFormatted(block.text)}
-              </span>
-            </div>
-          );
-        }
+            </button>
+          ))}
+        </div>
+      )}
 
-        if (block.type === "ordered") {
-          return (
-            <div key={idx} className="flex items-start gap-2">
-              <span className="font-mono-tabular text-[11.5px] font-semibold text-[#C84B00] mt-0.5 shrink-0 min-w-[1.25rem]">
-                {block.index}.
-              </span>
-              <span className="min-w-0 break-words">
-                {renderInlineFormatted(block.text)}
-              </span>
-            </div>
-          );
-        }
-
-        return (
-          <p key={idx} className="break-words">
-            {renderInlineFormatted(block.text)}
-          </p>
-        );
-      })}
+      {trailingBlocks.length > 0 &&
+        renderAssistantBlockList(trailingBlocks, "trail")}
     </div>
   );
 }
@@ -462,7 +517,11 @@ export default function ProtocolAgent() {
                       }`}
                     >
                       {msg.role === "assistant" && !msg.isError ? (
-                        <RichAssistantMessage text={msg.text} />
+                        <RichAssistantMessage
+                          text={msg.text}
+                          onSelectSuggestion={sendMessage}
+                          isDisabled={isThinking}
+                        />
                       ) : (
                         <p className="break-words">{msg.text}</p>
                       )}

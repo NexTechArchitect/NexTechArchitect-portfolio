@@ -4,6 +4,7 @@ import React, { useCallback, useRef } from "react";
 import {
   motion,
   useMotionValue,
+  useReducedMotion,
   useScroll,
   useSpring,
   useTransform,
@@ -76,6 +77,7 @@ function FlagshipCard({
   onOpenCaseStudy,
   onAskAmit,
 }: FlagshipCardProps) {
+  const prefersReducedMotion = useReducedMotion();
   const cardRef = useRef<HTMLDivElement | null>(null);
   const mx = useMotionValue(0);
   const my = useMotionValue(0);
@@ -91,12 +93,19 @@ function FlagshipCard({
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      const rect = cardRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      mx.set((e.clientX - rect.left) / rect.width - 0.5);
-      my.set((e.clientY - rect.top) / rect.height - 0.5);
+      const el = cardRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const relX = e.clientX - rect.left;
+      const relY = e.clientY - rect.top;
+      el.style.setProperty("--mx", `${relX}px`);
+      el.style.setProperty("--my", `${relY}px`);
+      if (!prefersReducedMotion) {
+        mx.set(relX / rect.width - 0.5);
+        my.set(relY / rect.height - 0.5);
+      }
     },
-    [mx, my]
+    [mx, my, prefersReducedMotion]
   );
 
   const handleMouseLeave = useCallback(() => {
@@ -123,14 +132,18 @@ function FlagshipCard({
         ref={cardRef}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
-        style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-        className={`h-full rounded-[28px] p-6 sm:p-8 flex flex-col justify-between transition-[border-color,box-shadow] duration-250 border ${
+        style={
+          prefersReducedMotion
+            ? undefined
+            : { rotateX, rotateY, transformStyle: "preserve-3d" }
+        }
+        className={`h-full rounded-[28px] p-6 sm:p-8 flex flex-col justify-between transition-[border-color,box-shadow] duration-250 border overflow-hidden ${
           darkVariant
-            ? "bg-[#140E0B] text-[#FAF6F0] border-[#FAF6F0]/12 hover:border-[#E85D04]/45 shadow-[inset_0_1px_0_rgba(250,246,240,0.08),0_24px_64px_-32px_rgba(20,14,11,0.74)] hover:shadow-[inset_0_1px_0_rgba(244,140,6,0.16),0_28px_72px_-28px_rgba(232,93,4,0.22)]"
-            : "bg-[#FFFDF9] text-[#140E0B] border-[#140E0B]/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_20px_54px_-36px_rgba(20,14,11,0.22)] hover:border-[#E85D04]/45 hover:shadow-[0_26px_62px_-32px_rgba(232,93,4,0.2)]"
+            ? "specular-surface-dark bg-[#140E0B] text-[#FAF6F0] border-[#FAF6F0]/12 hover:border-[#E85D04]/50 shadow-[inset_0_1px_0_rgba(250,246,240,0.08),0_24px_64px_-32px_rgba(20,14,11,0.74)] hover:shadow-[inset_0_1px_0_rgba(244,140,6,0.18),0_28px_72px_-28px_rgba(232,93,4,0.26)]"
+            : "specular-surface bg-[#FFFDF9] text-[#140E0B] border-[#140E0B]/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_20px_54px_-36px_rgba(20,14,11,0.22)] hover:border-[#E85D04]/45 hover:shadow-[0_26px_62px_-32px_rgba(232,93,4,0.22)]"
         }`}
       >
-        <div>
+        <div className="relative z-10">
           {/* Top Metadata Line */}
           <div className="flex items-center justify-between gap-3 text-xs font-mono-tabular">
             <span
@@ -236,12 +249,12 @@ function FlagshipCard({
         </div>
 
         {/* 4 Clean Protocol Actions (Tonal Separation, Zero Straight Divider Line) */}
-        <div className="mt-7 flex flex-wrap items-center justify-between gap-3">
+        <div className="relative z-10 mt-7 flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => onOpenCaseStudy(project)}
-              className={`inline-flex items-center justify-center gap-1.5 min-h-[44px] px-4 py-2.5 rounded-full text-xs font-semibold active:scale-[0.98] transition-[background-color,transform] duration-150 whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] ${
+              className={`inline-flex items-center justify-center gap-1.5 min-h-[44px] px-4 py-2.5 rounded-full text-xs font-semibold hover:-translate-y-0.5 active:scale-[0.98] transition-[background-color,transform] duration-150 whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] ${
                 darkVariant
                   ? "bg-[#E85D04] hover:bg-[#D14F00] text-[#FAF6F0]"
                   : "bg-[#140E0B] hover:bg-[#E85D04] text-[#FAF6F0]"
@@ -310,16 +323,36 @@ export default function ProtocolShowcase({
   onSelectProject,
   onOpenArchive,
 }: ProtocolShowcaseProps) {
+  const prefersReducedMotion = useReducedMotion();
   const { explainProtocol } = useAgent();
   const flagshipProjects = getFlagshipProjects();
 
-  // Transition #2: Curved Editorial Sheet Rise (#140E0B -> #FBF8F3) with smooth upward parallax
+  // Transition #2: Curved Editorial Sheet Rise (#140E0B -> #FBF8F3) with rising architectural scale & y
   const sheetOuterRef = useRef<HTMLDivElement | null>(null);
   const { scrollYProgress: sheetScroll } = useScroll({
     target: sheetOuterRef,
     offset: ["start end", "start 0.35"],
   });
-  const sheetY = useTransform(sheetScroll, [0, 1], [28, 0]);
+  const sheetY = useTransform(sheetScroll, [0, 1], [36, 0]);
+  const sheetScale = useTransform(sheetScroll, [0, 1], [0.975, 1]);
+
+  // Archive Stage (#1B120D) rising depth
+  const archiveStageRef = useRef<HTMLElement | null>(null);
+  const { scrollYProgress: archiveScroll } = useScroll({
+    target: archiveStageRef,
+    offset: ["start end", "start 0.32"],
+  });
+  const archiveY = useTransform(archiveScroll, [0, 1], [32, 0]);
+  const archiveScale = useTransform(archiveScroll, [0, 1], [0.975, 1]);
+
+  const handlePortalSpecular = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      e.currentTarget.style.setProperty("--mx", `${e.clientX - rect.left}px`);
+      e.currentTarget.style.setProperty("--my", `${e.clientY - rect.top}px`);
+    },
+    []
+  );
 
   return (
     <>
@@ -331,21 +364,25 @@ export default function ProtocolShowcase({
         {/* Section 3: Curved Editorial Sheet Rise on Luminous Warm Porcelain (#FBF8F3) */}
         <motion.section
           id="protocols"
-          style={{ y: sheetY }}
+          style={
+            prefersReducedMotion
+              ? undefined
+              : { y: sheetY, scale: sheetScale, transformOrigin: "top center" }
+          }
           className="relative z-10 bg-[#FBF8F3] text-[#140E0B] silk-grain rounded-t-[44px] md:rounded-t-[72px] pt-14 sm:pt-20 scroll-mt-16 overflow-x-clip shadow-[0_-28px_72px_-26px_rgba(10,6,4,0.52)] will-change-transform"
         >
-          {/* Subtle edge-hugging warm apricot/bronze ambient light washes */}
+          {/* Subtle edge-hugging warm apricot/bronze ambient light washes with GPU silk drift */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute top-16 right-[-8%] w-[520px] h-[620px] rounded-full opacity-55"
+            className="pointer-events-none absolute top-16 right-[-8%] w-[520px] h-[620px] rounded-full opacity-55 ambient-silk-drift"
             style={{
               background:
-                "radial-gradient(ellipse at center, rgba(217, 107, 39, 0.12) 0%, rgba(251, 248, 243, 0) 72%)",
+                "radial-gradient(ellipse at center, rgba(217, 119, 54, 0.12) 0%, rgba(251, 248, 243, 0) 72%)",
             }}
           />
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute bottom-28 left-[-10%] w-[460px] h-[540px] rounded-full opacity-45"
+            className="pointer-events-none absolute bottom-28 left-[-10%] w-[460px] h-[540px] rounded-full opacity-45 ambient-silk-drift-reverse"
             style={{
               background:
                 "radial-gradient(ellipse at center, rgba(244, 140, 6, 0.1) 0%, rgba(251, 248, 243, 0) 72%)",
@@ -410,29 +447,41 @@ export default function ProtocolShowcase({
 
       {/* Section 4: Archive Environment on Rich Smoked Espresso (#1B120D) */}
       <section
+        ref={archiveStageRef}
         id="archive"
         data-testid="protocol-archive-section"
         className="relative bg-[#1B120D] text-[#FAF6F0] silk-grain-dark pt-12 sm:pt-16 lg:pt-20 pb-24 sm:pb-32 scroll-mt-16 overflow-x-clip"
       >
-        {/* Soft Copper-Amber Edge & Studio Illumination */}
+        {/* Soft Copper-Amber Edge & Studio Illumination with GPU silk drift */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -top-10 left-[-6%] w-[540px] h-[540px] rounded-full opacity-40"
+          className="pointer-events-none absolute -top-10 left-[-6%] w-[540px] h-[540px] rounded-full opacity-40 ambient-silk-drift"
           style={{
             background:
-              "radial-gradient(ellipse at center, rgba(232, 93, 4, 0.24) 0%, rgba(217, 107, 39, 0.1) 46%, rgba(27, 18, 13, 0) 74%)",
+              "radial-gradient(ellipse at center, rgba(232, 93, 4, 0.24) 0%, rgba(217, 119, 54, 0.1) 46%, rgba(27, 18, 13, 0) 74%)",
           }}
         />
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute bottom-20 right-[-6%] w-[520px] h-[520px] rounded-full opacity-35"
+          className="pointer-events-none absolute bottom-20 right-[-6%] w-[520px] h-[520px] rounded-full opacity-35 ambient-silk-drift-reverse"
           style={{
             background:
               "radial-gradient(ellipse at center, rgba(244, 140, 6, 0.2) 0%, rgba(200, 90, 23, 0.08) 46%, rgba(27, 18, 13, 0) 74%)",
           }}
         />
 
-        <div className="max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <motion.div
+          style={
+            prefersReducedMotion
+              ? undefined
+              : {
+                  y: archiveY,
+                  scale: archiveScale,
+                  transformOrigin: "top center",
+                }
+          }
+          className="max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10 will-change-transform"
+        >
           {/* Left-Aligned Staggered Editorial Header (Zero Straight Line) */}
           <div className="max-w-3xl">
             <motion.h2
@@ -472,9 +521,10 @@ export default function ProtocolShowcase({
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.16 }}
               transition={{ duration: 0.54, ease: [0.22, 1, 0.36, 1] }}
-              className="group rounded-[28px] bg-[#FBF8F3] text-[#140E0B] border border-[#FAF6F0]/25 hover:border-[#E85D04]/70 hover:-translate-y-1 p-6 sm:p-8 lg:p-9 flex flex-col justify-between transition-[border-color,box-shadow,transform] duration-250 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_28px_68px_-30px_rgba(0,0,0,0.68)] hover:shadow-[0_34px_76px_-28px_rgba(232,93,4,0.3)]"
+              onMouseMove={handlePortalSpecular}
+              className="specular-surface overflow-hidden group rounded-[28px] bg-[#FBF8F3] text-[#140E0B] border border-[#FAF6F0]/25 hover:border-[#E85D04]/70 hover:-translate-y-1 p-6 sm:p-8 lg:p-9 flex flex-col justify-between transition-[border-color,box-shadow,transform] duration-250 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_28px_68px_-30px_rgba(0,0,0,0.68)] hover:shadow-[0_34px_76px_-28px_rgba(232,93,4,0.3)]"
             >
-              <div>
+              <div className="relative z-10">
                 <div className="flex items-center justify-between gap-3">
                   <div className="w-11 h-11 rounded-2xl bg-[#EFE6DA] border border-[#140E0B]/10 flex items-center justify-center text-[#E85D04]">
                     <FolderKanban className="w-5 h-5" aria-hidden="true" />
@@ -498,11 +548,11 @@ export default function ProtocolShowcase({
                 </p>
               </div>
 
-              <div className="mt-8">
+              <div className="relative z-10 mt-8">
                 <button
                   type="button"
                   onClick={() => onOpenArchive("fullstack")}
-                  className="inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-3 rounded-full bg-[#140E0B] hover:bg-[#E85D04] active:scale-[0.98] text-[#FAF6F0] text-xs sm:text-sm font-semibold transition-[background-color,transform] duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04]"
+                  className="inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-3 rounded-full bg-[#140E0B] hover:bg-[#E85D04] hover:-translate-y-0.5 active:scale-[0.98] text-[#FAF6F0] text-xs sm:text-sm font-semibold transition-[background-color,transform] duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04]"
                 >
                   <span>Explore Full-Stack Web3 Protocols</span>
                   <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
@@ -520,9 +570,10 @@ export default function ProtocolShowcase({
                 delay: 0.08,
                 ease: [0.22, 1, 0.36, 1],
               }}
-              className="group rounded-[28px] bg-[#110B08] text-[#FAF6F0] border border-[#E85D04]/25 hover:border-[#E85D04]/70 hover:-translate-y-1 p-6 sm:p-8 lg:p-9 flex flex-col justify-between transition-[border-color,box-shadow,transform] duration-250 shadow-[inset_0_1px_0_rgba(250,246,240,0.08),0_28px_68px_-30px_rgba(0,0,0,0.8)] hover:shadow-[inset_0_1px_0_rgba(244,140,6,0.18),0_34px_76px_-28px_rgba(232,93,4,0.34)]"
+              onMouseMove={handlePortalSpecular}
+              className="specular-surface-dark overflow-hidden group rounded-[28px] bg-[#110B08] text-[#FAF6F0] border border-[#E85D04]/25 hover:border-[#E85D04]/70 hover:-translate-y-1 p-6 sm:p-8 lg:p-9 flex flex-col justify-between transition-[border-color,box-shadow,transform] duration-250 shadow-[inset_0_1px_0_rgba(250,246,240,0.08),0_28px_68px_-30px_rgba(0,0,0,0.8)] hover:shadow-[inset_0_1px_0_rgba(244,140,6,0.18),0_34px_76px_-28px_rgba(232,93,4,0.34)]"
             >
-              <div>
+              <div className="relative z-10">
                 <div className="flex items-center justify-between gap-3">
                   <div className="w-11 h-11 rounded-2xl bg-[#221610] border border-[#E85D04]/25 flex items-center justify-center text-[#F48C06]">
                     <Terminal className="w-5 h-5" aria-hidden="true" />
@@ -546,11 +597,11 @@ export default function ProtocolShowcase({
                 </p>
               </div>
 
-              <div className="mt-8">
+              <div className="relative z-10 mt-8">
                 <button
                   type="button"
                   onClick={() => onOpenArchive("core")}
-                  className="inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-3 rounded-full bg-[#E85D04] hover:bg-[#D14F00] active:scale-[0.98] text-[#FAF6F0] text-xs sm:text-sm font-semibold transition-[background-color,transform] duration-150 cursor-pointer shadow-[0_14px_30px_-14px_rgba(232,93,4,0.72)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FAF6F0]"
+                  className="inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-3 rounded-full bg-[#E85D04] hover:bg-[#D14F00] hover:-translate-y-0.5 active:scale-[0.98] text-[#FAF6F0] text-xs sm:text-sm font-semibold transition-[background-color,transform] duration-150 cursor-pointer shadow-[0_14px_30px_-14px_rgba(232,93,4,0.72)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FAF6F0]"
                 >
                   <span>Explore Core EVM Contracts</span>
                   <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
@@ -558,7 +609,7 @@ export default function ProtocolShowcase({
               </div>
             </motion.div>
           </div>
-        </div>
+        </motion.div>
       </section>
     </>
   );
