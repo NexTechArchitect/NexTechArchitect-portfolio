@@ -977,13 +977,11 @@ export default function AmitAvatar3D({
           >
             <span
               aria-hidden="true"
-              className="w-2 h-2 rounded-full bg-[#FF5E0E] shrink-0 shadow-[0_0_12px_rgba(255,94,14,0.7)]"
+              className="w-2 h-2 rounded-full bg-[#E85D04] shrink-0 shadow-[0_0_10px_rgba(232,93,4,0.55)]"
             />
             <p
-              className={`font-display text-xl sm:text-2xl font-semibold tracking-tight ${
-                darkTopStage
-                  ? "text-[#1C1410] lg:text-[#FAF6F0]"
-                  : "text-[#1C1410]"
+              className={`font-display text-xl sm:text-2xl font-medium tracking-tight ${
+                darkTopStage ? "text-[#FAF6F0]" : "text-[#1A130F]"
               }`}
             >
               {WELCOME_HEADLINES[welcomeIndex]}
@@ -992,15 +990,15 @@ export default function AmitAvatar3D({
         </AnimatePresence>
       </div>
 
-      {/* Compact Studio Stage + Interactive 3D Amit Character (~0.95x, Warm Rim Lighting Across Horizon) */}
-      <div className="relative w-full max-w-[360px] h-[280px] sm:h-[310px]">
+      {/* Compact Studio Stage + Interactive 3D Amit Character */}
+      <div className="relative w-full max-w-[360px] h-[272px] sm:h-[304px]">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-2 rounded-full opacity-90"
           style={{
             background: darkTopStage
               ? "radial-gradient(circle at 50% 42%, rgba(255, 94, 14, 0.24) 0%, rgba(244, 162, 97, 0.14) 42%, rgba(250, 246, 240, 0) 74%)"
-              : "radial-gradient(circle, rgba(244, 140, 6, 0.14) 0%, rgba(232, 93, 4, 0.05) 48%, rgba(250, 246, 240, 0) 74%)",
+              : "radial-gradient(circle, rgba(244, 140, 6, 0.16) 0%, rgba(232, 93, 4, 0.06) 46%, rgba(250, 246, 240, 0) 74%)",
           }}
         />
         {webglReady ? (
@@ -1022,12 +1020,12 @@ export default function AmitAvatar3D({
           <button
             type="button"
             onClick={handleAvatarClick}
-            className="relative z-10 w-full h-full rounded-3xl bg-[#F0E7DB] border border-[#18110D]/12 flex flex-col items-center justify-center p-8 text-center cursor-pointer"
+            className="relative z-10 w-full h-full rounded-3xl bg-[#F0E7DB] border border-[#16100C]/12 flex flex-col items-center justify-center p-8 text-center cursor-pointer"
           >
-            <span className="w-16 h-16 rounded-full bg-[#18110D] text-[#FBF8F3] font-display font-bold text-xl flex items-center justify-center">
+            <span className="w-16 h-16 rounded-full bg-[#16100C] text-[#FBF8F3] font-display font-bold text-xl flex items-center justify-center">
               AK
             </span>
-            <span className="mt-4 font-display font-bold text-lg text-[#18110D]">
+            <span className="mt-4 font-display font-bold text-lg text-[#16100C]">
               Amit Kumar
             </span>
           </button>
@@ -1041,7 +1039,7 @@ export default function AmitAvatar3D({
         onMouseLeave={() => setIsSpotlightPaused(false)}
         onFocusCapture={() => setIsSpotlightPaused(true)}
         onBlurCapture={() => setIsSpotlightPaused(false)}
-        className="relative z-20 mt-2 w-full max-w-[460px] min-h-[54px] px-2 flex items-center justify-center"
+        className="relative z-20 mt-2 w-full max-w-[440px] min-h-[54px] px-2 flex items-center justify-center"
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
@@ -1054,7 +1052,7 @@ export default function AmitAvatar3D({
           >
             <p
               data-testid="spotlight-prompt-text"
-              className="font-display text-[15px] sm:text-[16px] font-semibold tracking-[-0.015em] leading-[1.35] text-[#2F241E]"
+              className="font-display text-[15px] sm:text-[16px] font-semibold tracking-[-0.015em] leading-[1.35] text-[#1A130F]"
             >
               {activeSpotlight.prompt}
             </p>
@@ -1066,7 +1064,7 @@ export default function AmitAvatar3D({
               className={`group inline-flex items-center justify-center gap-1.5 min-h-[44px] px-4.5 py-2 rounded-full text-[13.5px] font-semibold active:scale-[0.98] transition-[background-color,transform] duration-150 cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF6F0] ${
                 activeSpotlight.emphasis === "orange"
                   ? "bg-[#E85D04] hover:bg-[#D14F00] text-[#FAF6F0] shadow-[0_10px_24px_-12px_rgba(232,93,4,0.68)]"
-                  : "bg-[#140E0B] hover:bg-[#E85D04] text-[#FAF6F0] shadow-[0_10px_22px_-12px_rgba(20,14,11,0.52)]"
+                  : "bg-[#16100C] hover:bg-[#E85D04] text-[#FAF6F0] shadow-[0_10px_22px_-12px_rgba(20,14,11,0.52)]"
               }`}
             >
               <span>{activeSpotlight.ctaLabel}</span>

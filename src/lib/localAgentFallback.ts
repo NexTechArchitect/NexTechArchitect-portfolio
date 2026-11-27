@@ -901,35 +901,90 @@ function scoreProjects(
   return scored;
 }
 
+function isFallbackSuggestionMessage(text: string): boolean {
+  const lower = text.toLowerCase();
+  return (
+    lower.includes("don't have offline data") ||
+    lower.includes("dont have offline data") ||
+    lower.includes("things you can ask me instead") ||
+    lower.includes("pick any of these or ask me anything directly")
+  );
+}
+
+function isOverviewOrGreetingMessage(text: string): boolean {
+  const lower = text.toLowerCase();
+  return (
+    lower.startsWith("### amit kumar's flagship") ||
+    lower.startsWith("hey! great to meet you") ||
+    lower.startsWith("i can help with **amit kumar's") ||
+    lower.startsWith("glad to hear it! two high-signal places") ||
+    lower.startsWith("got it, pausing right here")
+  );
+}
+
+function matchProjectByHeading(headingLine: string): ProjectItem | undefined {
+  const lower = headingLine.toLowerCase();
+  for (const project of ALL_PROJECTS) {
+    if (
+      lower.includes(project.title.toLowerCase()) ||
+      (project.shortTitle.length >= 5 &&
+        lower.includes(project.shortTitle.toLowerCase()))
+    ) {
+      return project;
+    }
+  }
+  return undefined;
+}
+
 function resolveProjectFromHistory(
   history?: readonly FallbackHistoryTurn[]
 ): ProjectItem | undefined {
   if (!history || history.length === 0) return undefined;
-  const recent = history.slice(-4).reverse();
+  const recent = history.slice(-6).reverse();
 
   for (const turn of recent) {
     const text = getTurnText(turn);
     if (!text) continue;
 
-    // 1. Check exact heading match in recent assistant replies
-    const firstLine = text.split("\n")[0]?.toLowerCase() ?? "";
-    if (firstLine.startsWith("### ")) {
-      for (const project of ALL_PROJECTS) {
-        if (
-          firstLine.includes(project.title.toLowerCase()) ||
-          (project.shortTitle.length >= 5 &&
-            firstLine.includes(project.shortTitle.toLowerCase()))
-        ) {
-          return project;
-        }
-      }
+    // Never let fallback suggestion buttons pollute active project memory or leak older stale projects
+    if (isFallbackSuggestionMessage(text)) {
+      return undefined;
+    }
+    if (isOverviewOrGreetingMessage(text)) {
+      continue;
     }
 
-    // 2. Otherwise score the turn text against all projects
+    const firstLine = text.split("\n")[0]?.trim() ?? "";
+    if (turn.role === "assistant") {
+      if (firstLine.startsWith("### ")) {
+        const headingProject = matchProjectByHeading(firstLine);
+        if (headingProject) {
+          return headingProject;
+        }
+        // Immediately preceding substantive reply was a general Web3/EIP/bio topic, NOT a project
+        return undefined;
+      }
+      // Short conversational assistant reply (e.g. "No worries!"): check the preceding substantive turn
+      continue;
+    }
+
+    // User turn: only treat as active project if the user explicitly named that project
     const turnQuery = normalizeQuery(text);
-    const matches = scoreProjects(turnQuery, true);
+    const hasPortfolioRef =
+      /\b(amit|nextecharchitect|portfolio|his|your|flagship|built|shipped|deployed)\b/.test(
+        turnQuery.softCollapsed
+      );
+    const matches = scoreProjects(turnQuery, hasPortfolioRef);
     if (matches[0] && matches[0].score >= EXPLICIT_PROJECT_THRESHOLD) {
       return matches[0].project;
+    }
+
+    // If the user explicitly asked a general Web3/EIP technical question, clear active project memory
+    if (
+      turnQuery.extractedStandards.size > 0 ||
+      scoreKnowledgeBase(turnQuery, true)[0]?.score >= 18
+    ) {
+      return undefined;
     }
   }
 
@@ -1196,7 +1251,11 @@ function getLastAssistantText(
   if (!history || history.length === 0) return null;
   const lastAssistant = [...history]
     .reverse()
-    .find((turn) => turn.role === "assistant");
+    .find((turn) => {
+      if (turn.role !== "assistant") return false;
+      const text = getTurnText(turn);
+      return Boolean(text) && !isFallbackSuggestionMessage(text);
+    });
   if (!lastAssistant) return null;
   const text = getTurnText(lastAssistant).trim();
   return text || null;
@@ -1253,46 +1312,508 @@ function buildSimpleSummaryFromHistory(
   ].join("\n");
 }
 
+const CONVERSATIONAL_VOCATIVES = new Set<string>([
+  "buddy",
+  "budy",
+  "bud",
+  "sir",
+  "maam",
+  "mam",
+  "madam",
+  "bro",
+  "bhai",
+  "yaar",
+  "yar",
+  "dude",
+  "man",
+  "mate",
+  "friend",
+  "boss",
+  "bos",
+  "chief",
+  "amit",
+  "bot",
+  "ai",
+  "assistant",
+  "asistant",
+  "there",
+  "everyone",
+  "guys",
+  "team",
+  "ji",
+  "please",
+  "pls",
+  "plz",
+  "my",
+  "dear",
+  "all",
+  "fren",
+  "frens",
+  "folks",
+  "pal",
+  "dost",
+  "partner",
+  "homie",
+  "kumar",
+]);
+
+function stripConversationalVocatives(text: string): string {
+  const words = text.split(" ").filter(Boolean);
+  if (words.length === 0 || words.length > 6) return text;
+  const remaining = words.filter((w) => !CONVERSATIONAL_VOCATIVES.has(w));
+  return remaining.length > 0 ? remaining.join(" ") : text;
+}
+
+function buildSmallTalkCandidates(q: NormalizedQuery): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  const add = (val: string) => {
+    const trimmed = val.trim();
+    if (trimmed && !seen.has(trimmed)) {
+      seen.add(trimmed);
+      out.push(trimmed);
+    }
+  };
+
+  add(q.softCollapsed);
+  add(q.hardCollapsed);
+  if (q.tokenList.length <= 6) {
+    add(stripConversationalVocatives(q.softCollapsed));
+    add(stripConversationalVocatives(q.hardCollapsed));
+  }
+  return out;
+}
+
+function matchesSmallTalkPhrases(
+  candidates: readonly string[],
+  phrases: readonly string[],
+  allowFuzzy = true
+): boolean {
+  const canonical = new Set<string>();
+  const phrasePairs: Array<{ soft: string; hard: string }> = [];
+
+  for (const phrase of phrases) {
+    const soft = softCollapseText(phrase);
+    const hard = hardCollapseText(phrase);
+    canonical.add(soft);
+    canonical.add(hard);
+    phrasePairs.push({ soft, hard });
+  }
+
+  // Pass 1: Exact / stretched-character / vocative-stripped match
+  for (const cand of candidates) {
+    if (canonical.has(cand)) return true;
+  }
+
+  if (!allowFuzzy) return false;
+
+  // Pass 2: Bounded Levenshtein fuzzy match for short human small-talk typos
+  for (const cand of candidates) {
+    if (cand.length < 4 || /\d/.test(cand)) continue;
+    const candWords = cand.split(" ");
+    if (candWords.length > 6) continue;
+
+    for (const pair of phrasePairs) {
+      for (const target of [pair.soft, pair.hard]) {
+        if (target.length < 5) continue;
+        const maxDist = target.length <= 8 ? 1 : 2;
+        if (Math.abs(cand.length - target.length) > maxDist + 1) continue;
+
+        const dist = levenshtein(cand, target);
+        if (dist <= maxDist) return true;
+
+        // Also catch multi-word typos like "nice to met u" vs "nice to meet you" (same word count, tiny per-word distance)
+        if (target.length >= 12 && dist <= 3) {
+          const targetWords = target.split(" ");
+          if (candWords.length === targetWords.length && candWords.length >= 3) {
+            const allClose = candWords.every(
+              (cw, idx) =>
+                levenshtein(cw, targetWords[idx]) <=
+                (targetWords[idx].length <= 3 ? 1 : 2)
+            );
+            if (allClose) return true;
+          }
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+const PAUSE_STOP_PHRASES = [
+  "stop",
+  "stop it",
+  "stop please",
+  "please stop",
+  "wait",
+  "wait a second",
+  "wait a sec",
+  "hold on",
+  "hold up",
+  "pause",
+  "quiet",
+  "be quiet",
+  "shut up",
+  "shutup",
+  "enough",
+  "bas",
+  "bas kar",
+  "bas karo",
+  "ruk",
+  "ruko",
+  "ruk ja",
+  "ruk jao",
+  "nevermind",
+  "never mind",
+  "nvm",
+  "forget it",
+  "leave it",
+  "drop it",
+  "cancel",
+  "abort",
+  "chill",
+] as const;
+
+const SIMPLIFY_PHRASES = [
+  "explain simply",
+  "explain it simply",
+  "explain in simple terms",
+  "in short",
+  "tldr",
+  "tl dr",
+  "summarize",
+  "summarize that",
+  "summary",
+  "eli5",
+  "make it simple",
+  "make it simpler",
+  "simpler",
+  "short version",
+  "too long",
+  "too technical",
+  "in plain english",
+  "plain english",
+  "keep it short",
+  "sum it up",
+  "sum that up",
+  "break it down simply",
+] as const;
+
+const CHECKIN_PHRASES = [
+  "how are you",
+  "how are u",
+  "how r u",
+  "how r you",
+  "how are you doing",
+  "hows it going",
+  "how is it going",
+  "how you doing",
+  "hows everything",
+  "how is everything",
+  "whats up",
+  "whatsup",
+  "what is up",
+  "what up",
+  "wat up",
+  "wats up",
+  "wassup",
+  "sup",
+  "kaise ho",
+  "kya haal",
+  "kya haal hai",
+  "all good",
+  "sab badhiya",
+  "sab badiya",
+] as const;
+
+const GREETING_PHRASES = [
+  "hi",
+  "hello",
+  "helo",
+  "hlo",
+  "hey",
+  "yo",
+  "hola",
+  "namaste",
+  "salam",
+  "salaam",
+  "gm",
+  "good morning",
+  "good afternoon",
+  "good evening",
+  "greetings",
+  "howdy",
+  "hi good morning",
+  "hey good morning",
+  "hello good morning",
+] as const;
+
+const PLEASANTRY_PHRASES = [
+  "nice to meet you",
+  "nice to met you",
+  "nice to meet u",
+  "pleasure meeting you",
+  "pleasure to meet you",
+  "glad to meet you",
+  "good to meet you",
+  "happy to meet you",
+  "great to meet you",
+  "nice meeting you",
+  "nice to meet you too",
+] as const;
+
+const GRATITUDE_PHRASES = [
+  "thank you",
+  "thank u",
+  "thanks",
+  "thanx",
+  "thankyou",
+  "thx",
+  "ty",
+  "tysm",
+  "thank you so much",
+  "thanks a lot",
+  "thanks very much",
+  "thank you very much",
+  "shukriya",
+  "dhanyawad",
+  "appreciate it",
+  "much appreciated",
+  "cheers",
+  "grateful",
+  "ok thanks",
+  "okay thanks",
+  "cool thanks",
+  "great thanks",
+  "got it thanks",
+  "thanks for that",
+  "thanks for helping",
+  "thanks for explaining",
+] as const;
+
+const FAREWELL_PHRASES = [
+  "bye",
+  "goodbye",
+  "good bye",
+  "see you",
+  "see ya",
+  "see you later",
+  "see u later",
+  "see you soon",
+  "cya",
+  "take care",
+  "later",
+  "catch you later",
+  "have a good day",
+  "have a great day",
+  "good night",
+  "gn",
+  "peace out",
+  "peace",
+  "tata",
+] as const;
+
+const COMPLIMENT_PHRASES = [
+  "good job",
+  "god job",
+  "well done",
+  "smart",
+  "very smart",
+  "so smart",
+  "you are smart",
+  "youre smart",
+  "nice bot",
+  "good bot",
+  "great bot",
+  "cool bot",
+  "awesome bot",
+  "best bot",
+  "clever",
+  "genius",
+  "helpful",
+  "very helpful",
+  "super helpful",
+  "love this bot",
+  "nice assistant",
+  "great assistant",
+] as const;
+
+const AFFIRMATION_PHRASES = [
+  "yes",
+  "yeah",
+  "yea",
+  "yep",
+  "yup",
+  "ya",
+  "yah",
+  "sure",
+  "of course",
+  "ofcourse",
+  "definitely",
+  "def",
+  "absolutely",
+  "haan",
+  "han",
+  "ha",
+  "go ahead",
+  "go on",
+  "tell me",
+  "show me",
+  "continue",
+  "more",
+  "next",
+  "tell me more",
+  "show me more",
+  "proceed",
+  "lets go",
+  "let us go",
+  "do it",
+] as const;
+
+const DECLINE_PHRASES = [
+  "no",
+  "nope",
+  "nah",
+  "nahi",
+  "na",
+  "not now",
+  "not right now",
+  "maybe",
+  "maybe later",
+  "no thanks",
+  "no thank you",
+  "im good",
+  "i am good",
+  "all set",
+] as const;
+
+const REACTION_PHRASES = [
+  "nice",
+  "cool",
+  "awesome",
+  "great",
+  "amazing",
+  "fire",
+  "dope",
+  "impressive",
+  "love it",
+  "loved it",
+  "sick",
+  "sweet",
+  "solid",
+  "good",
+  "sounds good",
+  "ok",
+  "okay",
+  "k",
+  "got it",
+  "makes sense",
+  "understood",
+  "noted",
+  "wow",
+  "brilliant",
+  "clean",
+  "neat",
+  "super",
+  "superb",
+  "perfect",
+  "fair enough",
+  "interesting",
+  "mast",
+  "badhiya",
+  "badiya",
+  "sahi",
+  "sahi hai",
+  "lol",
+  "haha",
+  "hahaha",
+  "hehe",
+  "nice work",
+  "great work",
+  "awesome work",
+  "very nice",
+  "so cool",
+  "pretty cool",
+  "thats cool",
+  "that is cool",
+  "thats awesome",
+  "that is awesome",
+  "thats nice",
+  "that is nice",
+  "thats great",
+  "that is great",
+] as const;
+
 function matchConversationalTurn(
   q: NormalizedQuery,
   history?: readonly FallbackHistoryTurn[]
 ): string | null {
-  const variants = [q.softCollapsed, q.hardCollapsed];
+  const candidates = buildSmallTalkCandidates(q);
   const activeProject = resolveProjectFromHistory(history);
   const lastHeading = extractHeadingFromMarkdown(getLastAssistantText(history));
 
   // 0. Pause / Stop / Dismiss commands (highest conversational priority — never dump fallback lists)
-  const pauseStopRe =
-    /^(?:(?:ok|okay|hey|please|pls|plz|bro|bhai|yaar|yar)\s+)?(stop|stop it|stop please|please stop|pls stop|wait|wait a second|wait a sec|wait up|hold on|hold up|pause|quiet|be quiet|shut up|shutup|enough|bas|bas kar|bas karo|ruk|ruko|ruk ja|ruk jao|nevermind|never mind|nvm|forget it|leave it|drop it|cancel|abort|chill)(?:\s+(please|pls|plz|bro|bhai|yaar|yar|amit|now|it|for now|a sec|a second))?$/;
-  if (variants.some((v) => pauseStopRe.test(v))) {
+  if (matchesSmallTalkPhrases(candidates, PAUSE_STOP_PHRASES, true)) {
     return "Got it, pausing right here. Ping me anytime if you'd like to explore Amit's protocols, Solidity architecture, or contact details.";
   }
 
   // 1. Explain Simply / TLDR / In Short
-  const simplifyRe =
-    /^(?:(?:can you|could you|please|pls|plz)\s+)?(explain simply|explain it simply|explain in simple terms|in short|tldr|tl dr|summarize|summarize that|summary|eli5|make it simple|make it simpler|simpler|short version|too long|too technical|in plain english|plain english|keep it short|sum it up|sum that up|break it down simply)(?:\s+(please|pls|plz|bro|bhai|for me))?$/;
-  if (variants.some((v) => simplifyRe.test(v))) {
+  if (matchesSmallTalkPhrases(candidates, SIMPLIFY_PHRASES, true)) {
     return buildSimpleSummaryFromHistory(activeProject, history);
   }
 
   // 2. Check-ins & casual Hinglish/English chat
-  const checkInRe =
-    /^(?:(?:hi|hey|helo|hello|hlo|yo|gm|bro|bhai)\s+)?(how are you|how are u|how r u|how are you doing|hows it going|how is it going|how you doing|hows everything|how is everything|whats up|whatsup|what is up|wasup|wassup|sup|kaise ho|kya hal|kya haal|kya hal hai|kya haal hai|al god|all good|sab badiya|sab badhiya)(?:\s+(amit|bro|bhai|mate|man|today|there))?$/;
-  if (variants.some((v) => checkInRe.test(v))) {
+  const checkInWithGreetingPrefix = candidates.map((c) =>
+    c.replace(/^(?:hi|hey|helo|hello|hlo|yo|gm)\s+/, "")
+  );
+  if (
+    matchesSmallTalkPhrases(
+      [...candidates, ...checkInWithGreetingPrefix],
+      CHECKIN_PHRASES,
+      true
+    )
+  ) {
     return "Doing great, thanks for asking! Always energized to talk DeFi architecture, Solidity internals, and **Amit Kumar's** deployed protocols. What's on your mind today: a walkthrough of a flagship system like **Nexus Perps v2** or **Nexus RWA**, a Solidity/EVM deep dive, or Amit's hiring details?";
   }
 
-  // 3. Greetings (English + Hinglish + stretched forms like "hiiiiii", "heyy", "helloo", "hlo")
-  const greetingRe =
-    /^(hi|hello|helo|hlo|hey|yo|hola|namaste|salam|salaam|gm|good morning|god morning|good afternoon|god afternoon|good evening|god evening|greetings)(?:\s+(there|amit|bro|bhai|mate|man|friend|everyone))?$/;
-  if (variants.some((v) => greetingRe.test(v))) {
+  // 3. Greetings (handles "hii buddy", "hii sir", "hello amit", "hey there bro", "gm sir", "namaste bhai", "good mornin")
+  const GREETING_PREFIX_WORDS = new Set([
+    "hi",
+    "hey",
+    "hello",
+    "helo",
+    "hlo",
+    "yo",
+    "gm",
+    "hola",
+    "namaste",
+    "salam",
+    "salaam",
+    "howdy",
+  ]);
+  const isShortPureGreetingPrefix =
+    q.hardTokenList.length >= 2 &&
+    q.hardTokenList.length <= 4 &&
+    GREETING_PREFIX_WORDS.has(q.hardTokenList[0]) &&
+    q.hardTokenList
+      .slice(1)
+      .every(
+        (tok) =>
+          CONVERSATIONAL_VOCATIVES.has(tok) || GREETING_PREFIX_WORDS.has(tok)
+      );
+
+  if (
+    isShortPureGreetingPrefix ||
+    matchesSmallTalkPhrases(candidates, GREETING_PHRASES, true)
+  ) {
     return buildOverviewMenu(true);
   }
 
   // 4. Meta Questions & Builder / Online-Offline Inquiries
   const metaCreatorRe =
-    /^(who made you|who built you|who created you|who developed you|who designed you|how do you work|how do u work|how were you built|are you online|are you ofline|are you offline|are you live|are you real|are you human)(?:\s+(please|pls|plz|now|right now))?$/;
-  if (variants.some((v) => metaCreatorRe.test(v))) {
+    /^(who made you|who built you|who created you|who developed you|who designed you|how do you work|how do u work|how were you built|are you online|are you ofline|are you offline|are you live|are you real|are you human)$/;
+  if (candidates.some((v) => metaCreatorRe.test(v))) {
     if (/\b(online|offline|ofline|live)\b/.test(q.softCollapsed)) {
       return "I'm **Ask Amit**, built by **Amit Kumar (`NexTechArchitect`)** with a deep built-in DeFi, Solidity, EVM, and portfolio knowledge engine so I stay fast and responsive whether live cloud inference is active or running locally. Ask me about any of Amit's 15+ protocols, ERC/EIP standards, smart contract security, or hiring details!";
     }
@@ -1302,10 +1823,8 @@ function matchConversationalTurn(
     return "I'm **Ask Amit**, built by **Amit Kumar (`NexTechArchitect`)**, Smart Contract Engineer and DeFi Protocol Architect. I'm here to help you inspect his deployed protocols, walk through his Solidity and Yul code, or talk through EVM, security, and full-stack Web3 engineering.";
   }
 
-  // 5. Compliments directed at Ask Amit
-  const complimentRe =
-    /^(good job|god job|well done|wel done|smart|very smart|so smart|ur smart|you are smart|youre smart|nice bot|good bot|god bot|great bot|cool bot|col bot|awesome bot|best bot|clever|genius|helpful|very helpful|super helpful|love this bot|nice assistant|great assistant)(?:\s+(amit|bro|bhai|mate|man|indeed))?$/;
-  if (variants.some((v) => complimentRe.test(v))) {
+  // 5. Compliments directed at Ask Amit (handles "gud job", "good job", "nice bot", "smart")
+  if (matchesSmallTalkPhrases(candidates, COMPLIMENT_PHRASES, true)) {
     if (activeProject) {
       return `Appreciate that! I'm **Ask Amit**, built by **Amit Kumar (\`NexTechArchitect\`)**. Want to keep going on **${activeProject.title}** (like its security invariants or gas optimizations), or jump into another protocol?`;
     }
@@ -1314,9 +1833,13 @@ function matchConversationalTurn(
 
   // 6. Identity & Help Menu
   const identityRe =
-    /^(who are you|what are you|tell me about yourself|tel me about yourself|what is your name|whats your name|who am i talking to|are you amit|are you a bot|are you bot|are you ai|are you an ai|help|menu|options)(?:\s+please)?$/;
-  if (variants.some((v) => identityRe.test(v))) {
-    if (q.softCollapsed === "help" || q.softCollapsed === "menu" || q.softCollapsed === "options") {
+    /^(who are you|what are you|tell me about yourself|tel me about yourself|what is your name|whats your name|who am i talking to|are you amit|are you a bot|are you bot|are you ai|are you an ai|help|menu|options)$/;
+  if (candidates.some((v) => identityRe.test(v))) {
+    if (
+      q.softCollapsed === "help" ||
+      q.softCollapsed === "menu" ||
+      q.softCollapsed === "options"
+    ) {
       return buildOverviewMenu(false);
     }
     return "I'm **Ask Amit**, the protocol assistant built by **Amit Kumar (`NexTechArchitect`)**, a Smart Contract Engineer and DeFi Protocol Architect. Think of me as an interactive engineering guide to his 15+ deployed protocols, inline Yul and Solidity primitives, security invariants, hiring details, and deep Web3/EVM architecture. Ask me anything about his work or Solidity/DeFi engineering!";
@@ -1324,8 +1847,8 @@ function matchConversationalTurn(
 
   // 7. Apologies, Casual Fillers & Confusion (context-aware via conversation history)
   const apologyRe =
-    /^(sorry|sory|my bad|oops|ops|whoops|whops|apologies|pardon|excuse me|my mistake)(?:\s+(amit|bro|bhai|yaar|yar|man|mate))?$/;
-  if (variants.some((v) => apologyRe.test(v))) {
+    /^(sorry|sory|my bad|oops|ops|whoops|whops|apologies|pardon|excuse me|my mistake)$/;
+  if (candidates.some((v) => apologyRe.test(v))) {
     if (activeProject) {
       return `No worries at all! Whenever you're ready, we can continue looking at **${activeProject.title}** or switch over to any other protocol or Web3 topic.`;
     }
@@ -1333,8 +1856,8 @@ function matchConversationalTurn(
   }
 
   const fillerConfusionRe =
-    /^(hmm|hm|umm|um|uh|uhh|huh|what|wut|wait what|why|really|realy|seriously|bruh|bro|bhai|yaar|yar|oh|ah|eh|i see|i dont get it|i do not get it|confused|didnt get it|did not get it)(?:\s+(amit|bro|bhai|yaar|yar|man|mate|really|realy))?$/;
-  if (variants.some((v) => fillerConfusionRe.test(v))) {
+    /^(hmm|hm|umm|um|uh|uhh|huh|what|wut|wait what|why|really|realy|seriously|bruh|bro|bhai|yaar|yar|oh|ah|eh|i see|i dont get it|i do not get it|confused|didnt get it|did not get it)$/;
+  if (candidates.some((v) => fillerConfusionRe.test(v))) {
     if (activeProject) {
       return `All good! Want me to explain **${activeProject.title}** in simpler terms, walk through its core smart contract, or switch to a different protocol?`;
     }
@@ -1344,39 +1867,34 @@ function matchConversationalTurn(
     return "I'm right here! Feel free to ask about any of **Amit Kumar's** flagship DeFi protocols (**Nexus RWA**, **On-Chain Automation**, **Sentinel Insurance**, **Nexus Perps v2**), a Solidity/EVM concept, or hiring details.";
   }
 
-  // 8. Pleasantries
-  const pleasantryRe =
-    /^(nice to meet you|nice to met you|pleasure meeting you|pleasure meting you|pleasure to meet you|glad to meet you|good to meet you|god to met you|happy to meet you|hapy to met you|great to meet you)(?:\s+(too|to|amit|as well|as wel))?$/;
-  if (variants.some((v) => pleasantryRe.test(v))) {
+  // 8. Pleasantries (fuzzy-matched: "nice to mee you", "nice to met u", "pleasure meeting you")
+  if (matchesSmallTalkPhrases(candidates, PLEASANTRY_PHRASES, true)) {
     return "Likewise, great to meet you! Whether you're evaluating **Amit Kumar** for a Smart Contract Engineer role, reviewing a protocol walkthrough, or exploring EVM and DeFi internals, I'm here to help. Where would you like to start?";
   }
 
-  // 9. Gratitude (English + Hinglish)
-  const gratitudeRe =
-    /^(?:(?:ok|okay|k|cool|col|great|awesome|got it|nice)\s+)?(thank you|thanks|thankyou|thx|ty|tysm|shukriya|dhanyawad|apreciate it|appreciate it|much appreciated|much apreciated|cheers|chers|grateful)(?:\s+(so much|very much|a lot|amit|bro|bhai|mate|man|again|for that|for explaining|for the info|for helping|for the help))?$/;
-  if (variants.some((v) => gratitudeRe.test(v))) {
+  // 9. Gratitude (fuzzy-matched + vocative-stripped: "thankyouuu", "thnk you", "thanks buddy", "shukriya bhai")
+  if (matchesSmallTalkPhrases(candidates, GRATITUDE_PHRASES, true)) {
     if (activeProject) {
       return `You're very welcome! Glad that helped unpack **${activeProject.title}**. If you want to dig deeper into its smart contracts, gas optimizations, or security invariants, or compare it against another protocol in Amit's gallery, just say the word.`;
     }
     return "You're very welcome! Happy to help anytime. If you'd like to walk through any of Amit's DeFi protocols, inspect a Solidity or Yul snippet, or reach out to Amit directly at `nextech.amit@gmail.com`, just let me know.";
   }
 
-  // 10. Farewells (including "gn", "good night", "bye", "cya")
-  const farewellRe =
-    /^(bye|by|goodbye|godbye|good bye|god bye|see you|se you|see ya|se ya|cya|take care|later|catch you later|have a good day|have a great day|good night|god night|gn|peace out|peace|tata)(?:\s+(amit|bro|bhai|mate|man|soon|son))?$/;
-  if (variants.some((v) => farewellRe.test(v))) {
+  // 10. Farewells (fuzzy-matched + vocative-stripped: "bye sir", "see u later", "gn buddy")
+  if (matchesSmallTalkPhrases(candidates, FAREWELL_PHRASES, true)) {
     return "Take care, and thanks for stopping by **Amit Kumar's** portfolio! Whenever you want to connect directly with Amit, you can reach him at `nextech.amit@gmail.com`, check his repositories on [GitHub](https://github.com/NexTechArchitect), or connect on [LinkedIn](https://www.linkedin.com/in/amit-kumar-811a11277). See you around!";
   }
 
   // 11. Conversational Affirmations & Short Continuation Nudges (e.g. "yes", "sure", "haan", "tell me more", "go ahead")
-  const affirmationRe =
-    /^(?:(?:oh|o|ah|ok|okay)\s+)?(yes|ye|yeah|yea|yep|yup|ya|yah|sure|of course|ofcourse|definitely|def|absolutely|please|pls|plz|han|haan|ha|ji|go ahead|go on|tel me|tell me|show me|continue|more|next|tel me more|tell me more|show me more|proced|proceed|lets go|let us go|do it)(?:\s+(please|pls|plz|amit|bro|bhai|man|mate|sure|ahead|on|more))?$/;
-  if (variants.some((v) => affirmationRe.test(v))) {
+  if (matchesSmallTalkPhrases(candidates, AFFIRMATION_PHRASES, false)) {
     if (activeProject) {
       const nextIntent = detectNextProjectIntentFromHistory(history);
       return formatProjectForIntent(activeProject, nextIntent);
     }
-    if (lastHeading && /\b(more|continue|go ahead|go on|tell me|tel me)\b/.test(q.softCollapsed)) {
+    if (
+      lastHeading &&
+      /\b(more|continue|go ahead|go on|tell me|tel me)\b/.test(q.softCollapsed)
+    ) {
       return `Sure! We were just talking about **${lastHeading}**. Tell me if you want a deeper security angle, gas/EVM mechanics, a simpler summary, or a walkthrough of how **Amit Kumar** builds similar primitives in his protocols.`;
     }
     const picked = pickRandomSuggestions(history, 3);
@@ -1388,16 +1906,12 @@ function matchConversationalTurn(
   }
 
   // 12. Polite Declines (e.g. "no", "nope", "nah", "nahi", "not now", "maybe")
-  const declineRe =
-    /^(no|nope|nah|nahi|na|not now|not right now|maybe|maybe later|no thanks|no thank you|nah bro|nahi bhai|im good|i am good|all set|al set)(?:\s+(thanks|thank you|amit|bro|bhai|man|mate))?$/;
-  if (variants.some((v) => declineRe.test(v))) {
+  if (matchesSmallTalkPhrases(candidates, DECLINE_PHRASES, false)) {
     return "No problem at all. Feel free to explore the page, and ping me anytime if a question comes up about Amit's protocols or Solidity.";
   }
 
-  // 13. Short positive reactions & acknowledgments (English + Hinglish)
-  const reactionRe =
-    /^(nice|cool|col|awesome|great|amazing|fire|dope|impressive|impresive|love it|loved it|sick|sweet|swet|solid|good|god|sounds good|sounds god|ok|okay|k|got it|makes sense|makes sence|understood|understod|noted|wow|brilliant|briliant|clean|neat|super|superb|perfect|fair enough|interesting|mast|badiya|badhiya|sahi|sahi hai|lol|haha|hahaha|hehe|nice work|great work|awesome work|very nice|so cool|pretty cool|thats cool|that is cool|thats awesome|that is awesome|thats nice|that is nice|thats great|that is great)(?:\s+(work|stuff|stuf|job|man|bro|bhai|mate|amit))?$/;
-  if (variants.some((v) => reactionRe.test(v))) {
+  // 13. Short positive reactions & acknowledgments (English + Hinglish, e.g. "ok bro", "nice buddy", "got it sir")
+  if (matchesSmallTalkPhrases(candidates, REACTION_PHRASES, true)) {
     if (activeProject) {
       return `Glad you like how **${activeProject.title}** is put together! Want to inspect its security invariants, check its gas optimizations, or compare it side by side with another protocol in Amit's portfolio?`;
     }

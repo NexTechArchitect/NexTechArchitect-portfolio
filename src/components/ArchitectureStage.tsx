@@ -257,7 +257,7 @@ export default function ArchitectureStage({
     <section
       ref={stageRef}
       id="architecture"
-      className="relative bg-[#140E0B] text-[#FAF6F0] silk-grain-dark pt-12 sm:pt-16 lg:pt-20 pb-24 sm:pb-32 scroll-mt-12 overflow-x-clip"
+      className="relative bg-[#140E0B] text-[#FAF6F0] silk-grain-dark pt-12 sm:pt-16 lg:pt-20 pb-24 sm:pb-32 scroll-mt-24 overflow-x-clip"
     >
       {/* Subtle edge-hugging warm copper vertical ambient washes with GPU silk drift */}
       <div
@@ -296,7 +296,7 @@ export default function ArchitectureStage({
             style={{ textWrap: "balance" }}
           >
             Built for Adversarial{" "}
-            <span className="text-[#E85D04]">Mainnet Execution.</span>
+            <span className="text-[#FF6B1A]">Mainnet Execution.</span>
           </motion.h2>
 
           <motion.p
@@ -309,7 +309,7 @@ export default function ArchitectureStage({
               delay: 0.08,
               ease: [0.22, 1, 0.36, 1],
             }}
-            className="mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#D9CEC2]"
+            className="mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#D8CEC4]"
           >
             The core engineering disciplines governing how every smart contract
             system is specified, verified, and deployed across Ethereum and EVM
@@ -334,10 +334,10 @@ export default function ArchitectureStage({
                   data-testid={`arch-tab-${domain.id}`}
                   aria-selected={isActive}
                   onClick={() => setActiveDomainId(domain.id)}
-                  className={`relative inline-flex items-center justify-center min-h-[44px] px-3.5 sm:px-5 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-colors duration-150 cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] ${
+                  className={`relative inline-flex items-center justify-center min-h-[44px] px-3.5 sm:px-5 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-colors duration-150 cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B1A] ${
                     isActive
                       ? "text-[#FAF6F0]"
-                      : "text-[#B8A699] hover:text-[#FAF6F0]"
+                      : "text-[#A69688] hover:text-[#FAF6F0]"
                   }`}
                 >
                   {isActive && (
@@ -374,7 +374,7 @@ export default function ArchitectureStage({
               <h3 className="font-display text-2xl sm:text-[1.75rem] font-bold text-[#FAF6F0] tracking-[-0.028em] leading-[1.2]">
                 {activeDomain.headline}
               </h3>
-              <p className="mt-3.5 text-sm sm:text-[15.5px] leading-[1.72] text-[#D9CEC2]">
+              <p className="mt-3.5 text-sm sm:text-[15.5px] leading-[1.72] text-[#D8CEC4]">
                 {activeDomain.summary}
               </p>
 
@@ -396,13 +396,13 @@ export default function ArchitectureStage({
                   >
                     <span
                       aria-hidden="true"
-                      className="mt-2 w-2 h-2 rounded-full bg-[#E85D04] shrink-0 shadow-[0_0_10px_rgba(232,93,4,0.65)]"
+                      className="mt-2 w-2 h-2 rounded-full bg-[#FF6B1A] shrink-0 shadow-[0_0_10px_rgba(255,107,26,0.65)]"
                     />
                     <div className="min-w-0">
                       <p className="font-display text-[15px] font-bold text-[#FAF6F0] tracking-[-0.015em]">
                         {item.name}
                       </p>
-                      <p className="mt-0.5 text-[13px] leading-relaxed text-[#B5A598]">
+                      <p className="mt-0.5 text-[13px] leading-relaxed text-[#A69688]">
                         {item.focus}
                       </p>
                     </div>
@@ -427,14 +427,14 @@ export default function ArchitectureStage({
                     onMouseMove={handleSpecularMove}
                     className="specular-surface-dark overflow-hidden rounded-[32px] bg-[#1C140F]/92 hover:bg-[#221711] hover:-translate-y-0.5 p-6 sm:p-7 flex items-start gap-5 sm:gap-6 shadow-[inset_0_1px_0_rgba(250,246,240,0.08),0_22px_46px_-26px_rgba(0,0,0,0.78)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.22),0_26px_54px_-24px_rgba(232,93,4,0.26)] transition-[background-color,transform,box-shadow] duration-200"
                   >
-                    <span className="relative z-10 font-mono-tabular text-sm sm:text-base font-semibold text-[#F48C06] tracking-[0.06em] pt-0.5 shrink-0">
+                    <span className="relative z-10 font-mono-tabular text-sm sm:text-base font-semibold text-[#FF6B1A] tracking-[0.06em] pt-0.5 shrink-0">
                       {principle.num}
                     </span>
                     <div className="relative z-10 min-w-0">
                       <h4 className="font-display text-lg sm:text-xl font-bold text-[#FAF6F0] tracking-[-0.02em]">
                         {principle.title}
                       </h4>
-                      <p className="mt-2 text-sm sm:text-[15px] leading-[1.7] text-[#D9CEC2]">
+                      <p className="mt-2 text-sm sm:text-[15px] leading-[1.7] text-[#D8CEC4]">
                         {principle.detail}
                       </p>
                     </div>
@@ -452,7 +452,7 @@ export default function ArchitectureStage({
                   <ArrowDown className="w-4 h-4" aria-hidden="true" />
                 </button>
 
-                <span className="font-mono-tabular text-xs text-[#A8988B]">
+                <span className="font-mono-tabular text-xs text-[#A69688]">
                   Opens {activeDomain.workbenchFile}
                 </span>
               </div>

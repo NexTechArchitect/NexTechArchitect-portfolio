@@ -50,7 +50,7 @@ function CopyableCodeBlock({ code, lang }: { code: string; lang: string }) {
 
   return (
     <div className="my-2.5 rounded-xl bg-[#120B07] border border-[#FAF6F0]/12 overflow-hidden text-[#FAF6F0]">
-      <div className="px-3 py-1.5 bg-[#1B120C] border-b border-[#FAF6F0]/10 flex items-center justify-between gap-2 text-[10.5px] font-mono-tabular text-[#B8A699]">
+      <div className="px-3 py-1.5 bg-[#1B120C] border-b border-[#FAF6F0]/10 flex items-center justify-between gap-2 text-[10.5px] font-mono-tabular text-[#A69688]">
         <span>{lang || "code"}</span>
         <button
           type="button"
@@ -413,7 +413,7 @@ export default function ProtocolAgent() {
                   <h2 className="font-display font-bold text-[15px] leading-tight text-[#FAF6F0] truncate">
                     Ask Amit
                   </h2>
-                  <p className="text-[11px] text-[#C8B9AE] truncate">
+                  <p className="text-[11px] text-[#D8CEC4] truncate">
                     {isThinking
                       ? "Thinking..."
                       : isSpeaking
@@ -600,7 +600,7 @@ export default function ProtocolAgent() {
                     if (inputError) setInputError(false);
                   }}
                   placeholder="Ask me anything about Amit, his protocols, or Web3..."
-                  className={`flex-1 min-w-0 min-h-[44px] bg-[#241A15] text-[13.5px] text-[#FAF6F0] placeholder:text-[#9D8C80] rounded-full px-4 py-2.5 border transition-colors focus:outline-none focus:ring-2 focus:ring-[#E85D04]/45 ${
+                  className={`flex-1 min-w-0 min-h-[44px] bg-[#241A15] text-[13.5px] text-[#FAF6F0] placeholder:text-[#A69688] rounded-full px-4 py-2.5 border transition-colors focus:outline-none focus:ring-2 focus:ring-[#E85D04]/45 ${
                     inputError
                       ? "border-[#E85D04]"
                       : "border-[#FAF6F0]/14 focus:border-[#E85D04]"
@@ -616,7 +616,7 @@ export default function ProtocolAgent() {
                 </button>
               </div>
               {inputError && (
-                <p className="mt-1.5 px-3 text-[11px] text-[#E85D04]">
+                <p className="mt-1.5 px-3 text-[11px] text-[#FF6B1A]">
                   Type a message to start chatting.
                 </p>
               )}
@@ -642,7 +642,7 @@ export default function ProtocolAgent() {
               <span className="font-display font-bold text-[13.5px] leading-tight text-[#FAF6F0] whitespace-nowrap">
                 Ask Amit
               </span>
-              <span className="hidden sm:block text-[10.5px] text-[#C8B9AE] whitespace-nowrap">
+              <span className="hidden sm:block text-[10.5px] text-[#D8CEC4] whitespace-nowrap">
                 Personal Protocol Assistant
               </span>
             </span>

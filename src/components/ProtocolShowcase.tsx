@@ -37,7 +37,10 @@ import {
   fullStackProjects,
   type ProjectItem,
 } from "@/data/projects";
-import { SweepingRibbonCurve } from "@/components/SectionCurves";
+import {
+  SheetSilkCrest,
+  SweepingRibbonCurve,
+} from "@/components/SectionCurves";
 import { getFlagshipProjects } from "@/lib/portfolio";
 import { useAgent } from "@/context/AgentContext";
 
@@ -140,7 +143,7 @@ function FlagshipCard({
         className={`h-full rounded-[34px] sm:rounded-[38px] p-6 sm:p-8 flex flex-col justify-between transition-[box-shadow,transform] duration-250 overflow-hidden ${
           darkVariant
             ? "specular-surface-dark bg-[#140E0B] text-[#FAF6F0] shadow-[inset_0_1px_0_rgba(250,246,240,0.1),0_28px_72px_-32px_rgba(20,14,11,0.78)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.24),0_32px_80px_-28px_rgba(232,93,4,0.3)]"
-            : "specular-surface bg-[#FFFDF9] text-[#140E0B] shadow-[inset_0_1px_0_rgba(255,255,255,0.96),0_24px_60px_-34px_rgba(20,14,11,0.2)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,1),0_30px_68px_-30px_rgba(232,93,4,0.24)]"
+            : "specular-surface bg-[#FFFDF9] text-[#16100C] shadow-[inset_0_1px_0_rgba(255,255,255,0.96),0_24px_60px_-34px_rgba(20,14,11,0.2)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,1),0_30px_68px_-30px_rgba(232,93,4,0.24)]"
         }`}
       >
         <div className="relative z-10">
@@ -149,8 +152,8 @@ function FlagshipCard({
             <span
               className={
                 darkVariant
-                  ? "text-[#F48C06] font-semibold"
-                  : "text-[#E85D04] font-semibold"
+                  ? "text-[#FF6B1A] font-semibold"
+                  : "text-[#C84B04] font-semibold"
               }
             >
               {project.network}
@@ -158,14 +161,14 @@ function FlagshipCard({
                 aria-hidden="true"
                 className={
                   darkVariant
-                    ? "mx-1.5 text-[#FAF6F0]/25"
-                    : "mx-1.5 text-[#140E0B]/25"
+                    ? "mx-1.5 text-[#FAF6F0]/30"
+                    : "mx-1.5 text-[#16100C]/25"
                 }
               >
                 ·
               </span>
               <span
-                className={darkVariant ? "text-[#D9CEC2]" : "text-[#7D6C61]"}
+                className={darkVariant ? "text-[#D8CEC4]" : "text-[#6E5F54]"}
               >
                 {project.standard}
               </span>
@@ -177,7 +180,7 @@ function FlagshipCard({
             <div
               className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${
                 darkVariant
-                  ? "bg-[#221813] text-[#FF5E0E] shadow-[inset_0_1px_0_rgba(250,246,240,0.1)]"
+                  ? "bg-[#221813] text-[#FF6B1A] shadow-[inset_0_1px_0_rgba(250,246,240,0.1)]"
                   : "bg-[#F3EAE0] text-[#E85D04] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]"
               }`}
             >
@@ -190,7 +193,7 @@ function FlagshipCard({
               </h3>
               <p
                 className={`mt-1 text-xs font-mono-tabular font-medium ${
-                  darkVariant ? "text-[#F48C06]" : "text-[#B84700]"
+                  darkVariant ? "text-[#FF6B1A]" : "text-[#C84B04]"
                 }`}
               >
                 {project.metric}
@@ -201,7 +204,7 @@ function FlagshipCard({
           {/* Complete Editorial Description */}
           <p
             className={`mt-4 text-sm sm:text-[15px] leading-[1.68] ${
-              darkVariant ? "text-[#D9CEC2]" : "text-[#4D4139]"
+              darkVariant ? "text-[#D8CEC4]" : "text-[#4A3F37]"
             }`}
           >
             {project.description}
@@ -222,14 +225,14 @@ function FlagshipCard({
                   >
                     <p
                       className={`font-mono-tabular text-[11px] font-semibold ${
-                        darkVariant ? "text-[#FAF6F0]" : "text-[#140E0B]"
+                        darkVariant ? "text-[#FAF6F0]" : "text-[#16100C]"
                       }`}
                     >
                       {contract.label}
                     </p>
                     <p
                       className={`text-[11px] text-right ${
-                        darkVariant ? "text-[#B8A89B]" : "text-[#6D5D53]"
+                        darkVariant ? "text-[#A69688]" : "text-[#6E5F54]"
                       }`}
                     >
                       {contract.role}
@@ -243,7 +246,7 @@ function FlagshipCard({
           {/* Unboxed Stack Row */}
           <p
             className={`mt-4 text-xs font-mono-tabular ${
-              darkVariant ? "text-[#A8988B]" : "text-[#7D6C61]"
+              darkVariant ? "text-[#A69688]" : "text-[#6E5F54]"
             }`}
           >
             {project.tech.join(" · ")}
@@ -285,7 +288,7 @@ function FlagshipCard({
 
           <div
             className={`flex items-center gap-4 text-xs font-semibold ${
-              darkVariant ? "text-[#D9CEC2]" : "text-[#4D4139]"
+              darkVariant ? "text-[#D8CEC4]" : "text-[#4A3F37]"
             }`}
           >
             {project.liveUrl && (
@@ -363,6 +366,8 @@ export default function ProtocolShowcase({
         ref={sheetOuterRef}
         className="relative bg-[#140E0B] -mt-[2px] overflow-x-clip"
       >
+        <SheetSilkCrest idPrefix="arch-to-protocols" />
+
         {/* Section 3: Curved Editorial Sheet Rise on Luminous Warm Porcelain (#FBF8F3) */}
         <motion.section
           id="protocols"
@@ -371,7 +376,7 @@ export default function ProtocolShowcase({
               ? undefined
               : { y: sheetY, scale: sheetScale, transformOrigin: "top center" }
           }
-          className="relative z-10 bg-[#FBF8F3] text-[#140E0B] silk-grain rounded-t-[48px] md:rounded-t-[76px] pt-14 sm:pt-20 scroll-mt-16 overflow-x-clip shadow-[0_-28px_72px_-26px_rgba(10,6,4,0.52)] will-change-transform"
+          className="relative z-10 bg-[#FBF8F3] text-[#16100C] silk-grain rounded-t-[44px] md:rounded-t-[72px] pt-14 sm:pt-20 scroll-mt-24 overflow-x-clip shadow-[0_-28px_72px_-26px_rgba(10,6,4,0.52)] will-change-transform"
         >
           {/* Subtle edge-hugging warm apricot/bronze ambient light washes with GPU silk drift */}
           <div
@@ -399,7 +404,7 @@ export default function ProtocolShowcase({
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.2 }}
                 transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-                className="font-display font-bold text-[#140E0B] text-3xl sm:text-4xl lg:text-[3rem] leading-[1.05] tracking-[-0.03em]"
+                className="font-display font-bold text-[#16100C] text-3xl sm:text-4xl lg:text-[3rem] leading-[1.05] tracking-[-0.03em]"
                 style={{ textWrap: "balance" }}
               >
                 Flagship <span className="text-[#E85D04]">Protocols.</span>
@@ -415,7 +420,7 @@ export default function ProtocolShowcase({
                   delay: 0.08,
                   ease: [0.22, 1, 0.36, 1],
                 }}
-                className="mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#4D4139]"
+                className="mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#4A3F37]"
               >
                 Inspect deep architectural case studies, launch live
                 applications, or ask the protocol assistant to walk through any
@@ -452,7 +457,7 @@ export default function ProtocolShowcase({
         ref={archiveStageRef}
         id="archive"
         data-testid="protocol-archive-section"
-        className="relative bg-[#1B120D] text-[#FAF6F0] silk-grain-dark pt-12 sm:pt-16 lg:pt-20 pb-24 sm:pb-32 scroll-mt-16 overflow-x-clip"
+        className="relative bg-[#1B120D] text-[#FAF6F0] silk-grain-dark pt-12 sm:pt-16 lg:pt-20 pb-24 sm:pb-32 scroll-mt-24 overflow-x-clip"
       >
         {/* Soft Copper-Amber Edge & Studio Illumination with GPU silk drift */}
         <div
@@ -495,7 +500,7 @@ export default function ProtocolShowcase({
               style={{ textWrap: "balance" }}
             >
               Explore Full-Stack &amp;{" "}
-              <span className="text-[#E85D04]">Core EVM Systems.</span>
+              <span className="text-[#FF6B1A]">Core EVM Systems.</span>
             </motion.h2>
 
             <motion.p
@@ -508,7 +513,7 @@ export default function ProtocolShowcase({
                 delay: 0.08,
                 ease: [0.22, 1, 0.36, 1],
               }}
-              className="mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#D9CEC2]"
+              className="mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#D8CEC4]"
             >
               Browse every production dApp and standalone EVM contract primitive
               with live search, case study breakdowns, and interactive agent
@@ -524,28 +529,28 @@ export default function ProtocolShowcase({
               viewport={{ once: true, amount: 0.16 }}
               transition={{ duration: 0.54, ease: [0.22, 1, 0.36, 1] }}
               onMouseMove={handlePortalSpecular}
-              className="specular-surface overflow-hidden group rounded-[36px] sm:rounded-[40px] bg-[#FBF8F3] text-[#140E0B] hover:-translate-y-1 p-7 sm:p-9 lg:p-10 flex flex-col justify-between transition-[box-shadow,transform] duration-250 shadow-[inset_0_1px_0_rgba(255,255,255,0.96),0_30px_72px_-30px_rgba(0,0,0,0.72)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,1),0_36px_80px_-28px_rgba(232,93,4,0.32)]"
+              className="specular-surface overflow-hidden group rounded-[36px] sm:rounded-[40px] bg-[#FBF8F3] text-[#16100C] hover:-translate-y-1 p-7 sm:p-9 lg:p-10 flex flex-col justify-between transition-[box-shadow,transform] duration-250 shadow-[inset_0_1px_0_rgba(255,255,255,0.96),0_30px_72px_-30px_rgba(0,0,0,0.72)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,1),0_36px_80px_-28px_rgba(232,93,4,0.32)]"
             >
               <div className="relative z-10">
                 <div className="flex items-center justify-between gap-3">
                   <div className="w-12 h-12 rounded-full bg-[#EFE6DA] flex items-center justify-center text-[#E85D04] shadow-[inset_0_1px_0_rgba(255,255,255,0.85)]">
                     <FolderKanban className="w-5 h-5" aria-hidden="true" />
                   </div>
-                  <span className="font-mono-tabular text-xs font-semibold text-[#7D6C61]">
+                  <span className="font-mono-tabular text-xs font-semibold text-[#6E5F54]">
                     Warm Porcelain Atelier
                   </span>
                 </div>
 
-                <h3 className="mt-5 font-display text-2xl sm:text-[1.65rem] font-bold text-[#140E0B] tracking-[-0.025em]">
+                <h3 className="mt-5 font-display text-2xl sm:text-[1.65rem] font-bold text-[#16100C] tracking-[-0.025em]">
                   Full-Stack Web3 Protocols
                 </h3>
-                <p className="mt-2.5 text-sm sm:text-[15px] leading-[1.68] text-[#4D4139]">
+                <p className="mt-2.5 text-sm sm:text-[15px] leading-[1.68] text-[#4A3F37]">
                   End-to-end DeFi, RWA, keeper automation, insurance,
                   governance, and on-chain reputation protocols pairing audited
                   Solidity cores with live Next.js and Wagmi interfaces.
                 </p>
 
-                <p className="mt-5 rounded-[24px] bg-[#EFE6DA]/82 px-4 py-3.5 text-xs font-mono-tabular text-[#594A42] leading-relaxed">
+                <p className="mt-5 rounded-[24px] bg-[#EFE6DA]/82 px-4 py-3.5 text-xs font-mono-tabular text-[#4A3F37] leading-relaxed">
                   {fullStackProjects.map((p) => p.shortTitle).join(" · ")}
                 </p>
               </div>
@@ -554,7 +559,7 @@ export default function ProtocolShowcase({
                 <button
                   type="button"
                   onClick={() => onOpenArchive("fullstack")}
-                  className="inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-3 rounded-full bg-[#140E0B] hover:bg-[#E85D04] hover:-translate-y-0.5 active:scale-[0.98] text-[#FAF6F0] text-xs sm:text-sm font-semibold transition-[background-color,transform] duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04]"
+                  className="inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-3 rounded-full bg-[#16100C] hover:bg-[#E85D04] hover:-translate-y-0.5 active:scale-[0.98] text-[#FAF6F0] text-xs sm:text-sm font-semibold transition-[background-color,transform] duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04]"
                 >
                   <span>Explore Full-Stack Web3 Protocols</span>
                   <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
@@ -577,10 +582,10 @@ export default function ProtocolShowcase({
             >
               <div className="relative z-10">
                 <div className="flex items-center justify-between gap-3">
-                  <div className="w-12 h-12 rounded-full bg-[#221610] flex items-center justify-center text-[#FF5E0E] shadow-[inset_0_1px_0_rgba(244,162,97,0.18)]">
+                  <div className="w-12 h-12 rounded-full bg-[#221610] flex items-center justify-center text-[#FF6B1A] shadow-[inset_0_1px_0_rgba(244,162,97,0.18)]">
                     <Terminal className="w-5 h-5" aria-hidden="true" />
                   </div>
-                  <span className="font-mono-tabular text-xs font-semibold text-[#F48C06]">
+                  <span className="font-mono-tabular text-xs font-semibold text-[#FF6B1A]">
                     Obsidian Copper Lab
                   </span>
                 </div>
@@ -588,13 +593,13 @@ export default function ProtocolShowcase({
                 <h3 className="mt-5 font-display text-2xl sm:text-[1.65rem] font-bold text-[#FAF6F0] tracking-[-0.025em]">
                   Core EVM Contracts
                 </h3>
-                <p className="mt-2.5 text-sm sm:text-[15px] leading-[1.68] text-[#D9CEC2]">
+                <p className="mt-2.5 text-sm sm:text-[15px] leading-[1.68] text-[#D8CEC4]">
                   Focused Solidity and Foundry engineering covering CDP
                   stablecoins, Chainlink VRF state machines, ERC-4337 EntryPoint
                   smart accounts, UUPS proxies, and Merkle-712 claim vaults.
                 </p>
 
-                <p className="mt-5 rounded-[24px] bg-[#1D130E]/92 px-4 py-3.5 text-xs font-mono-tabular text-[#B8A89B] leading-relaxed shadow-[inset_0_1px_0_rgba(250,246,240,0.05)]">
+                <p className="mt-5 rounded-[24px] bg-[#1D130E]/92 px-4 py-3.5 text-xs font-mono-tabular text-[#A69688] leading-relaxed shadow-[inset_0_1px_0_rgba(250,246,240,0.05)]">
                   {coreProjects.map((p) => p.shortTitle).join(" · ")}
                 </p>
               </div>

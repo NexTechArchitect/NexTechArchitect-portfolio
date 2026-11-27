@@ -144,15 +144,15 @@ function GalleryCard({
           {/* Monospace Protocol Metadata Header */}
           <div
             className={`flex items-center justify-between gap-3 text-xs font-mono-tabular mb-4 ${
-              isDarkLab ? "text-[#A8988B]" : "text-[#7D6C61]"
+              isDarkLab ? "text-[#A69688]" : "text-[#6E5F54]"
             }`}
           >
             <span className="truncate">
               <span
                 className={
                   isDarkLab
-                    ? "text-[#F48C06] font-semibold"
-                    : "text-[#E85D04] font-semibold"
+                    ? "text-[#FF6B1A] font-semibold"
+                    : "text-[#C84B04] font-semibold"
                 }
               >
                 {project.network}
@@ -162,7 +162,7 @@ function GalleryCard({
                 className={
                   isDarkLab
                     ? "mx-1.5 text-[#FAF6F0]/25"
-                    : "mx-1.5 text-[#140E0B]/25"
+                    : "mx-1.5 text-[#16100C]/25"
                 }
               >
                 ·
@@ -176,8 +176,8 @@ function GalleryCard({
             <div
               className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 ${
                 isDarkLab
-                  ? "bg-[#120B07] border-[#E85D04]/30 text-[#F48C06]"
-                  : "bg-[#F5EFE6] border-[#140E0B]/10 text-[#E85D04]"
+                  ? "bg-[#120B07] border-[#E85D04]/30 text-[#FF6B1A]"
+                  : "bg-[#F3EAE0] border-[#16100C]/10 text-[#E85D04]"
               }`}
             >
               <Icon className="w-5 h-5" aria-hidden="true" />
@@ -187,18 +187,18 @@ function GalleryCard({
                 className={`font-display text-lg font-bold tracking-[-0.025em] leading-snug transition-colors ${
                   hovered
                     ? isDarkLab
-                      ? "text-[#F48C06]"
+                      ? "text-[#FF6B1A]"
                       : "text-[#E85D04]"
                     : isDarkLab
                     ? "text-[#FAF6F0]"
-                    : "text-[#140E0B]"
+                    : "text-[#16100C]"
                 }`}
               >
                 {project.title}
               </h3>
               <p
                 className={`text-xs font-mono-tabular font-medium mt-0.5 ${
-                  isDarkLab ? "text-[#E85D04]" : "text-[#B84700]"
+                  isDarkLab ? "text-[#FF6B1A]" : "text-[#C84B04]"
                 }`}
               >
                 {project.metric}
@@ -209,7 +209,7 @@ function GalleryCard({
           {/* Humanized 2-sentence description */}
           <p
             className={`text-sm leading-relaxed flex-1 mb-4 ${
-              isDarkLab ? "text-[#CFC3B9]" : "text-[#594A42]"
+              isDarkLab ? "text-[#D8CEC4]" : "text-[#4A3F37]"
             }`}
           >
             {project.description}
@@ -218,7 +218,7 @@ function GalleryCard({
           {/* Clean unboxed stack list */}
           <p
             className={`text-xs font-mono-tabular mb-5 ${
-              isDarkLab ? "text-[#9C8B7E]" : "text-[#7D6C61]"
+              isDarkLab ? "text-[#A69688]" : "text-[#6E5F54]"
             }`}
           >
             {project.tech.join(" · ")}
@@ -232,8 +232,8 @@ function GalleryCard({
                 onClick={onSelect}
                 className={`inline-flex items-center justify-center gap-1.5 min-h-[44px] px-4 py-2 rounded-full text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                   isDarkLab
-                    ? "bg-[#E85D04] hover:bg-[#F48C06] text-[#FAF6F0]"
-                    : "bg-[#140E0B] hover:bg-[#E85D04] text-[#FAF6F0]"
+                    ? "bg-[#E85D04] hover:bg-[#D14F00] text-[#FAF6F0]"
+                    : "bg-[#16100C] hover:bg-[#E85D04] text-[#FAF6F0]"
                 }`}
               >
                 <span>Case Study</span>
@@ -245,8 +245,8 @@ function GalleryCard({
                 onClick={onAskAmit}
                 className={`inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3.5 py-2 rounded-full border text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                   isDarkLab
-                    ? "bg-[#120B07] hover:bg-[#261810] text-[#FAF6F0] border-[#FAF6F0]/14 hover:border-[#E85D04]"
-                    : "bg-[#F5EFE6] hover:bg-[#140E0B] text-[#140E0B] hover:text-[#FAF6F0] border-[#140E0B]/12"
+                    ? "bg-[#120B07] hover:bg-[#261810] text-[#FAF6F0] border-[#FAF6F0]/14 hover:border-[#FF6B1A]"
+                    : "bg-[#F3EAE0] hover:bg-[#16100C] text-[#16100C] hover:text-[#FAF6F0] border-[#16100C]/12"
                 }`}
               >
                 <MessageSquare
@@ -259,7 +259,7 @@ function GalleryCard({
 
             <div
               className={`flex items-center gap-4 text-xs font-semibold ${
-                isDarkLab ? "text-[#C9BDB3]" : "text-[#594A42]"
+                isDarkLab ? "text-[#D8CEC4]" : "text-[#4A3F37]"
               }`}
             >
               {project.liveUrl && (
@@ -395,7 +395,7 @@ export default function ProjectGalleryOverlay({
               <div>
                 <h2
                   className={`font-display text-2xl sm:text-3xl font-bold tracking-[-0.03em] ${
-                    isDarkLab ? "text-[#FAF6F0]" : "text-[#140E0B]"
+                    isDarkLab ? "text-[#FAF6F0]" : "text-[#16100C]"
                   }`}
                 >
                   {title}
@@ -406,7 +406,7 @@ export default function ProjectGalleryOverlay({
                 <div className="relative flex-1 sm:w-72">
                   <Search
                     className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${
-                      isDarkLab ? "text-[#A8988B]" : "text-[#7D6C61]"
+                      isDarkLab ? "text-[#A69688]" : "text-[#6E5F54]"
                     }`}
                     aria-hidden="true"
                   />
@@ -418,8 +418,8 @@ export default function ProjectGalleryOverlay({
                     aria-label="Filter projects by protocol or standard"
                     className={`w-full h-11 pl-10 pr-3 rounded-full border text-sm focus:outline-none focus:border-[#E85D04] ${
                       isDarkLab
-                        ? "bg-[#1C120C] border-[#FAF6F0]/14 text-[#FAF6F0] placeholder:text-[#9C8B7E]"
-                        : "bg-[#FFFCF7] border-[#140E0B]/15 text-[#140E0B] placeholder:text-[#7D6C61]"
+                        ? "bg-[#1C120C] border-[#FAF6F0]/14 text-[#FAF6F0] placeholder:text-[#A69688]"
+                        : "bg-[#FFFCF7] border-[#16100C]/15 text-[#16100C] placeholder:text-[#6E5F54]"
                     }`}
                   />
                 </div>
@@ -430,8 +430,8 @@ export default function ProjectGalleryOverlay({
                   aria-label="Close project gallery"
                   className={`inline-flex items-center justify-center w-11 h-11 rounded-full transition-colors shrink-0 cursor-pointer ${
                     isDarkLab
-                      ? "bg-[#E85D04] text-[#FAF6F0] hover:bg-[#F48C06]"
-                      : "bg-[#140E0B] text-[#FAF6F0] hover:bg-[#E85D04]"
+                      ? "bg-[#E85D04] text-[#FAF6F0] hover:bg-[#D14F00]"
+                      : "bg-[#16100C] text-[#FAF6F0] hover:bg-[#E85D04]"
                   }`}
                 >
                   <X className="w-4 h-4" aria-hidden="true" />
@@ -447,19 +447,19 @@ export default function ProjectGalleryOverlay({
                 className={`p-10 sm:p-12 rounded-2xl border text-center ${
                   isDarkLab
                     ? "bg-[#1C120C] border-[#FAF6F0]/12"
-                    : "bg-[#FFFCF7] border-[#140E0B]/12"
+                    : "bg-[#FFFCF7] border-[#16100C]/12"
                 }`}
               >
                 <p
                   className={`font-display text-lg font-bold mb-1 ${
-                    isDarkLab ? "text-[#FAF6F0]" : "text-[#140E0B]"
+                    isDarkLab ? "text-[#FAF6F0]" : "text-[#16100C]"
                   }`}
                 >
                   No matching protocols
                 </p>
                 <p
                   className={`text-sm mb-4 ${
-                    isDarkLab ? "text-[#C9BDB3]" : "text-[#594A42]"
+                    isDarkLab ? "text-[#D8CEC4]" : "text-[#4A3F37]"
                   }`}
                 >
                   Try clearing your filter query to browse the full archive.

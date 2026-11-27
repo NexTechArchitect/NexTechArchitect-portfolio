@@ -10,7 +10,7 @@ import {
 } from "framer-motion";
 import { Check, Copy, FileCode2, MessageSquare } from "lucide-react";
 import { ARCHITECTURE_INSIGHTS } from "@/data/projects";
-import { SolarHorizonArch } from "@/components/SectionCurves";
+import { SheetSilkCrest, SolarHorizonArch } from "@/components/SectionCurves";
 import { useAgent } from "@/context/AgentContext";
 
 const SOLIDITY_KEYWORDS = new Set([
@@ -181,6 +181,8 @@ export default function WorkbenchStage({
       ref={folioOuterRef}
       className="relative bg-[#1B120D] -mt-[2px] overflow-x-clip"
     >
+      <SheetSilkCrest idPrefix="archive-to-workbench" />
+
       <motion.section
         id="workbench"
         style={
@@ -188,7 +190,7 @@ export default function WorkbenchStage({
             ? undefined
             : { y: folioY, scale: folioScale, transformOrigin: "top center" }
         }
-        className="relative z-20 bg-[#F3EAE0] text-[#140E0B] silk-grain rounded-t-[48px] md:rounded-t-[76px] pt-14 sm:pt-20 scroll-mt-20 overflow-x-clip shadow-[0_-28px_72px_-26px_rgba(10,6,4,0.55)] will-change-transform"
+        className="relative z-20 bg-[#F3EAE0] text-[#16100C] silk-grain rounded-t-[44px] md:rounded-t-[72px] pt-14 sm:pt-20 scroll-mt-24 overflow-x-clip shadow-[0_-28px_72px_-26px_rgba(10,6,4,0.55)] will-change-transform"
       >
         {/* Subtle warm-amber edge ambient light over Soft Champagne Sand canvas with GPU silk drift */}
         <div
@@ -216,7 +218,7 @@ export default function WorkbenchStage({
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-              className="font-display font-bold text-[#140E0B] text-3xl sm:text-4xl lg:text-[3rem] leading-[1.05] tracking-[-0.032em]"
+              className="font-display font-bold text-[#16100C] text-3xl sm:text-4xl lg:text-[3rem] leading-[1.05] tracking-[-0.032em]"
               style={{ textWrap: "balance" }}
             >
               Production Contract{" "}
@@ -233,7 +235,7 @@ export default function WorkbenchStage({
                 delay: 0.08,
                 ease: [0.22, 1, 0.36, 1],
               }}
-              className="mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#4D4139]"
+              className="mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#4A3F37]"
             >
               Inspect real Solidity and inline Yul guards extracted from
               deployed DeFi, RWA, keeper, and governance systems.
@@ -266,7 +268,7 @@ export default function WorkbenchStage({
                     className={`relative z-30 inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-full font-mono-tabular text-xs font-semibold transition-colors duration-150 whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] ${
                       isSelected
                         ? "text-[#FAF6F0]"
-                        : "text-[#594A42] hover:text-[#140E0B]"
+                        : "text-[#4A3F37] hover:text-[#16100C]"
                     }`}
                   >
                     {isSelected && (
@@ -308,43 +310,43 @@ export default function WorkbenchStage({
                 {/* Left (5 cols): Crisp Light Editorial Breakdown */}
                 <div className="lg:col-span-5 flex flex-col justify-between pt-1">
                   <div>
-                    <p className="font-mono-tabular text-xs font-semibold text-[#B84700]">
+                    <p className="font-mono-tabular text-xs font-semibold text-[#C84B04]">
                       {activeInsight.protocol}
                       <span
                         aria-hidden="true"
-                        className="mx-2 text-[#140E0B]/25"
+                        className="mx-2 text-[#16100C]/25"
                       >
                         ·
                       </span>
-                      <span className="text-[#6C5B52]">
+                      <span className="text-[#6E5F54]">
                         {activeInsight.domain}
                       </span>
                     </p>
 
-                    <h3 className="mt-3 font-display text-2xl sm:text-[1.85rem] font-bold text-[#140E0B] tracking-[-0.028em] leading-[1.16]">
+                    <h3 className="mt-3 font-display text-2xl sm:text-[1.85rem] font-bold text-[#16100C] tracking-[-0.028em] leading-[1.16]">
                       {activeInsight.title}
                     </h3>
 
-                    <p className="mt-4 text-[15px] leading-[1.72] text-[#4D4139]">
+                    <p className="mt-4 text-[15px] leading-[1.72] text-[#4A3F37]">
                       {activeInsight.body}
                     </p>
 
                     {/* Two Tonal Editorial Callout Cards (Zero Rigid Borders, Organic Curvature) */}
                     <div className="mt-7 space-y-3.5">
                       <div className="rounded-[28px] bg-[#EAE0D3]/88 shadow-[inset_0_1px_0_rgba(255,255,255,0.72),0_14px_34px_-26px_rgba(20,14,11,0.22)] px-6 py-5">
-                        <p className="font-mono-tabular text-[11px] uppercase tracking-[0.12em] font-semibold text-[#7D6C61]">
+                        <p className="font-mono-tabular text-[11px] uppercase tracking-[0.12em] font-semibold text-[#6E5F54]">
                           Engineering Tradeoff
                         </p>
-                        <p className="mt-1.5 text-sm leading-[1.68] text-[#3F332C]">
+                        <p className="mt-1.5 text-sm leading-[1.68] text-[#4A3F37]">
                           {activeInsight.tradeoff}
                         </p>
                       </div>
 
                       <div className="rounded-[28px] bg-[#EFE5D8] shadow-[inset_0_1px_0_rgba(255,255,255,0.78),0_16px_38px_-26px_rgba(232,93,4,0.22)] px-6 py-5">
-                        <p className="font-mono-tabular text-[11px] uppercase tracking-[0.12em] font-semibold text-[#E85D04]">
+                        <p className="font-mono-tabular text-[11px] uppercase tracking-[0.12em] font-semibold text-[#C84B04]">
                           Verified Outcome
                         </p>
-                        <p className="mt-1.5 text-sm leading-[1.68] font-medium text-[#140E0B]">
+                        <p className="mt-1.5 text-sm leading-[1.68] font-medium text-[#16100C]">
                           {activeInsight.outcome}
                         </p>
                       </div>
@@ -376,7 +378,7 @@ export default function WorkbenchStage({
                         >
                           {activeInsight.filename}
                         </p>
-                        <p className="text-[11px] text-[#A8988B] truncate">
+                        <p className="text-[11px] text-[#A69688] truncate">
                           {activeInsight.language}
                         </p>
                       </div>
@@ -386,10 +388,10 @@ export default function WorkbenchStage({
                       <button
                         type="button"
                         onClick={handleAskCode}
-                        className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-4 py-2 rounded-full bg-[#271C15] border border-[#FAF6F0]/14 hover:border-[#E85D04] active:scale-[0.98] text-xs font-semibold text-[#FAF6F0] transition-[border-color,transform] cursor-pointer whitespace-nowrap"
+                        className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-4 py-2 rounded-full bg-[#271C15] border border-[#FAF6F0]/14 hover:border-[#FF6B1A] active:scale-[0.98] text-xs font-semibold text-[#FAF6F0] transition-[border-color,transform] cursor-pointer whitespace-nowrap"
                       >
                         <MessageSquare
-                          className="w-3.5 h-3.5 text-[#E85D04]"
+                          className="w-3.5 h-3.5 text-[#FF6B1A]"
                           aria-hidden="true"
                         />
                         <span>Explain Code</span>
@@ -427,7 +429,7 @@ export default function WorkbenchStage({
                           >
                             <span
                               aria-hidden="true"
-                              className="select-none w-8 pr-3 text-right text-[#6E5E54] shrink-0"
+                              className="select-none w-8 pr-3 text-right text-[#8E7E72] shrink-0"
                             >
                               {index + 1}
                             </span>

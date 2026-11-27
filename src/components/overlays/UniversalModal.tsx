@@ -43,22 +43,22 @@ export default function UniversalModal({
   const renderContent = () => {
     if (activeType === "skill" || activeType === "experience") {
       return (
-        <div className="p-8 md:p-12 text-[#140E0B] min-h-[50vh]">
+        <div className="p-8 md:p-12 text-[#16100C] min-h-[50vh]">
           <h2 className="font-display text-4xl font-bold tracking-[-0.03em] mb-4">
             {selectedItem.name || selectedItem.role}
           </h2>
-          <p className="text-lg text-[#E85D04] mb-8">
+          <p className="text-lg text-[#C84B04] mb-8">
             {selectedItem.description || selectedItem.company}
           </p>
           {(selectedItem.content || []).map((c, i) => (
             <div
               key={i}
-              className="mb-6 p-6 bg-[#F5EFE6]/80 rounded-2xl border border-[#140E0B]/10"
+              className="mb-6 p-6 bg-[#F3EAE0]/80 rounded-2xl border border-[#16100C]/10"
             >
-              <h4 className="font-mono-tabular font-semibold text-[#E85D04] mb-2 text-xs">
+              <h4 className="font-mono-tabular font-semibold text-[#C84B04] mb-2 text-xs">
                 {c.heading}
               </h4>
-              <p className="text-[#594A42] leading-relaxed">{c.text}</p>
+              <p className="text-[#4A3F37] leading-relaxed">{c.text}</p>
             </div>
           ))}
         </div>
@@ -85,10 +85,10 @@ export default function UniversalModal({
 
     return (
       <div className="p-20 text-center min-h-[50vh] flex flex-col items-center justify-center">
-        <h3 className="font-display text-2xl font-bold mb-3 text-[#140E0B]">
+        <h3 className="font-display text-2xl font-bold mb-3 text-[#16100C]">
           Case Study Unavailable
         </h3>
-        <p className="text-[#594A42] text-sm">
+        <p className="text-[#4A3F37] text-sm">
           The detailed architectural breakdown for this entry is being prepared.
         </p>
       </div>

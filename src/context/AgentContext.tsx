@@ -46,7 +46,15 @@ interface AgentContextValue {
   stopSpeaking: () => void;
 }
 
-const AgentContext = createContext<AgentContextValue | null>(null);
+const AGENT_CONTEXT_SYMBOL = Symbol.for("__nextech_agent_context__");
+const globalScope = globalThis as unknown as Record<
+  symbol,
+  React.Context<AgentContextValue | null> | undefined
+>;
+const AgentContext =
+  globalScope[AGENT_CONTEXT_SYMBOL] ??
+  (globalScope[AGENT_CONTEXT_SYMBOL] =
+    createContext<AgentContextValue | null>(null));
 
 const subscribeNoop = () => () => {};
 const getSpeechSupportedClient = () =>

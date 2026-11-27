@@ -59,7 +59,7 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
     <footer
       ref={footerRef}
       id="contact"
-      className="relative -mt-[2px] bg-[#0A0604] text-[#FAF6F0] silk-grain-dark pt-12 sm:pt-18 pb-14 overflow-hidden scroll-mt-20"
+      className="relative -mt-[2px] bg-[#0A0604] text-[#FAF6F0] silk-grain-dark pt-12 sm:pt-18 pb-28 sm:pb-24 overflow-hidden scroll-mt-24"
     >
       {/* Warm burnt-orange & copper atmospheric illumination nestled smoothly inside obsidian canvas */}
       <div
@@ -102,7 +102,7 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
               style={{ textWrap: "balance" }}
             >
               Let&apos;s Architect Your Next{" "}
-              <span className="text-[#E85D04]">Protocol.</span>
+              <span className="text-[#FF6B1A]">Protocol.</span>
             </motion.h2>
             <motion.p
               data-testid="section-subtitle-footer"
@@ -114,7 +114,7 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
                 delay: 0.08,
                 ease: [0.22, 1, 0.36, 1],
               }}
-              className="mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#D9CEC2]"
+              className="mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#D8CEC4]"
             >
               Available for remote Smart Contract Engineer roles, DeFi protocol
               architecture, Foundry invariant hardening, and full-stack EVM
@@ -203,7 +203,7 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.5, delay: 0.14, ease: [0.22, 1, 0.36, 1] }}
           onMouseMove={handleBarSpecular}
-          className="specular-surface-dark overflow-hidden rounded-[36px] bg-[#140D09]/92 transition-shadow duration-250 shadow-[inset_0_1px_0_rgba(250,246,240,0.09),0_24px_56px_-28px_rgba(0,0,0,0.85)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.22),0_26px_62px_-26px_rgba(232,93,4,0.25)] px-7 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs font-medium text-[#B8A89B]"
+          className="specular-surface-dark overflow-hidden rounded-[36px] bg-[#140D09]/92 transition-shadow duration-250 shadow-[inset_0_1px_0_rgba(250,246,240,0.09),0_24px_56px_-28px_rgba(0,0,0,0.85)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.22),0_26px_62px_-26px_rgba(232,93,4,0.25)] px-7 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs font-medium text-[#A69688]"
         >
           <div className="relative z-10 flex flex-wrap items-center gap-x-3 gap-y-1">
             <span className="font-display font-bold text-[#FAF6F0] text-sm tracking-[-0.02em]">
