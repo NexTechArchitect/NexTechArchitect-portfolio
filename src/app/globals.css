@@ -39,6 +39,7 @@
 html {
   scroll-behavior: smooth;
   background-color: #FAF6F0;
+  overflow-x: clip;
 }
 
 /* Preserve effortless native scrolling across trackpads, mice, and touchscreens */

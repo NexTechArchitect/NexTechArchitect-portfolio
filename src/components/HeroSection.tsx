@@ -1,13 +1,21 @@
 "use client";
 
-import React from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import React, { useRef } from "react";
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useSpring,
+  useTransform,
+} from "framer-motion";
 import { ArrowDownRight, ArrowUpRight, Mail } from "lucide-react";
 import AmitAvatar3D from "@/components/AmitAvatar3D";
 import {
+  getScrollSpringConfig,
   HeroHeaderCanopy,
   HeroSilkWave,
   ScrollHorizonSweep,
+  useIsMobile,
 } from "@/components/SectionCurves";
 import { useAgent } from "@/context/AgentContext";
 
@@ -40,7 +48,27 @@ export default function HeroSection({
   onInspectYulGas,
 }: HeroSectionProps) {
   const prefersReducedMotion = useReducedMotion();
+  const isMobile = useIsMobile();
   const { openAgent } = useAgent();
+  const heroRef = useRef<HTMLElement | null>(null);
+
+  // Live bidirectional scroll-exit depth parallax across copy, silk wave, and 3D avatar
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"],
+  });
+  const smoothExit = useSpring(
+    scrollYProgress,
+    getScrollSpringConfig(isMobile)
+  );
+
+  const copyY = useTransform(smoothExit, [0, 1], [0, isMobile ? -12 : -28]);
+  const copyScale = useTransform(
+    smoothExit,
+    [0, 1],
+    [1, isMobile ? 0.985 : 0.965]
+  );
+  const avatarY = useTransform(smoothExit, [0, 1], [0, isMobile ? -16 : -40]);
 
   const handleScrollToContact = () => {
     const el = document.getElementById("contact");
@@ -51,6 +79,7 @@ export default function HeroSection({
 
   return (
     <section
+      ref={heroRef}
       id="top"
       className="relative bg-[#FAF6F0] text-[#16100C] silk-grain overflow-x-clip"
     >
@@ -75,17 +104,31 @@ export default function HeroSection({
         }}
       />
 
-      {/* Signature Translucent Glowing Apricot & Burnt-Orange Filled Silk Wave Behind Hero & 3D Avatar */}
-      <HeroSilkWave idPrefix="hero-signature-silk" />
+      {/* Signature Translucent Glowing Apricot & Burnt-Orange Filled Silk Wave with Live Scroll Drift */}
+      <HeroSilkWave
+        idPrefix="hero-signature-silk"
+        scrollProgress={smoothExit}
+      />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 lg:pt-10 pb-6 sm:pb-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
-          {/* Left Column: Choreographed Cinema Load Sequence on Luminous Warm Ivory */}
-          <div className="lg:col-span-7 flex flex-col justify-center">
+          {/* Left Column: Choreographed Cinema Load + Bidirectional Scroll-Exit Depth Scale */}
+          <motion.div
+            style={
+              prefersReducedMotion
+                ? undefined
+                : { y: copyY, scale: copyScale, transformOrigin: "top left" }
+            }
+            className="lg:col-span-7 flex flex-col justify-center will-change-transform"
+          >
             {/* 1. Identity + Role Pill glide cleanly in from the Left */}
             <motion.div
               data-testid="hero-identity-lockup"
-              initial={prefersReducedMotion ? false : { opacity: 0, x: -44 }}
+              initial={
+                prefersReducedMotion
+                  ? false
+                  : { opacity: 0, x: isMobile ? -20 : -44 }
+              }
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.72, delay: 0.06, ease: CINEMA_EASE }}
               className="flex flex-wrap items-center gap-x-3 gap-y-2 will-change-transform"
@@ -105,17 +148,25 @@ export default function HeroSection({
             {/* 2. Hero H1 lines cascade smoothly upward (staggered 0.1s) */}
             <h1 className="mt-4 font-display font-bold text-[#16100C] text-[30px] sm:text-[36px] lg:text-[42px] leading-[1.1] tracking-[-0.025em] max-w-[26ch]">
               <motion.span
-                initial={prefersReducedMotion ? false : { opacity: 0, y: 34 }}
+                initial={
+                  prefersReducedMotion
+                    ? false
+                    : { opacity: 0, y: isMobile ? 16 : 34 }
+                }
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.74, delay: 0.14, ease: CINEMA_EASE }}
+                transition={{ duration: 0.72, delay: 0.14, ease: CINEMA_EASE }}
                 className="block will-change-transform"
               >
                 I Architect DeFi Protocols
               </motion.span>
               <motion.span
-                initial={prefersReducedMotion ? false : { opacity: 0, y: 34 }}
+                initial={
+                  prefersReducedMotion
+                    ? false
+                    : { opacity: 0, y: isMobile ? 16 : 34 }
+                }
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.74, delay: 0.24, ease: CINEMA_EASE }}
+                transition={{ duration: 0.72, delay: 0.24, ease: CINEMA_EASE }}
                 className="block mt-1 will-change-transform"
               >
                 Built to{" "}
@@ -126,7 +177,11 @@ export default function HeroSection({
             {/* 3. Bio paragraphs rise cleanly from the Bottom (staggered) */}
             <div className="mt-5 space-y-3 text-[15px] sm:text-[16px] leading-[1.66] text-[#4A3F37] max-w-[60ch]">
               <motion.p
-                initial={prefersReducedMotion ? false : { opacity: 0, y: 28 }}
+                initial={
+                  prefersReducedMotion
+                    ? false
+                    : { opacity: 0, y: isMobile ? 14 : 28 }
+                }
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.72, delay: 0.32, ease: CINEMA_EASE }}
                 className="will-change-transform"
@@ -138,7 +193,11 @@ export default function HeroSection({
                 top.
               </motion.p>
               <motion.p
-                initial={prefersReducedMotion ? false : { opacity: 0, y: 28 }}
+                initial={
+                  prefersReducedMotion
+                    ? false
+                    : { opacity: 0, y: isMobile ? 14 : 28 }
+                }
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.72, delay: 0.4, ease: CINEMA_EASE }}
                 className="text-[#5C4E45] will-change-transform"
@@ -152,7 +211,11 @@ export default function HeroSection({
 
             {/* 4. Primary Actions rise cleanly from Bottom with Diagonal Specular Sheen & Directional Icon Nudge */}
             <motion.div
-              initial={prefersReducedMotion ? false : { opacity: 0, y: 28 }}
+              initial={
+                prefersReducedMotion
+                  ? false
+                  : { opacity: 0, y: isMobile ? 14 : 28 }
+              }
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.72, delay: 0.46, ease: CINEMA_EASE }}
               className="mt-6 flex flex-wrap items-center gap-3.5 will-change-transform"
@@ -184,7 +247,11 @@ export default function HeroSection({
 
             {/* 5. Direct Social & Contact Row */}
             <motion.div
-              initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
+              initial={
+                prefersReducedMotion
+                  ? false
+                  : { opacity: 0, y: isMobile ? 10 : 20 }
+              }
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.68, delay: 0.54, ease: CINEMA_EASE }}
               className="mt-5 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-x-5 gap-y-2 text-[13.5px] font-medium text-[#4A3F37] will-change-transform"
@@ -235,18 +302,23 @@ export default function HeroSection({
                 <span>nextech.amit@gmail.com</span>
               </a>
             </motion.div>
-          </div>
+          </motion.div>
 
-          {/* Right Column: Glides in smoothly from the Right (x: 64 -> 0, scale: 0.88 -> 1) */}
+          {/* Right Column: Live Counter-Parallax Float + Cinema Entrance from Right */}
           <motion.div
-            initial={
-              prefersReducedMotion ? false : { opacity: 0, x: 64, scale: 0.88 }
-            }
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            transition={{ duration: 0.84, delay: 0.16, ease: CINEMA_EASE }}
+            style={prefersReducedMotion ? undefined : { y: avatarY }}
             className="lg:col-span-5 relative z-20 flex flex-col items-center will-change-transform"
           >
-            <div className="relative w-full flex flex-col items-center justify-center">
+            <motion.div
+              initial={
+                prefersReducedMotion
+                  ? false
+                  : { opacity: 0, x: isMobile ? 26 : 64, scale: 0.88 }
+              }
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              transition={{ duration: 0.82, delay: 0.16, ease: CINEMA_EASE }}
+              className="relative w-full flex flex-col items-center justify-center will-change-transform"
+            >
               <div
                 aria-hidden="true"
                 className="pointer-events-none absolute left-1/2 top-[48%] -translate-x-1/2 -translate-y-1/2 w-[320px] h-[320px] sm:w-[380px] sm:h-[380px] rounded-full opacity-90 z-0"
@@ -264,11 +336,11 @@ export default function HeroSection({
                   onScrollToContact={handleScrollToContact}
                 />
               </div>
-            </div>
+            </motion.div>
           </motion.div>
         </div>
 
-        {/* All 12 Skill Pills Cascading in a Crisp Wave Sequence with Bouncy Spring Hover Lift */}
+        {/* All 12 Skill Pills Cascading in a Replayable Staggered Wave (once: false) */}
         <div
           data-testid="hero-core-skills"
           aria-label="Core engineering skills"
@@ -281,10 +353,10 @@ export default function HeroSection({
                 initial={
                   prefersReducedMotion
                     ? false
-                    : { opacity: 0, scale: 0.82, y: 24 }
+                    : { opacity: 0, scale: 0.88, y: isMobile ? 10 : 22 }
                 }
                 whileInView={{ opacity: 1, scale: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.08 }}
+                viewport={{ once: false, amount: 0.12 }}
                 whileHover={
                   prefersReducedMotion
                     ? undefined
@@ -299,8 +371,8 @@ export default function HeroSection({
                       }
                 }
                 transition={{
-                  duration: 0.56,
-                  delay: idx * 0.045,
+                  duration: 0.68,
+                  delay: idx * 0.035,
                   ease: CINEMA_EASE,
                 }}
                 className="flex items-center justify-center text-center gap-2 min-h-[44px] px-4 py-2.5 rounded-full bg-[#F3EAE0]/88 hover:bg-[#FFFDF9] text-[12px] sm:text-[12.5px] font-medium text-[#4A3F37] hover:text-[#16100C] leading-snug shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_26px_-18px_rgba(20,14,11,0.2)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.98),0_16px_32px_-14px_rgba(232,93,4,0.32)] transition-[background-color,color,box-shadow] duration-200 will-change-transform cursor-default"

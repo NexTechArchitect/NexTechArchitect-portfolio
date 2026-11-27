@@ -18,7 +18,11 @@ import {
   Mail,
   MessageSquare,
 } from "lucide-react";
-import { SectionRevealStage } from "@/components/SectionCurves";
+import {
+  getScrollSpringConfig,
+  SectionRevealStage,
+  useIsMobile,
+} from "@/components/SectionCurves";
 import { useAgent } from "@/context/AgentContext";
 
 interface StudioFooterProps {
@@ -31,10 +35,12 @@ const CINEMA_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 function MagneticWrap({
   children,
   strength = 0.18,
+  disabled = false,
   className = "",
 }: {
   children: React.ReactNode;
   strength?: number;
+  disabled?: boolean;
   className?: string;
 }) {
   const prefersReducedMotion = useReducedMotion();
@@ -46,7 +52,7 @@ function MagneticWrap({
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      if (prefersReducedMotion) return;
+      if (prefersReducedMotion || disabled) return;
       const el = wrapRef.current;
       if (!el) return;
       const rect = el.getBoundingClientRect();
@@ -55,7 +61,7 @@ function MagneticWrap({
       rawX.set(Math.max(-6, Math.min(6, dx)));
       rawY.set(Math.max(-5, Math.min(5, dy)));
     },
-    [prefersReducedMotion, rawX, rawY, strength]
+    [prefersReducedMotion, disabled, rawX, rawY, strength]
   );
 
   const handleMouseLeave = useCallback(() => {
@@ -68,7 +74,7 @@ function MagneticWrap({
       ref={wrapRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      style={prefersReducedMotion ? undefined : { x, y }}
+      style={prefersReducedMotion || disabled ? undefined : { x, y }}
       className={`inline-flex will-change-transform ${className}`}
     >
       {children}
@@ -78,6 +84,7 @@ function MagneticWrap({
 
 export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
   const prefersReducedMotion = useReducedMotion();
+  const isMobile = useIsMobile();
   const { openAgent } = useAgent();
   const [copied, setCopied] = useState(false);
 
@@ -86,9 +93,17 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
     target: footerRef,
     offset: ["start end", "end end"],
   });
-  const emberRiseY = useTransform(scrollYProgress, [0, 1], [44, -8]);
-  const emberScale = useTransform(scrollYProgress, [0, 1], [0.92, 1.08]);
-  const emberOpacity = useTransform(scrollYProgress, [0, 1], [0.24, 0.62]);
+  const smoothEmber = useSpring(
+    scrollYProgress,
+    getScrollSpringConfig(isMobile)
+  );
+  const emberRiseY = useTransform(
+    smoothEmber,
+    [0, 1],
+    isMobile ? [20, -4] : [44, -8]
+  );
+  const emberScale = useTransform(smoothEmber, [0, 1], [0.92, 1.08]);
+  const emberOpacity = useTransform(smoothEmber, [0, 1], [0.26, 0.64]);
 
   const handleCopyEmail = async () => {
     try {
@@ -115,7 +130,7 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
       id="contact"
       className="relative -mt-[2px] bg-[#0A0604] text-[#FAF6F0] silk-grain-dark pt-6 sm:pt-10 pb-16 sm:pb-20 overflow-x-clip overflow-y-hidden scroll-mt-24"
     >
-      {/* Scroll-linked rising sunrise ember illumination swelling gently upward with scroll */}
+      {/* Spring-smoothed rising Solar Horizon ember illumination swelling gently behind the rising footer */}
       <motion.div
         aria-hidden="true"
         style={
@@ -129,7 +144,7 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
           className="w-full h-full rounded-full"
           style={{
             background:
-              "radial-gradient(ellipse at center, rgba(255, 107, 26, 0.3) 0%, rgba(217, 119, 54, 0.14) 45%, rgba(10, 6, 4, 0) 74%)",
+              "radial-gradient(ellipse at center, rgba(255, 107, 26, 0.32) 0%, rgba(217, 119, 54, 0.14) 45%, rgba(10, 6, 4, 0) 74%)",
           }}
         />
       </motion.div>
@@ -142,20 +157,25 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
         }}
       />
 
-      {/* Bold Cinema Small-to-Large Zoom Expand Stage */}
+      {/* Whole-Section Horizon Rise (y: 68 -> 0, scale: 0.9 -> 1, borderRadius: 56 -> 0) */}
       <SectionRevealStage
-        maxRadius={60}
+        variant="horizon-rise"
+        maxRadius={56}
         minRadius={0}
         scrollEndOffset="end 1"
         innerClassName="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
       >
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-end pb-10">
-          {/* Left Display Headline & Availability Copy Sweep Smoothly from Left */}
+          {/* Replayable Left Display Headline & Bio Sweep from Left (once: false) */}
           <motion.div
-            initial={prefersReducedMotion ? false : { opacity: 0.2, x: -64 }}
+            initial={
+              prefersReducedMotion
+                ? false
+                : { opacity: 0, x: isMobile ? -24 : -64 }
+            }
             whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, amount: 0.08 }}
-            transition={{ duration: 0.78, ease: CINEMA_EASE }}
+            viewport={{ once: false, amount: 0.12 }}
+            transition={{ duration: 0.72, ease: CINEMA_EASE }}
             className="lg:col-span-7 will-change-transform"
           >
             <h2
@@ -175,20 +195,28 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
             </p>
           </motion.div>
 
-          {/* Right Email Copy Pill & Primary CTA Buttons Sweep Cleanly from Right */}
+          {/* Replayable Right Email Copy Pill & CTA Buttons Sweep from Right (once: false) */}
           <motion.div
-            initial={prefersReducedMotion ? false : { opacity: 0.2, x: 64 }}
+            initial={
+              prefersReducedMotion
+                ? false
+                : { opacity: 0, x: isMobile ? 24 : 64 }
+            }
             whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, amount: 0.08 }}
+            viewport={{ once: false, amount: 0.12 }}
             transition={{
-              duration: 0.78,
-              delay: 0.08,
+              duration: 0.72,
+              delay: 0.07,
               ease: CINEMA_EASE,
             }}
             className="lg:col-span-5 flex flex-col items-start lg:items-end gap-4 will-change-transform"
           >
             {/* One-Click Copyable Email Pill with Spring Pop Copied Micro-Feedback */}
-            <MagneticWrap strength={0.14} className="max-w-full">
+            <MagneticWrap
+              strength={0.14}
+              disabled={isMobile}
+              className="max-w-full"
+            >
               <button
                 type="button"
                 onClick={handleCopyEmail}
@@ -237,7 +265,7 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
 
             {/* Primary Contact Actions with Refined Magnetic Hover Physics & Specular Sheen */}
             <div className="flex flex-wrap items-center gap-2.5">
-              <MagneticWrap>
+              <MagneticWrap disabled={isMobile}>
                 <a
                   href={`mailto:${CONTACT_EMAIL}`}
                   className="group btn-spring btn-cta-sheen inline-flex items-center justify-center gap-2 min-h-[44px] px-6 py-3 rounded-full bg-[#E85D04] hover:bg-[#D14F00] text-[#FAF6F0] text-xs sm:text-sm font-semibold whitespace-nowrap shadow-[0_14px_32px_-14px_rgba(232,93,4,0.65)] hover:shadow-[0_18px_38px_-12px_rgba(255,107,26,0.88)]"
@@ -250,7 +278,7 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
                 </a>
               </MagneticWrap>
 
-              <MagneticWrap>
+              <MagneticWrap disabled={isMobile}>
                 <button
                   type="button"
                   onClick={onOpenResume}
@@ -264,7 +292,7 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
                 </button>
               </MagneticWrap>
 
-              <MagneticWrap>
+              <MagneticWrap disabled={isMobile}>
                 <button
                   type="button"
                   onClick={openAgent}
@@ -281,12 +309,16 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
           </motion.div>
         </div>
 
-        {/* Bottom Brand Bar Rises Cleanly from Bottom (y: 36 -> 0) */}
+        {/* Replayable Bottom Brand Bar Rises Smoothly from Bottom (y: 34 -> 0, once: false) */}
         <motion.div
-          initial={prefersReducedMotion ? false : { opacity: 0.25, y: 36 }}
+          initial={
+            prefersReducedMotion
+              ? false
+              : { opacity: 0, y: isMobile ? 16 : 34 }
+          }
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.08 }}
-          transition={{ duration: 0.7, delay: 0.1, ease: CINEMA_EASE }}
+          viewport={{ once: false, amount: 0.12 }}
+          transition={{ duration: 0.72, delay: 0.08, ease: CINEMA_EASE }}
           onMouseMove={handleBarSpecular}
           className="specular-surface-dark overflow-hidden rounded-[32px] bg-[#140D09]/92 transition-shadow duration-250 shadow-[inset_0_1px_0_rgba(250,246,240,0.09),0_24px_56px_-28px_rgba(0,0,0,0.85)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.22),0_26px_62px_-26px_rgba(232,93,4,0.25)] px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 text-xs font-medium text-[#A69688] will-change-transform"
         >
@@ -298,7 +330,8 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
               ·
             </span>
             <span>
-              Amit Kumar · Smart Contract Engineer &amp; DeFi Protocol Architect
+              Amit Kumar · Smart Contract Engineer &amp; DeFi Protocol
+              Architect
             </span>
           </div>
 

@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import type { ProjectItem } from "@/data/projects";
 import { filterProjectsByQuery } from "@/lib/portfolio";
+import { useIsMobile } from "@/components/SectionCurves";
 
 const CINEMA_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
@@ -61,12 +62,14 @@ function GalleryCard({
   project,
   index,
   isDarkLab,
+  isMobile,
   onSelect,
   onAskAmit,
 }: {
   project: ProjectItem;
   index: number;
   isDarkLab: boolean;
+  isMobile: boolean;
   onSelect: () => void;
   onAskAmit: () => void;
 }) {
@@ -98,13 +101,13 @@ function GalleryCard({
       el.style.setProperty("--my", `${py}px`);
       const relX = px / rect.width;
       const relY = py / rect.height;
-      if (!prefersReducedMotion) {
+      if (!prefersReducedMotion && !isMobile) {
         mx.set(relX - 0.5);
         my.set(relY - 0.5);
       }
       setSheenPos({ x: Math.round(relX * 100), y: Math.round(relY * 100) });
     },
-    [mx, my, prefersReducedMotion]
+    [mx, my, prefersReducedMotion, isMobile]
   );
 
   const handleLeave = useCallback(() => {
@@ -115,9 +118,11 @@ function GalleryCard({
 
   const Icon = ICON_MAP[project.iconKey] || Cpu;
 
-  // Directional bottom-up wave: left column x: -36 -> 0, center x: 0, right column x: 36 -> 0
+  // Directional bottom-up wave: left column bottom-left, center bottom, right column bottom-right
   const col = index % 3;
-  const entryX = col === 0 ? -36 : col === 2 ? 36 : 0;
+  const sideShift = isMobile ? 16 : 36;
+  const entryX = col === 0 ? -sideShift : col === 2 ? sideShift : 0;
+  const entryY = col === 1 ? (isMobile ? 24 : 52) : isMobile ? 20 : 48;
 
   return (
     <motion.div
@@ -125,14 +130,15 @@ function GalleryCard({
       initial={
         prefersReducedMotion
           ? false
-          : { opacity: 0, y: 56, x: entryX, scale: 0.9 }
+          : { opacity: 0, y: entryY, x: entryX, scale: 0.9 }
       }
-      animate={{ opacity: 1, y: 0, x: 0, scale: 1 }}
+      whileInView={{ opacity: 1, y: 0, x: 0, scale: 1 }}
+      viewport={{ once: false, amount: 0.12 }}
       exit={{ opacity: 0, y: -16, scale: 0.94 }}
       transition={{
         layout: { type: "spring", stiffness: 300, damping: 28 },
-        delay: Math.min(index * 0.07, 0.35),
-        duration: 0.62,
+        delay: Math.min((index % 3) * 0.06, 0.18),
+        duration: 0.68,
         ease: CINEMA_EASE,
       }}
       style={{ perspective: 1100 }}
@@ -141,7 +147,7 @@ function GalleryCard({
       <motion.div
         ref={ref}
         whileHover={
-          prefersReducedMotion
+          prefersReducedMotion || isMobile
             ? undefined
             : {
                 y: -6,
@@ -150,7 +156,7 @@ function GalleryCard({
               }
         }
         style={
-          prefersReducedMotion
+          prefersReducedMotion || isMobile
             ? undefined
             : { rotateX: rotX, rotateY: rotY, transformStyle: "preserve-3d" }
         }
@@ -358,6 +364,7 @@ export default function ProjectGalleryOverlay({
   onAskAmit: (project: ProjectItem) => void;
 }) {
   const prefersReducedMotion = useReducedMotion();
+  const isMobile = useIsMobile();
   const [query, setQuery] = useState("");
   const isDarkLab = variant === "core";
 
@@ -449,7 +456,11 @@ export default function ProjectGalleryOverlay({
           >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4">
               <motion.div
-                initial={prefersReducedMotion ? false : { opacity: 0, x: -44 }}
+                initial={
+                  prefersReducedMotion
+                    ? false
+                    : { opacity: 0, x: isMobile ? -18 : -44 }
+                }
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.54, ease: CINEMA_EASE }}
               >
@@ -463,7 +474,11 @@ export default function ProjectGalleryOverlay({
               </motion.div>
 
               <motion.div
-                initial={prefersReducedMotion ? false : { opacity: 0, x: 44 }}
+                initial={
+                  prefersReducedMotion
+                    ? false
+                    : { opacity: 0, x: isMobile ? 18 : 44 }
+                }
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.54, delay: 0.05, ease: CINEMA_EASE }}
                 className="flex items-center gap-2.5 sm:gap-3"
@@ -552,6 +567,7 @@ export default function ProjectGalleryOverlay({
                       project={project}
                       index={index}
                       isDarkLab={isDarkLab}
+                      isMobile={isMobile}
                       onSelect={() => onProjectClick(project)}
                       onAskAmit={() => onAskAmit(project)}
                     />

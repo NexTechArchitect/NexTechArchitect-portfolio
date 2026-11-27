@@ -8,6 +8,7 @@ import {
   SectionRevealStage,
   SheetSilkCrest,
   SolarHorizonArch,
+  useIsMobile,
 } from "@/components/SectionCurves";
 import { useAgent } from "@/context/AgentContext";
 
@@ -103,6 +104,7 @@ export default function WorkbenchStage({
   onSelectTabId,
 }: WorkbenchStageProps) {
   const prefersReducedMotion = useReducedMotion();
+  const isMobile = useIsMobile();
   const { openAgent, sendMessage } = useAgent();
   const [internalId, setInternalId] = useState<string>(
     ARCHITECTURE_INSIGHTS[0].id
@@ -162,10 +164,11 @@ export default function WorkbenchStage({
   };
 
   return (
-    /* Section 5: Solidity Workbench with Bold Cinema Small-to-Large Zoom Expand */
+    /* Section 5: Solidity Workbench — Whole-Section 3D Perspective Sheet Unfold (rotateX: 7deg -> 0deg, scale: 0.89 -> 1, y: 64 -> 0, borderRadius: 56 -> 0) */
     <SectionRevealStage
       id="workbench"
-      maxRadius={60}
+      variant="unfold-3d"
+      maxRadius={56}
       minRadius={0}
       outerClassName="bg-[#1B120D] -mt-[2px] scroll-mt-24"
       backdropNode={<SheetSilkCrest idPrefix="archive-to-workbench" />}
@@ -194,13 +197,17 @@ export default function WorkbenchStage({
         />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20">
-          {/* Headline Glides from Left; Subtitle Rises from Bottom */}
+          {/* Replayable Headline from Left & Subtitle from Bottom (once: false) */}
           <div className="max-w-3xl">
             <motion.h2
-              initial={prefersReducedMotion ? false : { opacity: 0.2, x: -56 }}
+              initial={
+                prefersReducedMotion
+                  ? false
+                  : { opacity: 0, x: isMobile ? -24 : -56 }
+              }
               whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, amount: 0.08 }}
-              transition={{ duration: 0.74, ease: CINEMA_EASE }}
+              viewport={{ once: false, amount: 0.12 }}
+              transition={{ duration: 0.72, ease: CINEMA_EASE }}
               className="font-display font-bold text-[#16100C] text-3xl sm:text-4xl lg:text-[3rem] leading-[1.08] tracking-[-0.032em] will-change-transform"
               style={{ textWrap: "balance" }}
             >
@@ -210,12 +217,16 @@ export default function WorkbenchStage({
 
             <motion.p
               data-testid="section-subtitle-workbench"
-              initial={prefersReducedMotion ? false : { opacity: 0.25, y: 24 }}
+              initial={
+                prefersReducedMotion
+                  ? false
+                  : { opacity: 0, y: isMobile ? 12 : 24 }
+              }
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.08 }}
+              viewport={{ once: false, amount: 0.12 }}
               transition={{
-                duration: 0.68,
-                delay: 0.08,
+                duration: 0.72,
+                delay: 0.07,
                 ease: CINEMA_EASE,
               }}
               className="mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#4A3F37] will-change-transform"
@@ -225,12 +236,16 @@ export default function WorkbenchStage({
             </motion.p>
           </div>
 
-          {/* Architectural Horizontal File-Switcher Dock Glides in from Left */}
+          {/* Architectural Horizontal File-Switcher Dock Glides Smoothly from Left (once: false) */}
           <motion.div
-            initial={prefersReducedMotion ? false : { opacity: 0, x: -64 }}
+            initial={
+              prefersReducedMotion
+                ? false
+                : { opacity: 0, x: isMobile ? -24 : -60 }
+            }
             whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, amount: 0.08 }}
-            transition={{ duration: 0.72, delay: 0.08, ease: CINEMA_EASE }}
+            viewport={{ once: false, amount: 0.12 }}
+            transition={{ duration: 0.72, delay: 0.07, ease: CINEMA_EASE }}
             className="mt-9 relative z-30 will-change-transform"
           >
             <div
@@ -279,14 +294,18 @@ export default function WorkbenchStage({
             </div>
           </motion.div>
 
-          {/* Cinematic 2-Column Floating Studio Stage: Left Breakdown from Left, Code Studio from Right */}
+          {/* Replayable 2-Column Split Code Studio Glide (once: false) */}
           <div className="mt-9 relative z-20 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
             {/* Left (5 cols): Editorial Breakdown Glides from Left */}
             <motion.div
-              initial={prefersReducedMotion ? false : { opacity: 0, x: -52 }}
+              initial={
+                prefersReducedMotion
+                  ? false
+                  : { opacity: 0, x: isMobile ? -22 : -56 }
+              }
               whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, amount: 0.08 }}
-              transition={{ duration: 0.76, delay: 0.1, ease: CINEMA_EASE }}
+              viewport={{ once: false, amount: 0.12 }}
+              transition={{ duration: 0.72, delay: 0.08, ease: CINEMA_EASE }}
               className="lg:col-span-5 flex flex-col justify-between pt-1 will-change-transform"
             >
               <AnimatePresence mode="wait" initial={false}>
@@ -346,16 +365,16 @@ export default function WorkbenchStage({
               </AnimatePresence>
             </motion.div>
 
-            {/* Right (7 cols): Elevated Deep Espresso Code Studio Glides in from Right (x: 64 -> 0, scale: 0.93 -> 1) */}
+            {/* Right (7 cols): Elevated Deep Espresso Code Studio Glides from Right (x: 68 -> 0, scale: 0.93 -> 1) */}
             <motion.div
               initial={
                 prefersReducedMotion
                   ? false
-                  : { opacity: 0, x: 64, scale: 0.93 }
+                  : { opacity: 0, x: isMobile ? 28 : 68, scale: 0.93 }
               }
               whileInView={{ opacity: 1, x: 0, scale: 1 }}
-              viewport={{ once: true, amount: 0.08 }}
-              transition={{ duration: 0.8, delay: 0.14, ease: CINEMA_EASE }}
+              viewport={{ once: false, amount: 0.12 }}
+              transition={{ duration: 0.72, delay: 0.12, ease: CINEMA_EASE }}
               data-testid="workbench-code-panel"
               onMouseMove={handleStudioSpecular}
               className="specular-surface-dark relative lg:col-span-7 rounded-[34px] bg-[#130D0A] text-[#FAF6F0] transition-shadow duration-250 flex flex-col overflow-hidden shadow-[inset_0_1px_0_rgba(250,246,240,0.1),0_34px_76px_-28px_rgba(20,14,11,0.62)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.24),0_38px_82px_-26px_rgba(232,93,4,0.3)] will-change-transform"

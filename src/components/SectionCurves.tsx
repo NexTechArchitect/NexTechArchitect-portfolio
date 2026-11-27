@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   motion,
   useReducedMotion,
   useScroll,
   useSpring,
   useTransform,
+  type MotionValue,
 } from "framer-motion";
 
 interface CurveProps {
@@ -14,6 +15,38 @@ interface CurveProps {
   bottomFill: string;
   className?: string;
 }
+
+/**
+ * Lightweight responsive viewport hook (< 768px) for adaptive mobile motion ergonomics.
+ * Scales travel distances down ~60% and tightens spring stiffness on touch devices.
+ */
+export function useIsMobile(maxWidth = 767): boolean {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia(`(max-width: ${maxWidth}px)`);
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, [maxWidth]);
+
+  return isMobile;
+}
+
+export function getScrollSpringConfig(isMobile: boolean) {
+  return isMobile
+    ? { stiffness: 120, damping: 26, mass: 0.42 }
+    : { stiffness: 95, damping: 24, mass: 0.45 };
+}
+
+export type SectionMotionVariant =
+  | "zoom-curtain"
+  | "glide-right"
+  | "glide-left"
+  | "unfold-3d"
+  | "horizon-rise";
 
 /**
  * Dark Espresso-Brown & Warm Burnt-Orange Curved Header Stage
@@ -64,43 +97,43 @@ export function HeroHeaderCanopy() {
         shapeRendering="geometricPrecision"
         className="pointer-events-none absolute inset-x-0 bottom-0 -mb-[2px] block w-full h-[38px] sm:h-[46px] lg:h-[54px]"
       >
-        <path
-          d="M0 68V14C360 62 1080 62 1440 14V68H0Z"
-          fill="#FAF6F0"
-        />
+        <path d="M0 68V14C360 62 1080 62 1440 14V68H0Z" fill="#FAF6F0" />
       </svg>
     </div>
   );
 }
 
 /**
- * Cinema Video-Style "Small-to-Large" Zoom Expand Section Wrapper
- * Smoothly expands each entering section from scale 0.84 -> 1, y 84px -> 0px,
- * sculpted rounded corners 60px -> 0px (or minRadius), and opacity 0.65 -> 1
- * using spring-damped scroll progress so content is never stuck hidden.
+ * Bidirectional Spring-Scrubbed Whole-Section Motion Stage
+ * Drives each section's signature entrance directly from scroll progress smoothed
+ * with silky inertia so scrolling down glides it in and scrolling back up smoothly
+ * unwinds it every single time — with zero stuck-invisible safety (min opacity 0.35 -> 1).
  */
 export function SectionRevealStage({
   children,
+  variant = "zoom-curtain",
   outerClassName = "",
   innerClassName = "",
   backdropNode,
-  maxRadius = 60,
+  maxRadius,
   minRadius = 0,
-  scrollEndOffset = "start 0.28",
+  scrollEndOffset = "start 0.32",
   id,
   dataTestId,
 }: {
   children: React.ReactNode;
+  variant?: SectionMotionVariant;
   outerClassName?: string;
   innerClassName?: string;
   backdropNode?: React.ReactNode;
   maxRadius?: number;
   minRadius?: number;
-  scrollEndOffset?: "start 0.28" | "end 1";
+  scrollEndOffset?: "start 0.32" | "end 1";
   id?: string;
   dataTestId?: string;
 }) {
   const prefersReducedMotion = useReducedMotion();
+  const isMobile = useIsMobile();
   const outerRef = useRef<HTMLDivElement | null>(null);
 
   const { scrollYProgress } = useScroll({
@@ -108,20 +141,81 @@ export function SectionRevealStage({
     offset: ["start 0.98", scrollEndOffset],
   });
 
-  const smoothProgress = useSpring(scrollYProgress, {
-    stiffness: 110,
-    damping: 22,
-    mass: 0.5,
-  });
+  const smoothProgress = useSpring(
+    scrollYProgress,
+    getScrollSpringConfig(isMobile)
+  );
 
-  const scale = useTransform(smoothProgress, [0, 1], [0.84, 1]);
-  const y = useTransform(smoothProgress, [0, 1], [84, 0]);
+  // Per-variant GPU-composited start transforms (scaled ~60% tighter on mobile < 768px)
+  const resolvedStartX =
+    variant === "glide-right"
+      ? isMobile
+        ? 36
+        : 90
+      : variant === "glide-left"
+      ? isMobile
+        ? -36
+        : -90
+      : 0;
+
+  const resolvedStartY =
+    variant === "zoom-curtain" || variant === "horizon-rise"
+      ? isMobile
+        ? 28
+        : 68
+      : variant === "unfold-3d"
+      ? isMobile
+        ? 26
+        : 64
+      : isMobile
+      ? 18
+      : 44;
+
+  const resolvedStartScale =
+    variant === "zoom-curtain"
+      ? isMobile
+        ? 0.93
+        : 0.86
+      : variant === "unfold-3d"
+      ? isMobile
+        ? 0.94
+        : 0.89
+      : variant === "horizon-rise"
+      ? isMobile
+        ? 0.95
+        : 0.9
+      : isMobile
+      ? 0.95
+      : 0.91;
+
+  const resolvedStartRotateX =
+    variant === "unfold-3d" ? (isMobile ? 3.5 : 7) : 0;
+
+  const defaultDesktopRadius = variant === "zoom-curtain" ? 64 : 56;
+  const resolvedMaxRadius = isMobile
+    ? Math.round((maxRadius ?? defaultDesktopRadius) * 0.6)
+    : maxRadius ?? defaultDesktopRadius;
+
+  const resolvedMinOpacity = isMobile ? 0.45 : 0.35;
+
+  const x = useTransform(smoothProgress, [0, 1], [resolvedStartX, 0]);
+  const y = useTransform(smoothProgress, [0, 1], [resolvedStartY, 0]);
+  const scale = useTransform(smoothProgress, [0, 1], [resolvedStartScale, 1]);
+  const rotateX = useTransform(
+    smoothProgress,
+    [0, 1],
+    [resolvedStartRotateX, 0]
+  );
   const borderRadius = useTransform(
     smoothProgress,
     [0, 1],
-    [maxRadius, minRadius]
+    [resolvedMaxRadius, minRadius]
   );
-  const opacity = useTransform(smoothProgress, [0, 1], [0.65, 1]);
+  const opacity = useTransform(
+    smoothProgress,
+    [0, 1],
+    [resolvedMinOpacity, 1]
+  );
 
   return (
     <div
@@ -136,11 +230,20 @@ export function SectionRevealStage({
           prefersReducedMotion
             ? undefined
             : {
-                scale,
+                x,
                 y,
+                scale,
+                rotateX: variant === "unfold-3d" ? rotateX : undefined,
+                transformPerspective:
+                  variant === "unfold-3d" ? 1200 : undefined,
                 opacity,
                 borderRadius,
-                transformOrigin: "top center",
+                transformOrigin:
+                  variant === "glide-right"
+                    ? "top right"
+                    : variant === "glide-left"
+                    ? "top left"
+                    : "top center",
               }
         }
         className={`relative z-10 will-change-transform ${innerClassName}`}
@@ -154,29 +257,31 @@ export function SectionRevealStage({
 /**
  * Signature Hero Translucent Apricot & Burnt-Orange Silk Wave
  * Pure filled sculptural shapes (zero stroke hairlines) flowing behind the Hero & 3D avatar
- * with smooth scroll-reactive drift.
+ * with smooth bidirectional scroll-linked sideways drift (x: 0 -> 48 desktop / 20 mobile).
  */
 export function HeroSilkWave({
   idPrefix = "hero-silk-wave",
   className = "",
+  scrollProgress,
 }: {
   idPrefix?: string;
   className?: string;
+  scrollProgress?: MotionValue<number>;
 }) {
   const prefersReducedMotion = useReducedMotion();
+  const isMobile = useIsMobile();
   const waveRef = useRef<HTMLDivElement | null>(null);
-  const { scrollYProgress } = useScroll({
+  const { scrollYProgress: localScrollProgress } = useScroll({
     target: waveRef,
     offset: ["start start", "end start"],
   });
-  const smoothWave = useSpring(scrollYProgress, {
-    stiffness: 100,
-    damping: 24,
-    mass: 0.4,
-  });
-  const y = useTransform(smoothWave, [0, 1], [0, 44]);
-  const x = useTransform(smoothWave, [0, 1], [0, -24]);
-  const scaleY = useTransform(smoothWave, [0, 1], [1, 1.12]);
+
+  const sourceProgress = scrollProgress ?? localScrollProgress;
+  const smoothWave = useSpring(sourceProgress, getScrollSpringConfig(isMobile));
+
+  const x = useTransform(smoothWave, [0, 1], [0, isMobile ? 20 : 48]);
+  const y = useTransform(smoothWave, [0, 1], [0, isMobile ? 12 : 28]);
+  const scaleY = useTransform(smoothWave, [0, 1], [1, 1.09]);
 
   const ribbonPrimaryId = `${idPrefix}-primary`;
   const ribbonSecondaryId = `${idPrefix}-secondary`;
@@ -311,14 +416,23 @@ export function SheetSilkCrest({
   className?: string;
 }) {
   const prefersReducedMotion = useReducedMotion();
+  const isMobile = useIsMobile();
   const crestRef = useRef<HTMLDivElement | null>(null);
   const { scrollYProgress } = useScroll({
     target: crestRef,
     offset: ["start end", "end start"],
   });
-  const shimmerX = useTransform(scrollYProgress, [0, 1], ["-24%", "24%"]);
-  const shimmerOpacity = useTransform(
+  const smoothScroll = useSpring(
     scrollYProgress,
+    getScrollSpringConfig(isMobile)
+  );
+  const shimmerX = useTransform(
+    smoothScroll,
+    [0, 1],
+    isMobile ? ["-12%", "12%"] : ["-24%", "24%"]
+  );
+  const shimmerOpacity = useTransform(
+    smoothScroll,
     [0, 0.35, 0.7, 1],
     [0.35, 0.92, 0.85, 0.4]
   );
@@ -404,15 +518,24 @@ export function ScrollHorizonSweep({
   className = "",
 }: CurveProps) {
   const prefersReducedMotion = useReducedMotion();
+  const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start end", "end start"],
   });
-  const scaleY = useTransform(scrollYProgress, [0, 0.55, 1], [1.14, 0.94, 0.56]);
-  const shimmerX = useTransform(scrollYProgress, [0, 1], ["-24%", "24%"]);
-  const shimmerOpacity = useTransform(
+  const smoothScroll = useSpring(
     scrollYProgress,
+    getScrollSpringConfig(isMobile)
+  );
+  const scaleY = useTransform(smoothScroll, [0, 0.55, 1], [1.14, 0.94, 0.56]);
+  const shimmerX = useTransform(
+    smoothScroll,
+    [0, 1],
+    isMobile ? ["-12%", "12%"] : ["-24%", "24%"]
+  );
+  const shimmerOpacity = useTransform(
+    smoothScroll,
     [0, 0.4, 0.8, 1],
     [0.35, 0.85, 0.65, 0.25]
   );
@@ -531,13 +654,22 @@ export function SweepingRibbonCurve({
   className = "",
 }: CurveProps) {
   const prefersReducedMotion = useReducedMotion();
+  const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start end", "end start"],
   });
-  const scaleY = useTransform(scrollYProgress, [0, 0.55, 1], [1.12, 0.94, 0.62]);
-  const shimmerX = useTransform(scrollYProgress, [0, 1], ["22%", "-22%"]);
+  const smoothScroll = useSpring(
+    scrollYProgress,
+    getScrollSpringConfig(isMobile)
+  );
+  const scaleY = useTransform(smoothScroll, [0, 0.55, 1], [1.12, 0.94, 0.62]);
+  const shimmerX = useTransform(
+    smoothScroll,
+    [0, 1],
+    isMobile ? ["11%", "-11%"] : ["22%", "-22%"]
+  );
 
   const ribbonGlowId = `${idPrefix}-ribbon-glow`;
   const crestId = `${idPrefix}-ribbon-crest`;
@@ -655,20 +787,29 @@ export function SolarHorizonArch({
   className?: string;
 }) {
   const prefersReducedMotion = useReducedMotion();
+  const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start end", "end start"],
   });
-  const scaleY = useTransform(scrollYProgress, [0, 0.55, 1], [1.1, 0.96, 0.78]);
-  const sunriseY = useTransform(scrollYProgress, [0, 0.7, 1], [40, 0, -12]);
-  const sunriseScale = useTransform(
+  const smoothScroll = useSpring(
     scrollYProgress,
+    getScrollSpringConfig(isMobile)
+  );
+  const scaleY = useTransform(smoothScroll, [0, 0.55, 1], [1.1, 0.96, 0.78]);
+  const sunriseY = useTransform(
+    smoothScroll,
+    [0, 0.7, 1],
+    isMobile ? [18, 0, -6] : [40, 0, -12]
+  );
+  const sunriseScale = useTransform(
+    smoothScroll,
     [0, 0.65, 1],
     [0.92, 1.04, 1.08]
   );
   const sunriseOpacity = useTransform(
-    scrollYProgress,
+    smoothScroll,
     [0, 0.55, 1],
     [0.45, 0.92, 0.96]
   );
