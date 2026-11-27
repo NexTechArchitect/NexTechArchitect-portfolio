@@ -71,6 +71,13 @@ body {
     radial-gradient(rgba(232, 93, 4, 0.42) 0.45px, transparent 0.45px);
   background-size: 6px 6px, 9px 9px;
   background-position: 0 0, 3px 4px;
+  transform: translateZ(0);
+}
+
+/* Strict layout & paint containment for 60-120fps scroll performance */
+.section-perf {
+  contain: layout style;
+  overflow-x: clip;
 }
 
 /* Frosted Cream Glass for floating light surfaces */
@@ -121,92 +128,26 @@ body {
   transform-style: preserve-3d;
 }
 
-/* Lightweight 60fps GPU-only ambient radial light drift */
-@keyframes ambientSilkDrift {
-  0% {
-    transform: translate3d(0px, 0px, 0) scale(1);
-    opacity: 0.42;
-  }
-  50% {
-    transform: translate3d(24px, -16px, 0) scale(1.06);
-    opacity: 0.62;
-  }
-  100% {
-    transform: translate3d(-18px, 14px, 0) scale(0.97);
-    opacity: 0.46;
-  }
-}
-
-@keyframes ambientSilkDriftReverse {
-  0% {
-    transform: translate3d(0px, 0px, 0) scale(1);
-    opacity: 0.36;
-  }
-  50% {
-    transform: translate3d(-22px, 18px, 0) scale(1.07);
-    opacity: 0.56;
-  }
-  100% {
-    transform: translate3d(16px, -14px, 0) scale(0.96);
-    opacity: 0.4;
-  }
-}
-
-@keyframes portalCoreBreath {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) scale(1);
-    opacity: 0.84;
-  }
-  50% {
-    transform: translate3d(0, -4px, 0) scale(1.09);
-    opacity: 1;
-  }
-}
-
-@keyframes portalOrbitalSpin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+/* Lightweight static ambient aura classes (zero background-thread layer churn during scroll) */
+.ambient-silk-drift,
+.ambient-silk-drift-reverse {
+  transform: translateZ(0);
 }
 
 @keyframes silkWaveShimmer {
   0%,
   100% {
-    transform: translate3d(0px, 0px, 0) scaleY(1);
-    opacity: 0.88;
+    transform: translate3d(0px, 0px, 0);
+    opacity: 0.92;
   }
   50% {
-    transform: translate3d(0px, -6px, 0) scaleY(1.035);
+    transform: translate3d(0px, -4px, 0);
     opacity: 1;
   }
 }
 
-.ambient-silk-drift {
-  animation: ambientSilkDrift 20s ease-in-out infinite alternate;
-  will-change: transform, opacity;
-}
-
-.ambient-silk-drift-reverse {
-  animation: ambientSilkDriftReverse 24s ease-in-out infinite alternate;
-  will-change: transform, opacity;
-}
-
 .silk-wave-shimmer {
-  animation: silkWaveShimmer 11s ease-in-out infinite;
-  will-change: transform, opacity;
-}
-
-.portal-core-breath {
-  animation: portalCoreBreath 8.5s ease-in-out infinite;
-  will-change: transform, opacity;
-}
-
-.portal-orbital-spin {
-  animation: portalOrbitalSpin 28s linear infinite;
+  animation: silkWaveShimmer 12s ease-in-out infinite;
   will-change: transform;
 }
 

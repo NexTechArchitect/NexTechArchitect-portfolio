@@ -1,14 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback, useMemo } from "react";
-import {
-  motion,
-  AnimatePresence,
-  useMotionValue,
-  useReducedMotion,
-  useSpring,
-  useTransform,
-} from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   ArrowUpRight,
   Building2,
@@ -33,9 +26,11 @@ import {
 } from "lucide-react";
 import type { ProjectItem } from "@/data/projects";
 import { filterProjectsByQuery } from "@/lib/portfolio";
-import { useIsMobile } from "@/components/SectionCurves";
-
-const CINEMA_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
+import {
+  LUXURY_EASE,
+  REPLAY_VIEWPORT,
+  useIsMobile,
+} from "@/components/SectionCurves";
 
 const ICON_MAP: Record<
   ProjectItem["iconKey"],
@@ -76,72 +71,36 @@ function GalleryCard({
   const prefersReducedMotion = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
   const [hovered, setHovered] = useState(false);
-  const [sheenPos, setSheenPos] = useState({ x: 50, y: 20 });
 
-  const mx = useMotionValue(0);
-  const my = useMotionValue(0);
-  const springConfig = { stiffness: 250, damping: 24 };
-  const rotX = useSpring(
-    useTransform(my, [-0.5, 0.5], [4.5, -4.5]),
-    springConfig
-  );
-  const rotY = useSpring(
-    useTransform(mx, [-0.5, 0.5], [-4.5, 4.5]),
-    springConfig
-  );
-
-  const handleMove = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      const el = ref.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const px = e.clientX - rect.left;
-      const py = e.clientY - rect.top;
-      el.style.setProperty("--mx", `${px}px`);
-      el.style.setProperty("--my", `${py}px`);
-      const relX = px / rect.width;
-      const relY = py / rect.height;
-      if (!prefersReducedMotion && !isMobile) {
-        mx.set(relX - 0.5);
-        my.set(relY - 0.5);
-      }
-      setSheenPos({ x: Math.round(relX * 100), y: Math.round(relY * 100) });
-    },
-    [mx, my, prefersReducedMotion, isMobile]
-  );
+  const handleMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    el.style.setProperty("--mx", `${e.clientX - rect.left}px`);
+    el.style.setProperty("--my", `${e.clientY - rect.top}px`);
+  }, []);
 
   const handleLeave = useCallback(() => {
-    mx.set(0);
-    my.set(0);
     setHovered(false);
-  }, [mx, my]);
+  }, []);
 
   const Icon = ICON_MAP[project.iconKey] || Cpu;
-
-  // Directional bottom-up wave: left column bottom-left, center bottom, right column bottom-right
-  const col = index % 3;
-  const sideShift = isMobile ? 16 : 36;
-  const entryX = col === 0 ? -sideShift : col === 2 ? sideShift : 0;
-  const entryY = col === 1 ? (isMobile ? 24 : 52) : isMobile ? 20 : 48;
 
   return (
     <motion.div
       layout
       initial={
-        prefersReducedMotion
-          ? false
-          : { opacity: 0, y: entryY, x: entryX, scale: 0.9 }
+        prefersReducedMotion ? false : { opacity: 0, y: 24, scale: 0.97 }
       }
-      whileInView={{ opacity: 1, y: 0, x: 0, scale: 1 }}
-      viewport={{ once: false, amount: 0.12 }}
-      exit={{ opacity: 0, y: -16, scale: 0.94 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={REPLAY_VIEWPORT}
+      exit={{ opacity: 0, y: -12, scale: 0.97 }}
       transition={{
-        layout: { type: "spring", stiffness: 300, damping: 28 },
-        delay: Math.min((index % 3) * 0.06, 0.18),
-        duration: 0.68,
-        ease: CINEMA_EASE,
+        layout: { type: "spring", stiffness: 320, damping: 28 },
+        delay: Math.min(index * 0.04, 0.2),
+        duration: 0.58,
+        ease: LUXURY_EASE,
       }}
-      style={{ perspective: 1100 }}
       className="h-full will-change-transform"
     >
       <motion.div
@@ -150,15 +109,9 @@ function GalleryCard({
           prefersReducedMotion || isMobile
             ? undefined
             : {
-                y: -6,
-                scale: 1.012,
-                transition: { type: "spring", stiffness: 280, damping: 22 },
+                y: -4,
+                transition: { type: "spring", stiffness: 320, damping: 24 },
               }
-        }
-        style={
-          prefersReducedMotion || isMobile
-            ? undefined
-            : { rotateX: rotX, rotateY: rotY, transformStyle: "preserve-3d" }
         }
         onMouseMove={handleMove}
         onMouseEnter={() => setHovered(true)}
@@ -170,18 +123,6 @@ function GalleryCard({
         }`}
       >
         <span aria-hidden="true" className="card-sheen-beam" />
-
-        {/* Dynamic pointer-tracked copper specular sheen */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 transition-opacity duration-200"
-          style={{
-            opacity: hovered ? 1 : 0,
-            background: isDarkLab
-              ? `radial-gradient(360px circle at ${sheenPos.x}% ${sheenPos.y}%, rgba(244, 140, 6, 0.16), rgba(232, 93, 4, 0.06) 42%, transparent 72%)`
-              : `radial-gradient(340px circle at ${sheenPos.x}% ${sheenPos.y}%, rgba(232, 93, 4, 0.11), rgba(244, 140, 6, 0.04) 45%, transparent 72%)`,
-          }}
-        />
 
         <div className="relative z-10 p-6 flex flex-col flex-1">
           {/* Monospace Protocol Metadata Header */}
@@ -459,10 +400,10 @@ export default function ProjectGalleryOverlay({
                 initial={
                   prefersReducedMotion
                     ? false
-                    : { opacity: 0, x: isMobile ? -18 : -44 }
+                    : { opacity: 0, x: isMobile ? -14 : -24 }
                 }
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.54, ease: CINEMA_EASE }}
+                transition={{ duration: 0.5, ease: LUXURY_EASE }}
               >
                 <h2
                   className={`font-display text-2xl sm:text-3xl font-bold tracking-[-0.03em] ${
@@ -477,10 +418,10 @@ export default function ProjectGalleryOverlay({
                 initial={
                   prefersReducedMotion
                     ? false
-                    : { opacity: 0, x: isMobile ? 18 : 44 }
+                    : { opacity: 0, x: isMobile ? 14 : 24 }
                 }
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.54, delay: 0.05, ease: CINEMA_EASE }}
+                transition={{ duration: 0.5, delay: 0.05, ease: LUXURY_EASE }}
                 className="flex items-center gap-2.5 sm:gap-3"
               >
                 <div className="relative flex-1 sm:w-72">
@@ -524,9 +465,9 @@ export default function ProjectGalleryOverlay({
           <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-10 pb-24">
             {filteredProjects.length === 0 ? (
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, scale: 0.97 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3, ease: CINEMA_EASE }}
+                transition={{ duration: 0.3, ease: LUXURY_EASE }}
                 className={`p-10 sm:p-12 rounded-2xl text-center ${
                   isDarkLab
                     ? "bg-[#1C120C] shadow-[inset_0_1px_0_rgba(250,246,240,0.08)]"

@@ -17,7 +17,7 @@ interface NavbarProps {
   onNavigate?: () => void;
 }
 
-const CINEMA_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
+const LUXURY_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 export default function Navbar({
   onOpenResume,
@@ -90,9 +90,9 @@ export default function Navbar({
     <header className="fixed top-4 sm:top-5 inset-x-0 z-40 pointer-events-none">
       <motion.div
         data-testid="floating-navbar-pill"
-        initial={prefersReducedMotion ? false : { opacity: 0, y: -32 }}
+        initial={prefersReducedMotion ? false : { opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.72, ease: CINEMA_EASE }}
+        transition={{ duration: 0.6, ease: LUXURY_EASE }}
         className={`relative pointer-events-auto w-[calc(100%-1.5rem)] max-w-6xl mx-auto h-[62px] sm:h-[66px] lg:h-[68px] px-3.5 sm:px-5 lg:px-6 rounded-full backdrop-blur-md text-[#FAF6F0] transition-[background-color,box-shadow] duration-300 flex items-center justify-between gap-2 sm:gap-4 lg:gap-6 will-change-transform ${pillSurfaceClass}`}
       >
         {/* Left: Refined Copper-Orange Geometric Mark + Wordmark */}

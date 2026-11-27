@@ -5,14 +5,14 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Check, Copy, FileCode2, MessageSquare } from "lucide-react";
 import { ARCHITECTURE_INSIGHTS } from "@/data/projects";
 import {
+  IMMEDIATE_VIEWPORT,
+  LUXURY_EASE,
   SectionRevealStage,
   SheetSilkCrest,
   SolarHorizonArch,
   useIsMobile,
 } from "@/components/SectionCurves";
 import { useAgent } from "@/context/AgentContext";
-
-const CINEMA_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
 const SOLIDITY_KEYWORDS = new Set([
   "pragma",
@@ -163,51 +163,47 @@ export default function WorkbenchStage({
     );
   };
 
+  const lateralShift = isMobile ? 14 : 24;
+
   return (
-    /* Section 5: Solidity Workbench — Whole-Section 3D Perspective Sheet Unfold (rotateX: 7deg -> 0deg, scale: 0.89 -> 1, y: 64 -> 0, borderRadius: 56 -> 0) */
+    /* Section 5: Solidity Workbench — Static Sculpted Sheet + Immediate Zero-Lag Split Reveal */
     <SectionRevealStage
       id="workbench"
-      variant="unfold-3d"
-      maxRadius={56}
-      minRadius={0}
+      sculptedTop
       outerClassName="bg-[#1B120D] -mt-[2px] scroll-mt-24"
       backdropNode={<SheetSilkCrest idPrefix="archive-to-workbench" />}
-      innerClassName="bg-[#F3EAE0] text-[#16100C] silk-grain pt-14 sm:pt-20 overflow-hidden shadow-[0_-28px_72px_-26px_rgba(10,6,4,0.55)]"
+      innerClassName="bg-[#F3EAE0] text-[#16100C] silk-grain pt-14 sm:pt-20 overflow-hidden shadow-[0_-24px_60px_-26px_rgba(10,6,4,0.5)]"
     >
       <section
         aria-label="Solidity Workbench"
-        className="relative overflow-x-clip"
+        className="relative section-perf"
       >
-        {/* Subtle warm-amber edge ambient light over Soft Champagne Sand canvas */}
+        {/* Lightweight static warm-amber washes over Soft Champagne Sand canvas */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -top-20 right-[-6%] w-[560px] h-[560px] rounded-full opacity-65 ambient-silk-drift"
+          className="pointer-events-none absolute -top-20 right-[-6%] w-[480px] h-[480px] rounded-full opacity-55"
           style={{
             background:
-              "radial-gradient(ellipse at center, rgba(244, 140, 6, 0.14) 0%, rgba(232, 93, 4, 0.06) 44%, rgba(243, 234, 224, 0) 74%)",
+              "radial-gradient(ellipse at center, rgba(244, 140, 6, 0.13) 0%, rgba(232, 93, 4, 0.05) 44%, rgba(243, 234, 224, 0) 74%)",
           }}
         />
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute bottom-32 left-[-8%] w-[480px] h-[520px] rounded-full opacity-45 ambient-silk-drift-reverse"
+          className="pointer-events-none absolute bottom-32 left-[-8%] w-[440px] h-[460px] rounded-full opacity-40"
           style={{
             background:
-              "radial-gradient(ellipse at center, rgba(217, 119, 54, 0.1) 0%, rgba(243, 234, 224, 0) 72%)",
+              "radial-gradient(ellipse at center, rgba(217, 119, 54, 0.09) 0%, rgba(243, 234, 224, 0) 72%)",
           }}
         />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20">
-          {/* Replayable Headline from Left & Subtitle from Bottom (once: false) */}
+          {/* Immediate Entry: Headline & Subtitle Appear Effortlessly as Section Crosses Lower Viewport */}
           <div className="max-w-3xl">
             <motion.h2
-              initial={
-                prefersReducedMotion
-                  ? false
-                  : { opacity: 0, x: isMobile ? -24 : -56 }
-              }
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: false, amount: 0.12 }}
-              transition={{ duration: 0.72, ease: CINEMA_EASE }}
+              initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={IMMEDIATE_VIEWPORT}
+              transition={{ duration: 0.55, ease: LUXURY_EASE }}
               className="font-display font-bold text-[#16100C] text-3xl sm:text-4xl lg:text-[3rem] leading-[1.08] tracking-[-0.032em] will-change-transform"
               style={{ textWrap: "balance" }}
             >
@@ -217,18 +213,10 @@ export default function WorkbenchStage({
 
             <motion.p
               data-testid="section-subtitle-workbench"
-              initial={
-                prefersReducedMotion
-                  ? false
-                  : { opacity: 0, y: isMobile ? 12 : 24 }
-              }
+              initial={prefersReducedMotion ? false : { opacity: 0, y: 18 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false, amount: 0.12 }}
-              transition={{
-                duration: 0.72,
-                delay: 0.07,
-                ease: CINEMA_EASE,
-              }}
+              viewport={IMMEDIATE_VIEWPORT}
+              transition={{ duration: 0.55, delay: 0.06, ease: LUXURY_EASE }}
               className="mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#4A3F37] will-change-transform"
             >
               Inspect real Solidity and inline Yul guards extracted from
@@ -236,16 +224,16 @@ export default function WorkbenchStage({
             </motion.p>
           </div>
 
-          {/* Architectural Horizontal File-Switcher Dock Glides Smoothly from Left (once: false) */}
+          {/* File-Switcher Dock Glides Smoothly (x: -24 -> 0) Immediately on Entry */}
           <motion.div
             initial={
               prefersReducedMotion
                 ? false
-                : { opacity: 0, x: isMobile ? -24 : -60 }
+                : { opacity: 0, x: -lateralShift }
             }
             whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: false, amount: 0.12 }}
-            transition={{ duration: 0.72, delay: 0.07, ease: CINEMA_EASE }}
+            viewport={IMMEDIATE_VIEWPORT}
+            transition={{ duration: 0.55, delay: 0.09, ease: LUXURY_EASE }}
             className="mt-9 relative z-30 will-change-transform"
           >
             <div
@@ -294,31 +282,31 @@ export default function WorkbenchStage({
             </div>
           </motion.div>
 
-          {/* Replayable 2-Column Split Code Studio Glide (once: false) */}
+          {/* Fast Unified Split Reveal: Left Breakdown (-24 -> 0), Code Studio (+24 -> 0) */}
           <div className="mt-9 relative z-20 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
-            {/* Left (5 cols): Editorial Breakdown Glides from Left */}
+            {/* Left (5 cols): Editorial Breakdown */}
             <motion.div
               initial={
                 prefersReducedMotion
                   ? false
-                  : { opacity: 0, x: isMobile ? -22 : -56 }
+                  : { opacity: 0, x: -lateralShift }
               }
               whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: false, amount: 0.12 }}
-              transition={{ duration: 0.72, delay: 0.08, ease: CINEMA_EASE }}
+              viewport={IMMEDIATE_VIEWPORT}
+              transition={{ duration: 0.55, delay: 0.12, ease: LUXURY_EASE }}
               className="lg:col-span-5 flex flex-col justify-between pt-1 will-change-transform"
             >
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   key={`meta-${activeInsight.id}`}
                   initial={
-                    prefersReducedMotion ? false : { opacity: 0, y: 18 }
+                    prefersReducedMotion ? false : { opacity: 0, y: 10 }
                   }
                   animate={{ opacity: 1, y: 0 }}
                   exit={
-                    prefersReducedMotion ? undefined : { opacity: 0, y: -12 }
+                    prefersReducedMotion ? undefined : { opacity: 0, y: -8 }
                   }
-                  transition={{ duration: 0.3, ease: CINEMA_EASE }}
+                  transition={{ duration: 0.22, ease: LUXURY_EASE }}
                 >
                   <p className="font-mono-tabular text-xs font-semibold text-[#C84B04]">
                     {activeInsight.protocol}
@@ -365,19 +353,19 @@ export default function WorkbenchStage({
               </AnimatePresence>
             </motion.div>
 
-            {/* Right (7 cols): Elevated Deep Espresso Code Studio Glides from Right (x: 68 -> 0, scale: 0.93 -> 1) */}
+            {/* Right (7 cols): Elevated Deep Espresso Code Studio (+24 -> 0, Immediate Entry) */}
             <motion.div
               initial={
                 prefersReducedMotion
                   ? false
-                  : { opacity: 0, x: isMobile ? 28 : 68, scale: 0.93 }
+                  : { opacity: 0, x: lateralShift, scale: 0.98 }
               }
               whileInView={{ opacity: 1, x: 0, scale: 1 }}
-              viewport={{ once: false, amount: 0.12 }}
-              transition={{ duration: 0.72, delay: 0.12, ease: CINEMA_EASE }}
+              viewport={IMMEDIATE_VIEWPORT}
+              transition={{ duration: 0.55, delay: 0.14, ease: LUXURY_EASE }}
               data-testid="workbench-code-panel"
               onMouseMove={handleStudioSpecular}
-              className="specular-surface-dark relative lg:col-span-7 rounded-[34px] bg-[#130D0A] text-[#FAF6F0] transition-shadow duration-250 flex flex-col overflow-hidden shadow-[inset_0_1px_0_rgba(250,246,240,0.1),0_34px_76px_-28px_rgba(20,14,11,0.62)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.24),0_38px_82px_-26px_rgba(232,93,4,0.3)] will-change-transform"
+              className="specular-surface-dark relative lg:col-span-7 rounded-[34px] bg-[#130D0A] text-[#FAF6F0] transition-shadow duration-250 flex flex-col overflow-hidden shadow-[inset_0_1px_0_rgba(250,246,240,0.1),0_30px_68px_-28px_rgba(20,14,11,0.6)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.24),0_34px_74px_-26px_rgba(232,93,4,0.28)] will-change-transform"
             >
               {/* Soft Ambient Studio Top Radial Wash */}
               <div
@@ -467,19 +455,19 @@ export default function WorkbenchStage({
                 </div>
               </div>
 
-              {/* Numbered Syntax-Highlighted Solidity / Yul Code with Crisp Upward Fade-Slide */}
+              {/* Numbered Syntax-Highlighted Solidity / Yul Code with Instant Crisp Crossfade */}
               <div className="px-4 sm:px-6 py-5 overflow-x-auto bg-[#130D0A]">
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.pre
                     key={`code-${activeInsight.id}`}
                     initial={
-                      prefersReducedMotion ? false : { opacity: 0, y: 18 }
+                      prefersReducedMotion ? false : { opacity: 0, y: 10 }
                     }
                     animate={{ opacity: 1, y: 0 }}
                     exit={
-                      prefersReducedMotion ? undefined : { opacity: 0, y: -12 }
+                      prefersReducedMotion ? undefined : { opacity: 0, y: -8 }
                     }
-                    transition={{ duration: 0.3, ease: CINEMA_EASE }}
+                    transition={{ duration: 0.22, ease: LUXURY_EASE }}
                     className="font-mono-tabular text-[12px] sm:text-[12.5px] leading-[1.74] text-[#EFE6DC] will-change-transform"
                   >
                     <code>
