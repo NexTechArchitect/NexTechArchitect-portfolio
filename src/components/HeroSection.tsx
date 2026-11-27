@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { ArrowDownRight, ArrowUpRight, Mail } from "lucide-react";
 import AmitAvatar3D from "@/components/AmitAvatar3D";
 import {
@@ -32,13 +32,14 @@ const CORE_SKILLS = [
   "Hardhat, Tenderly & Alchemy SDK",
 ] as const;
 
-const HERO_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
+const CINEMA_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
 export default function HeroSection({
   onOpenResume,
   onOpenGallery,
   onInspectYulGas,
 }: HeroSectionProps) {
+  const prefersReducedMotion = useReducedMotion();
   const { openAgent } = useAgent();
 
   const handleScrollToContact = () => {
@@ -79,14 +80,15 @@ export default function HeroSection({
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 lg:pt-10 pb-6 sm:pb-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
-          {/* Left Column: 100% High-Contrast Dark Editorial Ink on Warm Ivory */}
+          {/* Left Column: Choreographed Cinema Load Sequence on Luminous Warm Ivory */}
           <div className="lg:col-span-7 flex flex-col justify-center">
+            {/* 1. Identity + Role Pill glide cleanly in from the Left */}
             <motion.div
               data-testid="hero-identity-lockup"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.48, ease: HERO_EASE }}
-              className="flex flex-wrap items-center gap-x-3 gap-y-2"
+              initial={prefersReducedMotion ? false : { opacity: 0, x: -44 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.72, delay: 0.06, ease: CINEMA_EASE }}
+              className="flex flex-wrap items-center gap-x-3 gap-y-2 will-change-transform"
             >
               <span className="font-display text-xl sm:text-2xl font-semibold tracking-tight text-[#16100C]">
                 Amit Kumar
@@ -100,86 +102,103 @@ export default function HeroSection({
               </span>
             </motion.div>
 
-            <motion.h1
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.54, delay: 0.06, ease: HERO_EASE }}
-              className="mt-4 font-display font-bold text-[#16100C] text-[30px] sm:text-[36px] lg:text-[42px] leading-[1.1] tracking-[-0.025em] max-w-[26ch]"
-            >
-              <span className="block">I Architect DeFi Protocols</span>
-              <span className="block mt-1">
+            {/* 2. Hero H1 lines cascade smoothly upward (staggered 0.1s) */}
+            <h1 className="mt-4 font-display font-bold text-[#16100C] text-[30px] sm:text-[36px] lg:text-[42px] leading-[1.1] tracking-[-0.025em] max-w-[26ch]">
+              <motion.span
+                initial={prefersReducedMotion ? false : { opacity: 0, y: 34 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.74, delay: 0.14, ease: CINEMA_EASE }}
+                className="block will-change-transform"
+              >
+                I Architect DeFi Protocols
+              </motion.span>
+              <motion.span
+                initial={prefersReducedMotion ? false : { opacity: 0, y: 34 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.74, delay: 0.24, ease: CINEMA_EASE }}
+                className="block mt-1 will-change-transform"
+              >
                 Built to{" "}
                 <span className="text-[#E85D04]">Hold Under Fire.</span>
-              </span>
-            </motion.h1>
+              </motion.span>
+            </h1>
 
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.54, delay: 0.12, ease: HERO_EASE }}
-              className="mt-5 space-y-3 text-[15px] sm:text-[16px] leading-[1.66] text-[#4A3F37] max-w-[60ch]"
-            >
-              <p>
+            {/* 3. Bio paragraphs rise cleanly from the Bottom (staggered) */}
+            <div className="mt-5 space-y-3 text-[15px] sm:text-[16px] leading-[1.66] text-[#4A3F37] max-w-[60ch]">
+              <motion.p
+                initial={prefersReducedMotion ? false : { opacity: 0, y: 28 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.72, delay: 0.32, ease: CINEMA_EASE }}
+                className="will-change-transform"
+              >
                 I&apos;m Amit Kumar, a Smart Contract Engineer shipping complete
                 DeFi systems across Ethereum and EVM-compatible mainnets, from
                 threat model and Solidity architecture through stateful
                 invariant testing and the Next.js &amp; Wagmi application on
                 top.
-              </p>
-              <p className="text-[#5C4E45]">
+              </motion.p>
+              <motion.p
+                initial={prefersReducedMotion ? false : { opacity: 0, y: 28 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.72, delay: 0.4, ease: CINEMA_EASE }}
+                className="text-[#5C4E45] will-change-transform"
+              >
                 Strongest in the security-critical layer: enforcing compliance
                 directly inside token transfer hooks, keeping vault accounting
                 consistent under adversarial conditions, and closing attack
                 paths at design time rather than patching them after.
-              </p>
-            </motion.div>
+              </motion.p>
+            </div>
 
-            {/* Primary Actions */}
+            {/* 4. Primary Actions rise cleanly from Bottom with Diagonal Specular Sheen & Directional Icon Nudge */}
             <motion.div
-              initial={{ opacity: 0, y: 14 }}
+              initial={prefersReducedMotion ? false : { opacity: 0, y: 28 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.18, ease: HERO_EASE }}
-              className="mt-6 flex flex-wrap items-center gap-3.5"
+              transition={{ duration: 0.72, delay: 0.46, ease: CINEMA_EASE }}
+              className="mt-6 flex flex-wrap items-center gap-3.5 will-change-transform"
             >
               <a
                 href="#protocols"
-                className="inline-flex items-center justify-center gap-2 min-h-[44px] px-6 py-2.5 rounded-full text-sm font-semibold text-[#FAF6F0] bg-[#E85D04] hover:bg-[#D14F00] hover:-translate-y-0.5 active:scale-[0.98] transition-[background-color,transform,box-shadow] duration-150 whitespace-nowrap shrink-0 shadow-[0_14px_30px_-14px_rgba(232,93,4,0.62)] hover:shadow-[0_18px_34px_-14px_rgba(232,93,4,0.72)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF6F0]"
+                className="group btn-spring btn-cta-sheen inline-flex items-center justify-center gap-2 min-h-[44px] px-6 py-2.5 rounded-full text-sm font-semibold text-[#FAF6F0] bg-[#E85D04] hover:bg-[#D14F00] whitespace-nowrap shrink-0 shadow-[0_14px_30px_-14px_rgba(232,93,4,0.62)] hover:shadow-[0_18px_36px_-14px_rgba(232,93,4,0.78)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF6F0]"
               >
-                <span>Explore Protocols</span>
-                <ArrowDownRight className="w-4 h-4" aria-hidden="true" />
+                <span className="relative z-10">Explore Protocols</span>
+                <ArrowDownRight
+                  className="relative z-10 w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:translate-y-0.5"
+                  aria-hidden="true"
+                />
               </a>
 
               <a
                 href="https://github.com/NexTechArchitect"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-6 py-2.5 rounded-full text-sm font-semibold text-[#16100C] bg-[#F2E9DD]/92 hover:bg-[#EAE0D2] hover:-translate-y-0.5 active:scale-[0.98] transition-[background-color,transform,box-shadow] duration-150 whitespace-nowrap shrink-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_10px_24px_-18px_rgba(20,14,11,0.34)] hover:shadow-[0_14px_28px_-16px_rgba(232,93,4,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF6F0]"
+                className="group btn-spring inline-flex items-center justify-center gap-1.5 min-h-[44px] px-6 py-2.5 rounded-full text-sm font-semibold text-[#16100C] bg-[#F2E9DD]/92 hover:bg-[#EAE0D2] whitespace-nowrap shrink-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_10px_24px_-18px_rgba(20,14,11,0.34)] hover:shadow-[0_14px_28px_-16px_rgba(232,93,4,0.3)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF6F0]"
               >
                 <span>GitHub</span>
                 <ArrowUpRight
-                  className="w-4 h-4 text-[#C84B04]"
+                  className="w-4 h-4 text-[#C84B04] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
                   aria-hidden="true"
                 />
               </a>
             </motion.div>
 
-            {/* Clean Direct Social & Contact Row */}
+            {/* 5. Direct Social & Contact Row */}
             <motion.div
-              initial={{ opacity: 0, y: 12 }}
+              initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.48, delay: 0.24, ease: HERO_EASE }}
-              className="mt-5 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-x-5 gap-y-2 text-[13.5px] font-medium text-[#4A3F37]"
+              transition={{ duration: 0.68, delay: 0.54, ease: CINEMA_EASE }}
+              className="mt-5 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-x-5 gap-y-2 text-[13.5px] font-medium text-[#4A3F37] will-change-transform"
             >
               <div className="flex items-center gap-4">
                 <a
                   href="https://www.linkedin.com/in/amit-kumar-811a11277"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 hover:text-[#C84B04] transition-colors whitespace-nowrap"
+                  className="group inline-flex items-center gap-1 hover:text-[#C84B04] transition-colors whitespace-nowrap"
                 >
                   <span>LinkedIn</span>
                   <ArrowUpRight
-                    className="w-3.5 h-3.5 opacity-75"
+                    className="w-3.5 h-3.5 opacity-75 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
                     aria-hidden="true"
                   />
                 </a>
@@ -190,11 +209,11 @@ export default function HeroSection({
                   href="https://x.com/itZ_AmiT0"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 hover:text-[#C84B04] transition-colors whitespace-nowrap"
+                  className="group inline-flex items-center gap-1 hover:text-[#C84B04] transition-colors whitespace-nowrap"
                 >
                   <span>X (Twitter)</span>
                   <ArrowUpRight
-                    className="w-3.5 h-3.5 opacity-75"
+                    className="w-3.5 h-3.5 opacity-75 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
                     aria-hidden="true"
                   />
                 </a>
@@ -207,10 +226,10 @@ export default function HeroSection({
               </span>
               <a
                 href="mailto:nextech.amit@gmail.com"
-                className="inline-flex items-center gap-1.5 hover:text-[#C84B04] transition-colors whitespace-nowrap"
+                className="group inline-flex items-center gap-1.5 hover:text-[#C84B04] transition-colors whitespace-nowrap"
               >
                 <Mail
-                  className="w-3.5 h-3.5 text-[#C84B04]"
+                  className="w-3.5 h-3.5 text-[#C84B04] transition-transform duration-200 group-hover:scale-110"
                   aria-hidden="true"
                 />
                 <span>nextech.amit@gmail.com</span>
@@ -218,12 +237,14 @@ export default function HeroSection({
             </motion.div>
           </div>
 
-          {/* Right Column: Clean 3D Amit Avatar with Borderless Warm Studio Ambient Glow Only */}
+          {/* Right Column: Glides in smoothly from the Right (x: 64 -> 0, scale: 0.88 -> 1) */}
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1, ease: HERO_EASE }}
-            className="lg:col-span-5 relative z-20 flex flex-col items-center"
+            initial={
+              prefersReducedMotion ? false : { opacity: 0, x: 64, scale: 0.88 }
+            }
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            transition={{ duration: 0.84, delay: 0.16, ease: CINEMA_EASE }}
+            className="lg:col-span-5 relative z-20 flex flex-col items-center will-change-transform"
           >
             <div className="relative w-full flex flex-col items-center justify-center">
               <div
@@ -247,31 +268,52 @@ export default function HeroSection({
           </motion.div>
         </div>
 
-        {/* Zero-Box Floating 12 Symmetrical Skills (3 Full Rows x 4 Columns on Desktop) */}
-        <motion.div
+        {/* All 12 Skill Pills Cascading in a Crisp Wave Sequence with Bouncy Spring Hover Lift */}
+        <div
           data-testid="hero-core-skills"
           aria-label="Core engineering skills"
-          initial={{ opacity: 0.25, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.05 }}
-          transition={{ duration: 0.55, ease: HERO_EASE }}
           className="mt-10 lg:mt-12"
         >
           <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-3.5">
-            {CORE_SKILLS.map((skill) => (
-              <li
+            {CORE_SKILLS.map((skill, idx) => (
+              <motion.li
                 key={skill}
-                className="flex items-center justify-center text-center gap-2 min-h-[44px] px-4 py-2.5 rounded-full bg-[#F3EAE0]/88 hover:bg-[#FFFDF9] hover:-translate-y-0.5 text-[12px] sm:text-[12.5px] font-medium text-[#4A3F37] hover:text-[#16100C] leading-snug shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_26px_-18px_rgba(20,14,11,0.2)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.98),0_14px_30px_-14px_rgba(232,93,4,0.28)] transition-[background-color,color,transform,box-shadow] duration-200"
+                initial={
+                  prefersReducedMotion
+                    ? false
+                    : { opacity: 0, scale: 0.82, y: 24 }
+                }
+                whileInView={{ opacity: 1, scale: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.08 }}
+                whileHover={
+                  prefersReducedMotion
+                    ? undefined
+                    : {
+                        y: -3,
+                        scale: 1.04,
+                        transition: {
+                          type: "spring",
+                          stiffness: 380,
+                          damping: 20,
+                        },
+                      }
+                }
+                transition={{
+                  duration: 0.56,
+                  delay: idx * 0.045,
+                  ease: CINEMA_EASE,
+                }}
+                className="flex items-center justify-center text-center gap-2 min-h-[44px] px-4 py-2.5 rounded-full bg-[#F3EAE0]/88 hover:bg-[#FFFDF9] text-[12px] sm:text-[12.5px] font-medium text-[#4A3F37] hover:text-[#16100C] leading-snug shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_26px_-18px_rgba(20,14,11,0.2)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.98),0_16px_32px_-14px_rgba(232,93,4,0.32)] transition-[background-color,color,box-shadow] duration-200 will-change-transform cursor-default"
               >
                 <span
                   aria-hidden="true"
                   className="w-1.5 h-1.5 rounded-full bg-[#E85D04] shrink-0"
                 />
                 <span>{skill}</span>
-              </li>
+              </motion.li>
             ))}
           </ul>
-        </motion.div>
+        </div>
       </div>
 
       {/* Transition #1: Pure Filled Scroll-Flattening Sculptural Horizon Sweep (#FAF6F0 -> #140E0B) */}

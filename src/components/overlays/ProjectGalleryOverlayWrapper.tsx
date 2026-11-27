@@ -1,5 +1,6 @@
 "use client";
 
+import { AnimatePresence } from "framer-motion";
 import ProjectGalleryOverlay from "./ProjectGalleryOverlay";
 import {
   fullStackProjects,
@@ -22,24 +23,26 @@ export default function ProjectGalleryOverlayWrapper({
   openModal,
   onAskAmit,
 }: WrapperProps) {
-  if (!isOpen || !type) return null;
-
   const projects = type === "fullstack" ? fullStackProjects : coreProjects;
   const title =
     type === "fullstack" ? "Full-Stack Web3 Protocols" : "Core EVM Contracts";
 
   return (
-    <ProjectGalleryOverlay
-      isOpen={isOpen}
-      variant={type}
-      onClose={closeOverlay}
-      projects={projects}
-      title={title}
-      onProjectClick={(project) => openModal(project, "project")}
-      onAskAmit={(project) => {
-        closeOverlay();
-        onAskAmit(project);
-      }}
-    />
+    <AnimatePresence>
+      {isOpen && type && (
+        <ProjectGalleryOverlay
+          key={`gallery-overlay-${type}`}
+          variant={type}
+          onClose={closeOverlay}
+          projects={projects}
+          title={title}
+          onProjectClick={(project) => openModal(project, "project")}
+          onAskAmit={(project) => {
+            closeOverlay();
+            onAskAmit(project);
+          }}
+        />
+      )}
+    </AnimatePresence>
   );
 }

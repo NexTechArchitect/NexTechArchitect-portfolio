@@ -11,6 +11,8 @@ import {
 } from "@/components/SectionCurves";
 import { useAgent } from "@/context/AgentContext";
 
+const CINEMA_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
+
 const SOLIDITY_KEYWORDS = new Set([
   "pragma",
   "solidity",
@@ -160,16 +162,19 @@ export default function WorkbenchStage({
   };
 
   return (
-    /* Section 5: Solidity Workbench with Cinema Video-Style Small-to-Large Zoom Expand */
+    /* Section 5: Solidity Workbench with Bold Cinema Small-to-Large Zoom Expand */
     <SectionRevealStage
       id="workbench"
-      maxRadius={48}
+      maxRadius={60}
       minRadius={0}
       outerClassName="bg-[#1B120D] -mt-[2px] scroll-mt-24"
       backdropNode={<SheetSilkCrest idPrefix="archive-to-workbench" />}
       innerClassName="bg-[#F3EAE0] text-[#16100C] silk-grain pt-14 sm:pt-20 overflow-hidden shadow-[0_-28px_72px_-26px_rgba(10,6,4,0.55)]"
     >
-      <section aria-label="Solidity Workbench" className="relative">
+      <section
+        aria-label="Solidity Workbench"
+        className="relative overflow-x-clip"
+      >
         {/* Subtle warm-amber edge ambient light over Soft Champagne Sand canvas */}
         <div
           aria-hidden="true"
@@ -189,14 +194,14 @@ export default function WorkbenchStage({
         />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20">
-          {/* Always-Visible Display Headline */}
+          {/* Headline Glides from Left; Subtitle Rises from Bottom */}
           <div className="max-w-3xl">
             <motion.h2
-              initial={prefersReducedMotion ? false : { opacity: 0.25, y: 18 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.05 }}
-              transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
-              className="font-display font-bold text-[#16100C] text-3xl sm:text-4xl lg:text-[3rem] leading-[1.08] tracking-[-0.032em]"
+              initial={prefersReducedMotion ? false : { opacity: 0.2, x: -56 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, amount: 0.08 }}
+              transition={{ duration: 0.74, ease: CINEMA_EASE }}
+              className="font-display font-bold text-[#16100C] text-3xl sm:text-4xl lg:text-[3rem] leading-[1.08] tracking-[-0.032em] will-change-transform"
               style={{ textWrap: "balance" }}
             >
               Production Contract{" "}
@@ -205,28 +210,28 @@ export default function WorkbenchStage({
 
             <motion.p
               data-testid="section-subtitle-workbench"
-              initial={prefersReducedMotion ? false : { opacity: 0.3, y: 14 }}
+              initial={prefersReducedMotion ? false : { opacity: 0.25, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.05 }}
+              viewport={{ once: true, amount: 0.08 }}
               transition={{
-                duration: 0.52,
+                duration: 0.68,
                 delay: 0.08,
-                ease: [0.22, 1, 0.36, 1],
+                ease: CINEMA_EASE,
               }}
-              className="mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#4A3F37]"
+              className="mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#4A3F37] will-change-transform"
             >
               Inspect real Solidity and inline Yul guards extracted from
               deployed DeFi, RWA, keeper, and governance systems.
             </motion.p>
           </div>
 
-          {/* Architectural Horizontal File-Switcher Dock */}
+          {/* Architectural Horizontal File-Switcher Dock Glides in from Left */}
           <motion.div
-            initial={prefersReducedMotion ? false : { opacity: 0.35, y: 14 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.05 }}
-            transition={{ duration: 0.48, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
-            className="mt-9 relative z-30"
+            initial={prefersReducedMotion ? false : { opacity: 0, x: -64 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.08 }}
+            transition={{ duration: 0.72, delay: 0.08, ease: CINEMA_EASE }}
+            className="mt-9 relative z-30 will-change-transform"
           >
             <div
               role="tablist"
@@ -274,164 +279,212 @@ export default function WorkbenchStage({
             </div>
           </motion.div>
 
-          {/* Cinematic 2-Column Floating Studio Stage */}
-          <div className="mt-9 relative z-20">
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div
-                key={activeInsight.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
-                className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start"
-              >
-                {/* Left (5 cols): Crisp Light Editorial Breakdown */}
-                <div className="lg:col-span-5 flex flex-col justify-between pt-1">
-                  <div>
-                    <p className="font-mono-tabular text-xs font-semibold text-[#C84B04]">
-                      {activeInsight.protocol}
-                      <span
-                        aria-hidden="true"
-                        className="mx-2 text-[#16100C]/25"
-                      >
-                        ·
-                      </span>
-                      <span className="text-[#6E5F54]">
-                        {activeInsight.domain}
-                      </span>
-                    </p>
+          {/* Cinematic 2-Column Floating Studio Stage: Left Breakdown from Left, Code Studio from Right */}
+          <div className="mt-9 relative z-20 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
+            {/* Left (5 cols): Editorial Breakdown Glides from Left */}
+            <motion.div
+              initial={prefersReducedMotion ? false : { opacity: 0, x: -52 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, amount: 0.08 }}
+              transition={{ duration: 0.76, delay: 0.1, ease: CINEMA_EASE }}
+              className="lg:col-span-5 flex flex-col justify-between pt-1 will-change-transform"
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={`meta-${activeInsight.id}`}
+                  initial={
+                    prefersReducedMotion ? false : { opacity: 0, y: 18 }
+                  }
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={
+                    prefersReducedMotion ? undefined : { opacity: 0, y: -12 }
+                  }
+                  transition={{ duration: 0.3, ease: CINEMA_EASE }}
+                >
+                  <p className="font-mono-tabular text-xs font-semibold text-[#C84B04]">
+                    {activeInsight.protocol}
+                    <span
+                      aria-hidden="true"
+                      className="mx-2 text-[#16100C]/25"
+                    >
+                      ·
+                    </span>
+                    <span className="text-[#6E5F54]">
+                      {activeInsight.domain}
+                    </span>
+                  </p>
 
-                    <h3 className="mt-3 font-display text-2xl sm:text-[1.85rem] font-bold text-[#16100C] tracking-[-0.028em] leading-[1.16]">
-                      {activeInsight.title}
-                    </h3>
+                  <h3 className="mt-3 font-display text-2xl sm:text-[1.85rem] font-bold text-[#16100C] tracking-[-0.028em] leading-[1.16]">
+                    {activeInsight.title}
+                  </h3>
 
-                    <p className="mt-4 text-[15px] leading-[1.72] text-[#4A3F37]">
-                      {activeInsight.body}
-                    </p>
+                  <p className="mt-4 text-[15px] leading-[1.72] text-[#4A3F37]">
+                    {activeInsight.body}
+                  </p>
 
-                    {/* Two Tonal Editorial Callout Cards */}
-                    <div className="mt-7 space-y-3.5">
-                      <div className="rounded-[28px] bg-[#EAE0D3]/88 shadow-[inset_0_1px_0_rgba(255,255,255,0.72),0_14px_34px_-26px_rgba(20,14,11,0.22)] px-6 py-5">
-                        <p className="font-mono-tabular text-[11px] uppercase tracking-[0.12em] font-semibold text-[#6E5F54]">
-                          Engineering Tradeoff
-                        </p>
-                        <p className="mt-1.5 text-sm leading-[1.68] text-[#4A3F37]">
-                          {activeInsight.tradeoff}
-                        </p>
-                      </div>
+                  {/* Two Tonal Editorial Callout Cards */}
+                  <div className="mt-7 space-y-3.5">
+                    <div className="rounded-[28px] bg-[#EAE0D3]/88 shadow-[inset_0_1px_0_rgba(255,255,255,0.72),0_14px_34px_-26px_rgba(20,14,11,0.22)] px-6 py-5 transition-transform duration-200 hover:-translate-y-0.5">
+                      <p className="font-mono-tabular text-[11px] uppercase tracking-[0.12em] font-semibold text-[#6E5F54]">
+                        Engineering Tradeoff
+                      </p>
+                      <p className="mt-1.5 text-sm leading-[1.68] text-[#4A3F37]">
+                        {activeInsight.tradeoff}
+                      </p>
+                    </div>
 
-                      <div className="rounded-[28px] bg-[#EFE5D8] shadow-[inset_0_1px_0_rgba(255,255,255,0.78),0_16px_38px_-26px_rgba(232,93,4,0.22)] px-6 py-5">
-                        <p className="font-mono-tabular text-[11px] uppercase tracking-[0.12em] font-semibold text-[#C84B04]">
-                          Verified Outcome
-                        </p>
-                        <p className="mt-1.5 text-sm leading-[1.68] font-medium text-[#16100C]">
-                          {activeInsight.outcome}
-                        </p>
-                      </div>
+                    <div className="rounded-[28px] bg-[#EFE5D8] shadow-[inset_0_1px_0_rgba(255,255,255,0.78),0_16px_38px_-26px_rgba(232,93,4,0.22)] px-6 py-5 transition-transform duration-200 hover:-translate-y-0.5">
+                      <p className="font-mono-tabular text-[11px] uppercase tracking-[0.12em] font-semibold text-[#C84B04]">
+                        Verified Outcome
+                      </p>
+                      <p className="mt-1.5 text-sm leading-[1.68] font-medium text-[#16100C]">
+                        {activeInsight.outcome}
+                      </p>
                     </div>
                   </div>
-                </div>
+                </motion.div>
+              </AnimatePresence>
+            </motion.div>
 
-                {/* Right (7 cols): Elevated Deep Espresso (#130D0A) Floating Code Studio */}
-                <div
-                  data-testid="workbench-code-panel"
-                  onMouseMove={handleStudioSpecular}
-                  className="specular-surface-dark relative lg:col-span-7 rounded-[34px] bg-[#130D0A] text-[#FAF6F0] transition-[box-shadow] duration-250 flex flex-col overflow-hidden shadow-[inset_0_1px_0_rgba(250,246,240,0.1),0_34px_76px_-28px_rgba(20,14,11,0.62)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.24),0_38px_82px_-26px_rgba(232,93,4,0.3)]"
-                >
-                  {/* Soft Ambient Studio Top Radial Wash (Zero Straight Line) */}
+            {/* Right (7 cols): Elevated Deep Espresso Code Studio Glides in from Right (x: 64 -> 0, scale: 0.93 -> 1) */}
+            <motion.div
+              initial={
+                prefersReducedMotion
+                  ? false
+                  : { opacity: 0, x: 64, scale: 0.93 }
+              }
+              whileInView={{ opacity: 1, x: 0, scale: 1 }}
+              viewport={{ once: true, amount: 0.08 }}
+              transition={{ duration: 0.8, delay: 0.14, ease: CINEMA_EASE }}
+              data-testid="workbench-code-panel"
+              onMouseMove={handleStudioSpecular}
+              className="specular-surface-dark relative lg:col-span-7 rounded-[34px] bg-[#130D0A] text-[#FAF6F0] transition-shadow duration-250 flex flex-col overflow-hidden shadow-[inset_0_1px_0_rgba(250,246,240,0.1),0_34px_76px_-28px_rgba(20,14,11,0.62)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.24),0_38px_82px_-26px_rgba(232,93,4,0.3)] will-change-transform"
+            >
+              {/* Soft Ambient Studio Top Radial Wash */}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute -top-12 left-1/2 -translate-x-1/2 w-[78%] h-[110px] z-0 opacity-60"
+                style={{
+                  background:
+                    "radial-gradient(ellipse at center, rgba(232, 93, 4, 0.24) 0%, rgba(244, 162, 97, 0.08) 48%, rgba(19, 13, 10, 0) 76%)",
+                }}
+              />
+
+              {/* Tonal Window Header */}
+              <div className="relative z-10 px-5 sm:px-6 py-4 bg-[#1C130E] flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3.5 min-w-0">
                   <div
                     aria-hidden="true"
-                    className="pointer-events-none absolute -top-12 left-1/2 -translate-x-1/2 w-[78%] h-[110px] z-0 opacity-60"
-                    style={{
-                      background:
-                        "radial-gradient(ellipse at center, rgba(232, 93, 4, 0.24) 0%, rgba(244, 162, 97, 0.08) 48%, rgba(19, 13, 10, 0) 76%)",
-                    }}
-                  />
-
-                  {/* Tonal Window Header */}
-                  <div className="relative z-10 px-5 sm:px-6 py-4 bg-[#1C130E] flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-3.5 min-w-0">
-                      <div
-                        aria-hidden="true"
-                        className="flex items-center gap-1.5 shrink-0"
-                      >
-                        <span className="w-2.5 h-2.5 rounded-full bg-[#E85D04]/75" />
-                        <span className="w-2.5 h-2.5 rounded-full bg-[#D96B27]/45" />
-                        <span className="w-2.5 h-2.5 rounded-full bg-[#FAF6F0]/22" />
-                      </div>
-                      <div className="min-w-0">
-                        <p
-                          data-testid="workbench-active-filename"
-                          className="font-mono-tabular text-xs font-semibold text-[#FAF6F0] truncate"
-                        >
-                          {activeInsight.filename}
-                        </p>
-                        <p className="text-[11px] text-[#A69688] truncate">
-                          {activeInsight.language}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        type="button"
-                        onClick={handleAskCode}
-                        className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-4 py-2 rounded-full bg-[#271C15] hover:bg-[#33241B] active:scale-[0.98] text-xs font-semibold text-[#FAF6F0] transition-[background-color,transform] cursor-pointer whitespace-nowrap"
-                      >
-                        <MessageSquare
-                          className="w-3.5 h-3.5 text-[#FF6B1A]"
-                          aria-hidden="true"
-                        />
-                        <span>Explain Code</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={handleCopy}
-                        aria-label={`Copy ${activeInsight.filename}`}
-                        className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-4 py-2 rounded-full bg-[#E85D04] hover:bg-[#D14F00] active:scale-[0.98] text-xs font-semibold text-[#FAF6F0] transition-[background-color,transform] cursor-pointer whitespace-nowrap"
-                      >
-                        {copiedId === activeInsight.id ? (
-                          <>
-                            <Check className="w-3.5 h-3.5" aria-hidden="true" />
-                            <span>Copied</span>
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="w-3.5 h-3.5" aria-hidden="true" />
-                            <span>Copy</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
+                    className="flex items-center gap-1.5 shrink-0"
+                  >
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#E85D04]/75" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#D96B27]/45" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#FAF6F0]/22" />
                   </div>
-
-                  {/* Numbered Syntax-Highlighted Solidity / Yul Code */}
-                  <div className="px-4 sm:px-6 py-5 overflow-x-auto bg-[#130D0A]">
-                    <pre className="font-mono-tabular text-[12px] sm:text-[12.5px] leading-[1.74] text-[#EFE6DC]">
-                      <code>
-                        {codeLines.map((line, index) => (
-                          <div
-                            key={`${activeInsight.id}-${index}`}
-                            className="flex"
-                          >
-                            <span
-                              aria-hidden="true"
-                              className="select-none w-8 pr-3 text-right text-[#8E7E72] shrink-0"
-                            >
-                              {index + 1}
-                            </span>
-                            <span className="whitespace-pre">
-                              {highlightSolidityLine(line)}
-                            </span>
-                          </div>
-                        ))}
-                      </code>
-                    </pre>
+                  <div className="min-w-0">
+                    <p
+                      data-testid="workbench-active-filename"
+                      className="font-mono-tabular text-xs font-semibold text-[#FAF6F0] truncate"
+                    >
+                      {activeInsight.filename}
+                    </p>
+                    <p className="text-[11px] text-[#A69688] truncate">
+                      {activeInsight.language}
+                    </p>
                   </div>
                 </div>
-              </motion.div>
-            </AnimatePresence>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleAskCode}
+                    className="btn-spring inline-flex items-center justify-center gap-1.5 min-h-[44px] px-4 py-2 rounded-full bg-[#271C15] hover:bg-[#33241B] text-xs font-semibold text-[#FAF6F0] cursor-pointer whitespace-nowrap"
+                  >
+                    <MessageSquare
+                      className="w-3.5 h-3.5 text-[#FF6B1A]"
+                      aria-hidden="true"
+                    />
+                    <span>Explain Code</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleCopy}
+                    aria-label={`Copy ${activeInsight.filename}`}
+                    className="btn-spring btn-cta-sheen inline-flex items-center justify-center gap-1.5 min-h-[44px] min-w-[96px] px-4 py-2 rounded-full bg-[#E85D04] hover:bg-[#D14F00] text-xs font-semibold text-[#FAF6F0] cursor-pointer whitespace-nowrap"
+                  >
+                    <AnimatePresence mode="wait" initial={false}>
+                      {copiedId === activeInsight.id ? (
+                        <motion.span
+                          key="copied"
+                          initial={{ opacity: 0, scale: 0.72, y: 4 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 420,
+                            damping: 22,
+                          }}
+                          className="relative z-10 inline-flex items-center gap-1.5"
+                        >
+                          <Check className="w-3.5 h-3.5" aria-hidden="true" />
+                          <span>Copied!</span>
+                        </motion.span>
+                      ) : (
+                        <motion.span
+                          key="copy"
+                          initial={{ opacity: 0, scale: 0.85 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.85 }}
+                          transition={{ duration: 0.16 }}
+                          className="relative z-10 inline-flex items-center gap-1.5"
+                        >
+                          <Copy className="w-3.5 h-3.5" aria-hidden="true" />
+                          <span>Copy</span>
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+                  </button>
+                </div>
+              </div>
+
+              {/* Numbered Syntax-Highlighted Solidity / Yul Code with Crisp Upward Fade-Slide */}
+              <div className="px-4 sm:px-6 py-5 overflow-x-auto bg-[#130D0A]">
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.pre
+                    key={`code-${activeInsight.id}`}
+                    initial={
+                      prefersReducedMotion ? false : { opacity: 0, y: 18 }
+                    }
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={
+                      prefersReducedMotion ? undefined : { opacity: 0, y: -12 }
+                    }
+                    transition={{ duration: 0.3, ease: CINEMA_EASE }}
+                    className="font-mono-tabular text-[12px] sm:text-[12.5px] leading-[1.74] text-[#EFE6DC] will-change-transform"
+                  >
+                    <code>
+                      {codeLines.map((line, index) => (
+                        <div
+                          key={`${activeInsight.id}-${index}`}
+                          className="flex"
+                        >
+                          <span
+                            aria-hidden="true"
+                            className="select-none w-8 pr-3 text-right text-[#8E7E72] shrink-0"
+                          >
+                            {index + 1}
+                          </span>
+                          <span className="whitespace-pre">
+                            {highlightSolidityLine(line)}
+                          </span>
+                        </div>
+                      ))}
+                    </code>
+                  </motion.pre>
+                </AnimatePresence>
+              </div>
+            </motion.div>
           </div>
         </div>
 

@@ -75,8 +75,8 @@ export function HeroHeaderCanopy() {
 
 /**
  * Cinema Video-Style "Small-to-Large" Zoom Expand Section Wrapper
- * Smoothly expands each entering section from scale 0.88 -> 1, y 56px -> 0px,
- * sculpted rounded corners 48px -> 0px (or minRadius), and opacity 0.55 -> 1
+ * Smoothly expands each entering section from scale 0.84 -> 1, y 84px -> 0px,
+ * sculpted rounded corners 60px -> 0px (or minRadius), and opacity 0.65 -> 1
  * using spring-damped scroll progress so content is never stuck hidden.
  */
 export function SectionRevealStage({
@@ -84,9 +84,9 @@ export function SectionRevealStage({
   outerClassName = "",
   innerClassName = "",
   backdropNode,
-  maxRadius = 48,
+  maxRadius = 60,
   minRadius = 0,
-  scrollEndOffset = "start 0.22",
+  scrollEndOffset = "start 0.28",
   id,
   dataTestId,
 }: {
@@ -96,7 +96,7 @@ export function SectionRevealStage({
   backdropNode?: React.ReactNode;
   maxRadius?: number;
   minRadius?: number;
-  scrollEndOffset?: "start 0.22" | "end 1";
+  scrollEndOffset?: "start 0.28" | "end 1";
   id?: string;
   dataTestId?: string;
 }) {
@@ -109,19 +109,19 @@ export function SectionRevealStage({
   });
 
   const smoothProgress = useSpring(scrollYProgress, {
-    stiffness: 120,
-    damping: 24,
-    mass: 0.45,
+    stiffness: 110,
+    damping: 22,
+    mass: 0.5,
   });
 
-  const scale = useTransform(smoothProgress, [0, 1], [0.88, 1]);
-  const y = useTransform(smoothProgress, [0, 1], [56, 0]);
+  const scale = useTransform(smoothProgress, [0, 1], [0.84, 1]);
+  const y = useTransform(smoothProgress, [0, 1], [84, 0]);
   const borderRadius = useTransform(
     smoothProgress,
     [0, 1],
     [maxRadius, minRadius]
   );
-  const opacity = useTransform(smoothProgress, [0, 1], [0.55, 1]);
+  const opacity = useTransform(smoothProgress, [0, 1], [0.65, 1]);
 
   return (
     <div
@@ -153,7 +153,8 @@ export function SectionRevealStage({
 
 /**
  * Signature Hero Translucent Apricot & Burnt-Orange Silk Wave
- * Pure filled sculptural shapes (zero stroke hairlines) flowing behind the Hero & 3D avatar.
+ * Pure filled sculptural shapes (zero stroke hairlines) flowing behind the Hero & 3D avatar
+ * with smooth scroll-reactive drift.
  */
 export function HeroSilkWave({
   idPrefix = "hero-silk-wave",
@@ -168,8 +169,14 @@ export function HeroSilkWave({
     target: waveRef,
     offset: ["start start", "end start"],
   });
-  const y = useTransform(scrollYProgress, [0, 1], [0, 34]);
-  const scaleY = useTransform(scrollYProgress, [0, 1], [1, 1.09]);
+  const smoothWave = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 24,
+    mass: 0.4,
+  });
+  const y = useTransform(smoothWave, [0, 1], [0, 44]);
+  const x = useTransform(smoothWave, [0, 1], [0, -24]);
+  const scaleY = useTransform(smoothWave, [0, 1], [1, 1.12]);
 
   const ribbonPrimaryId = `${idPrefix}-primary`;
   const ribbonSecondaryId = `${idPrefix}-secondary`;
@@ -196,7 +203,7 @@ export function HeroSilkWave({
         style={
           prefersReducedMotion
             ? undefined
-            : { y, scaleY, transformOrigin: "center center" }
+            : { x, y, scaleY, transformOrigin: "center center" }
         }
         className="w-full will-change-transform"
       >

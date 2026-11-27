@@ -5,6 +5,7 @@ import {
   motion,
   AnimatePresence,
   useMotionValue,
+  useReducedMotion,
   useSpring,
   useTransform,
 } from "framer-motion";
@@ -32,6 +33,8 @@ import {
 } from "lucide-react";
 import type { ProjectItem } from "@/data/projects";
 import { filterProjectsByQuery } from "@/lib/portfolio";
+
+const CINEMA_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
 const ICON_MAP: Record<
   ProjectItem["iconKey"],
@@ -67,6 +70,7 @@ function GalleryCard({
   onSelect: () => void;
   onAskAmit: () => void;
 }) {
+  const prefersReducedMotion = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
   const [hovered, setHovered] = useState(false);
   const [sheenPos, setSheenPos] = useState({ x: 50, y: 20 });
@@ -75,11 +79,11 @@ function GalleryCard({
   const my = useMotionValue(0);
   const springConfig = { stiffness: 250, damping: 24 };
   const rotX = useSpring(
-    useTransform(my, [-0.5, 0.5], [5.5, -5.5]),
+    useTransform(my, [-0.5, 0.5], [4.5, -4.5]),
     springConfig
   );
   const rotY = useSpring(
-    useTransform(mx, [-0.5, 0.5], [-5.5, 5.5]),
+    useTransform(mx, [-0.5, 0.5], [-4.5, 4.5]),
     springConfig
   );
 
@@ -94,11 +98,13 @@ function GalleryCard({
       el.style.setProperty("--my", `${py}px`);
       const relX = px / rect.width;
       const relY = py / rect.height;
-      mx.set(relX - 0.5);
-      my.set(relY - 0.5);
+      if (!prefersReducedMotion) {
+        mx.set(relX - 0.5);
+        my.set(relY - 0.5);
+      }
       setSheenPos({ x: Math.round(relX * 100), y: Math.round(relY * 100) });
     },
-    [mx, my]
+    [mx, my, prefersReducedMotion]
   );
 
   const handleLeave = useCallback(() => {
@@ -109,33 +115,56 @@ function GalleryCard({
 
   const Icon = ICON_MAP[project.iconKey] || Cpu;
 
+  // Directional bottom-up wave: left column x: -36 -> 0, center x: 0, right column x: 36 -> 0
+  const col = index % 3;
+  const entryX = col === 0 ? -36 : col === 2 ? 36 : 0;
+
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 20, scale: 0.96 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -12, scale: 0.96 }}
+      initial={
+        prefersReducedMotion
+          ? false
+          : { opacity: 0, y: 56, x: entryX, scale: 0.9 }
+      }
+      animate={{ opacity: 1, y: 0, x: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -16, scale: 0.94 }}
       transition={{
-        layout: { type: "spring", stiffness: 320, damping: 30 },
-        delay: Math.min(index * 0.04, 0.2),
-        duration: 0.34,
-        ease: [0.16, 1, 0.3, 1],
+        layout: { type: "spring", stiffness: 300, damping: 28 },
+        delay: Math.min(index * 0.07, 0.35),
+        duration: 0.62,
+        ease: CINEMA_EASE,
       }}
       style={{ perspective: 1100 }}
-      className="h-full"
+      className="h-full will-change-transform"
     >
       <motion.div
         ref={ref}
-        style={{ rotateX: rotX, rotateY: rotY, transformStyle: "preserve-3d" }}
+        whileHover={
+          prefersReducedMotion
+            ? undefined
+            : {
+                y: -6,
+                scale: 1.012,
+                transition: { type: "spring", stiffness: 280, damping: 22 },
+              }
+        }
+        style={
+          prefersReducedMotion
+            ? undefined
+            : { rotateX: rotX, rotateY: rotY, transformStyle: "preserve-3d" }
+        }
         onMouseMove={handleMove}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={handleLeave}
-        className={`relative h-full rounded-[24px] border transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-1 flex flex-col overflow-hidden ${
+        className={`card-sheen-sweep relative h-full rounded-[24px] transition-shadow duration-250 flex flex-col overflow-hidden will-change-transform ${
           isDarkLab
-            ? "specular-surface-dark bg-[#1C120C] border-[#FAF6F0]/12 hover:border-[#FF6B1A]/65 shadow-[0_22px_54px_-28px_rgba(0,0,0,0.85)] hover:shadow-[0_28px_60px_-26px_rgba(232,93,4,0.34)]"
-            : "specular-surface bg-[#FFFCF7] border-[#16100C]/12 hover:border-[#E85D04]/55 shadow-[0_14px_38px_-24px_rgba(20,14,11,0.22)] hover:shadow-[0_28px_58px_-26px_rgba(232,93,4,0.28)]"
+            ? "specular-surface-dark bg-[#1C120C] shadow-[inset_0_1px_0_rgba(250,246,240,0.08),0_22px_54px_-28px_rgba(0,0,0,0.85)] hover:shadow-[inset_0_1px_0_rgba(255,138,61,0.28),0_32px_68px_-24px_rgba(232,93,4,0.38)]"
+            : "specular-surface bg-[#FFFCF7] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_14px_38px_-24px_rgba(20,14,11,0.22)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,1),0_30px_64px_-24px_rgba(232,93,4,0.3)]"
         }`}
       >
+        <span aria-hidden="true" className="card-sheen-beam" />
+
         {/* Dynamic pointer-tracked copper specular sheen */}
         <div
           aria-hidden="true"
@@ -182,10 +211,12 @@ function GalleryCard({
           {/* Icon + Title */}
           <div className="flex items-start gap-3.5 mb-3">
             <div
-              className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 ${
+              className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 ${
+                hovered ? "scale-110" : ""
+              } ${
                 isDarkLab
-                  ? "bg-[#120B07] border-[#E85D04]/30 text-[#FF6B1A]"
-                  : "bg-[#F3EAE0] border-[#16100C]/10 text-[#E85D04]"
+                  ? "bg-[#120B07] text-[#FF6B1A] shadow-[inset_0_1px_0_rgba(255,138,61,0.2)]"
+                  : "bg-[#F3EAE0] text-[#E85D04] shadow-[inset_0_1px_0_rgba(255,255,255,0.85)]"
               }`}
             >
               <Icon className="w-5 h-5" aria-hidden="true" />
@@ -223,38 +254,48 @@ function GalleryCard({
             {project.description}
           </p>
 
-          {/* Clean unboxed stack list */}
-          <p
-            className={`text-xs font-mono-tabular mb-5 ${
-              isDarkLab ? "text-[#A69688]" : "text-[#6E5F54]"
-            }`}
-          >
-            {project.tech.join(" · ")}
-          </p>
+          {/* Tactile Tech Stack Tags */}
+          <div className="flex flex-wrap items-center gap-1.5 mb-5">
+            {project.tech.map((techItem) => (
+              <span
+                key={techItem}
+                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-mono-tabular transition-transform duration-150 hover:-translate-y-0.5 ${
+                  isDarkLab
+                    ? "bg-[#251811] text-[#B9ABA0] hover:text-[#FAF6F0]"
+                    : "bg-[#F3EAE0]/90 text-[#5D4F46] hover:text-[#16100C]"
+                }`}
+              >
+                {techItem}
+              </span>
+            ))}
+          </div>
 
-          {/* Action Bar (Zero Straight Divider Line) */}
+          {/* Action Bar */}
           <div className="pt-2 flex flex-col gap-3">
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={onSelect}
-                className={`inline-flex items-center justify-center gap-1.5 min-h-[44px] px-4 py-2 rounded-full text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                className={`group/btn btn-spring btn-cta-sheen inline-flex items-center justify-center gap-1.5 min-h-[44px] px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 cursor-pointer ${
                   isDarkLab
                     ? "bg-[#E85D04] hover:bg-[#D14F00] text-[#FAF6F0]"
                     : "bg-[#16100C] hover:bg-[#E85D04] text-[#FAF6F0]"
                 }`}
               >
-                <span>Case Study</span>
-                <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
+                <span className="relative z-10">Case Study</span>
+                <ArrowUpRight
+                  className="relative z-10 w-3.5 h-3.5 transition-transform duration-200 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5"
+                  aria-hidden="true"
+                />
               </button>
 
               <button
                 type="button"
                 onClick={onAskAmit}
-                className={`inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3.5 py-2 rounded-full border text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                className={`btn-spring inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 cursor-pointer ${
                   isDarkLab
-                    ? "bg-[#120B07] hover:bg-[#261810] text-[#FAF6F0] border-[#FAF6F0]/14 hover:border-[#FF6B1A]"
-                    : "bg-[#F3EAE0] hover:bg-[#16100C] text-[#16100C] hover:text-[#FAF6F0] border-[#16100C]/12"
+                    ? "bg-[#120B07] hover:bg-[#261810] text-[#FAF6F0]"
+                    : "bg-[#F3EAE0] hover:bg-[#16100C] text-[#16100C] hover:text-[#FAF6F0]"
                 }`}
               >
                 <MessageSquare
@@ -275,17 +316,20 @@ function GalleryCard({
                   href={project.liveUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 hover:text-[#E85D04] transition-colors whitespace-nowrap shrink-0"
+                  className="group/link inline-flex items-center gap-1 hover:text-[#E85D04] transition-colors whitespace-nowrap shrink-0"
                 >
                   <span>Live App</span>
-                  <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
+                  <ArrowUpRight
+                    className="w-3.5 h-3.5 transition-transform duration-200 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5"
+                    aria-hidden="true"
+                  />
                 </a>
               )}
               <a
                 href={project.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 hover:text-[#E85D04] transition-colors whitespace-nowrap shrink-0"
+                className="group/link inline-flex items-center gap-1 hover:text-[#E85D04] transition-colors whitespace-nowrap shrink-0"
               >
                 <Code2 className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>GitHub</span>
@@ -299,7 +343,6 @@ function GalleryCard({
 }
 
 export default function ProjectGalleryOverlay({
-  isOpen,
   variant,
   onClose,
   projects,
@@ -307,7 +350,6 @@ export default function ProjectGalleryOverlay({
   onProjectClick,
   onAskAmit,
 }: {
-  isOpen: boolean;
   variant: "fullstack" | "core";
   onClose: () => void;
   projects: ProjectItem[];
@@ -315,6 +357,7 @@ export default function ProjectGalleryOverlay({
   onProjectClick: (project: ProjectItem) => void;
   onAskAmit: (project: ProjectItem) => void;
 }) {
+  const prefersReducedMotion = useReducedMotion();
   const [query, setQuery] = useState("");
   const isDarkLab = variant === "core";
 
@@ -323,28 +366,33 @@ export default function ProjectGalleryOverlay({
     [projects, query]
   );
 
-  if (!isOpen) return null;
-
   return (
-    <AnimatePresence>
+    <motion.div
+      data-testid="project-gallery-overlay"
+      data-variant={variant}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${title} Archive`}
+      initial={prefersReducedMotion ? false : { opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.24 }}
+      className="fixed inset-0 z-[150] overflow-hidden backdrop-blur-md bg-[#140E0B]/45"
+    >
       <motion.div
-        key={`gallery-overlay-${variant}`}
-        data-testid="project-gallery-overlay"
-        data-variant={variant}
-        role="dialog"
-        aria-modal="true"
-        aria-label={`${title} Archive`}
-        initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 18 }}
-        transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
-        className={`fixed inset-0 z-[150] overflow-hidden ${
+        initial={
+          prefersReducedMotion ? false : { opacity: 0, y: 28, scale: 0.93 }
+        }
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={prefersReducedMotion ? undefined : { opacity: 0, y: 22, scale: 0.95 }}
+        transition={{ type: "spring", stiffness: 260, damping: 24 }}
+        className={`relative h-full w-full overflow-hidden will-change-transform ${
           isDarkLab
             ? "bg-[#120B07] text-[#FAF6F0] silk-grain-dark"
             : "bg-[#FAF5EE] text-[#140E0B] silk-grain"
         }`}
       >
-        {/* Ambient Studio Light Ribbons (strictly pointer-events-none, zero blur-3xl raster overhead) */}
+        {/* Ambient Studio Light Ribbons */}
         {isDarkLab ? (
           <>
             <div
@@ -385,13 +433,13 @@ export default function ProjectGalleryOverlay({
           </>
         )}
 
-        {/* Dedicated full-viewport scrollable container for effortless wheel, trackpad, and touch scroll */}
+        {/* Dedicated full-viewport scrollable container */}
         <div
           data-testid="gallery-scroll-container"
-          className="relative z-10 h-full w-full overflow-y-auto overscroll-contain"
+          className="relative z-10 h-full w-full overflow-y-auto overflow-x-clip overscroll-contain"
           style={{ WebkitOverflowScrolling: "touch" }}
         >
-          {/* Sticky Header (Tonal Shadow Separation, Zero Straight Hairline) */}
+          {/* Sticky Header: Title from Left, Search & Close Controls from Right */}
           <div
             className={`sticky top-0 z-20 backdrop-blur-md ${
               isDarkLab
@@ -400,7 +448,11 @@ export default function ProjectGalleryOverlay({
             }`}
           >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4">
-              <div>
+              <motion.div
+                initial={prefersReducedMotion ? false : { opacity: 0, x: -44 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.54, ease: CINEMA_EASE }}
+              >
                 <h2
                   className={`font-display text-2xl sm:text-3xl font-bold tracking-[-0.03em] ${
                     isDarkLab ? "text-[#FAF6F0]" : "text-[#16100C]"
@@ -408,9 +460,14 @@ export default function ProjectGalleryOverlay({
                 >
                   {title}
                 </h2>
-              </div>
+              </motion.div>
 
-              <div className="flex items-center gap-2.5 sm:gap-3">
+              <motion.div
+                initial={prefersReducedMotion ? false : { opacity: 0, x: 44 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.54, delay: 0.05, ease: CINEMA_EASE }}
+                className="flex items-center gap-2.5 sm:gap-3"
+              >
                 <div className="relative flex-1 sm:w-72">
                   <Search
                     className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${
@@ -424,10 +481,10 @@ export default function ProjectGalleryOverlay({
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="Filter by protocol or standard"
                     aria-label="Filter projects by protocol or standard"
-                    className={`w-full h-11 pl-10 pr-3 rounded-full border text-sm focus:outline-none focus:border-[#E85D04] ${
+                    className={`w-full h-11 pl-10 pr-3 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-[#E85D04]/45 transition-shadow ${
                       isDarkLab
-                        ? "bg-[#1C120C] border-[#FAF6F0]/14 text-[#FAF6F0] placeholder:text-[#A69688]"
-                        : "bg-[#FFFCF7] border-[#16100C]/15 text-[#16100C] placeholder:text-[#6E5F54]"
+                        ? "bg-[#1C120C] text-[#FAF6F0] placeholder:text-[#A69688] shadow-[inset_0_1px_0_rgba(250,246,240,0.08)]"
+                        : "bg-[#FFFCF7] text-[#16100C] placeholder:text-[#6E5F54] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_6px_18px_-14px_rgba(20,14,11,0.3)]"
                     }`}
                   />
                 </div>
@@ -436,7 +493,7 @@ export default function ProjectGalleryOverlay({
                   type="button"
                   onClick={onClose}
                   aria-label="Close project gallery"
-                  className={`inline-flex items-center justify-center w-11 h-11 rounded-full transition-colors shrink-0 cursor-pointer ${
+                  className={`btn-spring inline-flex items-center justify-center w-11 h-11 rounded-full shrink-0 cursor-pointer ${
                     isDarkLab
                       ? "bg-[#E85D04] text-[#FAF6F0] hover:bg-[#D14F00]"
                       : "bg-[#16100C] text-[#FAF6F0] hover:bg-[#E85D04]"
@@ -444,18 +501,21 @@ export default function ProjectGalleryOverlay({
                 >
                   <X className="w-4 h-4" aria-hidden="true" />
                 </button>
-              </div>
+              </motion.div>
             </div>
           </div>
 
-          {/* 3D Tilt Cards Grid */}
+          {/* 3D Tilt Cards Grid with Directional Wave & Layout Spring Reflow */}
           <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-10 pb-24">
             {filteredProjects.length === 0 ? (
-              <div
-                className={`p-10 sm:p-12 rounded-2xl border text-center ${
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3, ease: CINEMA_EASE }}
+                className={`p-10 sm:p-12 rounded-2xl text-center ${
                   isDarkLab
-                    ? "bg-[#1C120C] border-[#FAF6F0]/12"
-                    : "bg-[#FFFCF7] border-[#16100C]/12"
+                    ? "bg-[#1C120C] shadow-[inset_0_1px_0_rgba(250,246,240,0.08)]"
+                    : "bg-[#FFFCF7] shadow-[0_14px_38px_-24px_rgba(20,14,11,0.22)]"
                 }`}
               >
                 <p
@@ -475,11 +535,11 @@ export default function ProjectGalleryOverlay({
                 <button
                   type="button"
                   onClick={() => setQuery("")}
-                  className="inline-flex items-center justify-center min-h-[44px] px-5 py-2 rounded-full bg-[#E85D04] text-[#FAF6F0] text-xs font-semibold cursor-pointer"
+                  className="btn-spring btn-cta-sheen inline-flex items-center justify-center min-h-[44px] px-5 py-2 rounded-full bg-[#E85D04] text-[#FAF6F0] text-xs font-semibold cursor-pointer"
                 >
-                  Reset Filter
+                  <span className="relative z-10">Reset Filter</span>
                 </button>
-              </div>
+              </motion.div>
             ) : (
               <motion.div
                 layout
@@ -502,6 +562,6 @@ export default function ProjectGalleryOverlay({
           </div>
         </div>
       </motion.div>
-    </AnimatePresence>
+    </motion.div>
   );
 }

@@ -395,11 +395,11 @@ export default function ProtocolAgent() {
             role="dialog"
             aria-label="Ask Amit AI Assistant"
             data-expanded={isExpanded ? "true" : "false"}
-            initial={{ opacity: 0, y: 18, scale: 0.96 }}
+            initial={{ opacity: 0, y: 28, scale: 0.93 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 14, scale: 0.96 }}
-            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className={`rounded-[24px] espresso-glass shadow-[0_32px_80px_-16px_rgba(11,7,5,0.72)] flex flex-col overflow-hidden text-[#FAF6F0] ${
+            exit={{ opacity: 0, y: 22, scale: 0.94 }}
+            transition={{ type: "spring", stiffness: 260, damping: 24 }}
+            className={`rounded-[24px] espresso-glass shadow-[0_32px_80px_-16px_rgba(11,7,5,0.72)] flex flex-col overflow-hidden text-[#FAF6F0] will-change-transform ${
               isExpanded
                 ? "w-[calc(100vw-2rem)] sm:w-[640px] lg:w-[740px] max-h-[min(780px,calc(100vh-4.5rem))]"
                 : "w-[calc(100vw-2rem)] sm:w-[428px] max-h-[min(610px,calc(100vh-5.5rem))]"
