@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   motion,
   useMotionValue,
   useReducedMotion,
+  useScroll,
+  useSpring,
   useTransform,
   type MotionValue,
 } from "framer-motion";
@@ -16,27 +18,25 @@ interface CurveProps {
 }
 
 /**
- * Unified 2026 Quiet-Luxury Editorial Motion Tokens
- * Single smooth deceleration bezier + flicker-free viewport thresholds.
+ * Weighted Slo-Mo Cinema Motion Tokens (Strict GPU-Only Compositing)
  */
-export const LUXURY_EASE: [number, number, number, number] = [
-  0.22, 1, 0.36, 1,
-];
+export const SLOMO_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
+export const LUXURY_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 export const REPLAY_VIEWPORT = {
   once: false,
-  amount: "some" as const,
-  margin: "-10% 0px -6% 0px",
+  amount: 0.08 as const,
 };
 
-export const IMMEDIATE_VIEWPORT = {
+export const WORKBENCH_VIEWPORT = {
   once: false,
   amount: "some" as const,
-  margin: "0px 0px -40px 0px",
+  margin: "0px 0px 80px 0px",
 };
 
 /**
- * Lightweight responsive viewport hook (< 768px) for adaptive mobile motion ergonomics.
+ * Lightweight responsive viewport hook (< 768px) for adaptive mobile ergonomics.
+ * Scales travel distances ~55% tighter and uses snappier touch springs on mobile.
  */
 export function useIsMobile(maxWidth = 767): boolean {
   const [isMobile, setIsMobile] = useState(false);
@@ -52,6 +52,31 @@ export function useIsMobile(maxWidth = 767): boolean {
 
   return isMobile;
 }
+
+export function getSloMoSpringConfig(isMobile: boolean) {
+  return isMobile
+    ? { stiffness: 95, damping: 24, mass: 0.55 }
+    : { stiffness: 65, damping: 22, mass: 0.75 };
+}
+
+export type SectionGlideVariant =
+  | "glide-right"
+  | "bottom-zoom"
+  | "glide-left"
+  | "early-zoom"
+  | "horizon-rise";
+
+type ScrollOffsetTuple = NonNullable<
+  Parameters<typeof useScroll>[0]
+>["offset"];
+
+const VARIANT_SCROLL_OFFSETS: Record<SectionGlideVariant, ScrollOffsetTuple> = {
+  "glide-right": ["start 0.98", "start 0.36"],
+  "bottom-zoom": ["start 0.98", "start 0.40"],
+  "glide-left": ["start 0.98", "start 0.38"],
+  "early-zoom": ["start 1.0", "start 0.68"],
+  "horizon-rise": ["start 1.0", "start 0.62"],
+};
 
 /**
  * Dark Espresso-Brown & Warm Burnt-Orange Curved Header Stage
@@ -109,20 +134,22 @@ export function HeroHeaderCanopy() {
 }
 
 /**
- * Lightweight Static Sculpted Editorial Sheet Wrapper (Zero Scroll-Jank)
- * Preserves the signature sculpted rounded top transition without morphing borderRadius
- * or running competing scroll listeners on outer wrappers.
+ * Bidirectional Weighted Slo-Mo Whole-Section Glide Stage (Strict 60FPS GPU-Only)
+ * Animates ONLY GPU-composited x, y, scale, and opacity with static rounded corners
+ * (ZERO animated borderRadius, ZERO rotateX, ZERO filter repaints).
  */
 export function SectionRevealStage({
   children,
+  variant = "bottom-zoom",
   outerClassName = "",
   innerClassName = "",
   backdropNode,
-  sculptedTop = true,
+  sculptedTop = false,
   id,
   dataTestId,
 }: {
   children: React.ReactNode;
+  variant?: SectionGlideVariant;
   outerClassName?: string;
   innerClassName?: string;
   backdropNode?: React.ReactNode;
@@ -130,28 +157,127 @@ export function SectionRevealStage({
   id?: string;
   dataTestId?: string;
 }) {
+  const prefersReducedMotion = useReducedMotion();
+  const isMobile = useIsMobile();
+  const outerRef = useRef<HTMLDivElement | null>(null);
+
+  const { scrollYProgress } = useScroll({
+    target: outerRef,
+    offset: VARIANT_SCROLL_OFFSETS[variant],
+  });
+
+  const smoothProgress = useSpring(
+    scrollYProgress,
+    getSloMoSpringConfig(isMobile)
+  );
+
+  // Per-variant GPU-only transform ranges (scaled ~55% tighter on mobile < 768px)
+  const startX =
+    variant === "glide-right"
+      ? isMobile
+        ? 36
+        : 96
+      : variant === "glide-left"
+      ? isMobile
+        ? -36
+        : -96
+      : 0;
+
+  const startY =
+    variant === "bottom-zoom"
+      ? isMobile
+        ? 28
+        : 64
+      : variant === "horizon-rise"
+      ? isMobile
+        ? 26
+        : 56
+      : variant === "early-zoom"
+      ? isMobile
+        ? 24
+        : 52
+      : isMobile
+      ? 20
+      : 44;
+
+  const startScale =
+    variant === "bottom-zoom"
+      ? isMobile
+        ? 0.95
+        : 0.9
+      : variant === "early-zoom"
+      ? isMobile
+        ? 0.97
+        : 0.94
+      : isMobile
+      ? 0.96
+      : 0.93;
+
+  const startOpacity =
+    variant === "early-zoom"
+      ? isMobile
+        ? 0.7
+        : 0.6
+      : variant === "horizon-rise"
+      ? isMobile
+        ? 0.65
+        : 0.55
+      : variant === "bottom-zoom"
+      ? isMobile
+        ? 0.6
+        : 0.5
+      : isMobile
+      ? 0.55
+      : 0.45;
+
+  const x = useTransform(smoothProgress, [0, 1], [startX, 0]);
+  const y = useTransform(smoothProgress, [0, 1], [startY, 0]);
+  const scale = useTransform(smoothProgress, [0, 1], [startScale, 1]);
+  const opacity = useTransform(smoothProgress, [0, 1], [startOpacity, 1]);
+
+  const origin =
+    variant === "glide-right"
+      ? "top right"
+      : variant === "glide-left"
+      ? "top left"
+      : variant === "horizon-rise"
+      ? "bottom center"
+      : "top center";
+
   return (
     <div
+      ref={outerRef}
       id={id}
       data-testid={dataTestId}
       className={`relative section-perf ${outerClassName}`}
     >
       {backdropNode}
-      <div
-        className={`relative z-10 ${
+      <motion.div
+        style={
+          prefersReducedMotion
+            ? undefined
+            : {
+                x,
+                y,
+                scale,
+                opacity,
+                transformOrigin: origin,
+              }
+        }
+        className={`relative z-10 gpu-layer ${
           sculptedTop ? "rounded-t-[36px] sm:rounded-t-[48px]" : ""
         } ${innerClassName}`}
       >
         {children}
-      </div>
+      </motion.div>
     </div>
   );
 }
 
 /**
  * Signature Hero Translucent Apricot & Burnt-Orange Silk Wave
- * Pure filled sculptural shapes (zero stroke hairlines, zero expensive SVG feGaussianBlur)
- * flowing behind the Hero & 3D avatar with subtle GPU-only vertical scroll parallax.
+ * Pure filled sculptural shapes (zero stroke hairlines, zero expensive SVG blur)
+ * flowing behind the Hero & 3D avatar with silky sideways scroll drift (x: 0 -> 54).
  */
 export function HeroSilkWave({
   idPrefix = "hero-silk-wave",
@@ -166,12 +292,9 @@ export function HeroSilkWave({
   const isMobile = useIsMobile();
   const fallbackProgress = useMotionValue(0);
 
-  // Subtle GPU-only vertical parallax driven by the Hero's single scroll progress
-  const y = useTransform(
-    scrollProgress ?? fallbackProgress,
-    [0, 1],
-    [0, isMobile ? 14 : 28]
-  );
+  const source = scrollProgress ?? fallbackProgress;
+  const x = useTransform(source, [0, 1], [0, isMobile ? 24 : 54]);
+  const y = useTransform(source, [0, 1], [0, isMobile ? 8 : 18]);
 
   const ribbonPrimaryId = `${idPrefix}-primary`;
   const ribbonSecondaryId = `${idPrefix}-secondary`;
@@ -194,9 +317,9 @@ export function HeroSilkWave({
 
       <motion.div
         style={
-          prefersReducedMotion || !scrollProgress ? undefined : { y }
+          prefersReducedMotion || !scrollProgress ? undefined : { x, y }
         }
-        className="w-full will-change-transform"
+        className="w-full gpu-layer"
       >
         <div className="silk-wave-shimmer w-full">
           <svg
@@ -253,7 +376,7 @@ export function HeroSilkWave({
               </linearGradient>
             </defs>
 
-            {/* Back translucent apricot silk veil (pure filled shape, zero SVG filter repaint) */}
+            {/* Back translucent apricot silk veil (pure filled shape, zero SVG filter) */}
             <path
               d="M0 156C250 74 560 72 885 138C1130 188 1310 154 1440 94L1440 202C1270 250 1065 246 820 198C525 140 245 160 0 224V156Z"
               fill={`url(#${ribbonSecondaryId})`}
@@ -327,7 +450,6 @@ export function SheetSilkCrest({
             <stop offset="100%" stopColor="#D97736" stopOpacity="0" />
           </linearGradient>
         </defs>
-        {/* Pure filled curved glow crescent (zero stroke, zero filter repaint) */}
         <path
           d="M60 78C380 14 1060 14 1380 78L1380 90C1060 36 380 36 60 90V78Z"
           fill={`url(#${glowId})`}
@@ -354,7 +476,6 @@ export function ScrollHorizonSweep({
       aria-hidden="true"
       className={`pointer-events-none relative w-full -mt-[2px] -mb-[2px] leading-none overflow-hidden select-none ${className}`}
     >
-      {/* Static warm molten-copper horizon halo */}
       <div
         className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-2 w-[78%] max-w-[1060px] h-[132px] rounded-full opacity-75"
         style={{
@@ -400,7 +521,6 @@ export function ScrollHorizonSweep({
           </linearGradient>
         </defs>
 
-        {/* Layered translucent apricot silk crescent (pure filled shapes, zero SVG blur) */}
         <path
           d="M0 140V84C360 0 1080 2 1440 88V140H0Z"
           fill={`url(#${glowId})`}
@@ -479,19 +599,14 @@ export function SweepingRibbonCurve({
           </linearGradient>
         </defs>
 
-        {/* Back translucent apricot silk swell (pure filled shape) */}
         <path
           d="M0 148V98C420 8 980 24 1440 78V148H0Z"
           fill={`url(#${ribbonGlowId})`}
         />
-
-        {/* Soft filled luminous copper crescent (zero stroke) */}
         <path
           d="M0 148V110C440 20 1000 34 1440 88V148H0Z"
           fill={`url(#${crestId})`}
         />
-
-        {/* Single fluid sweeping asymmetric curve matching exact Archive #1B120D */}
         <path
           d="M0 148V120C440 30 1000 44 1440 96V148H0Z"
           fill={bottomFill}
@@ -522,7 +637,6 @@ export function SolarHorizonArch({
       aria-hidden="true"
       className={`pointer-events-none relative w-full -mt-[2px] -mb-[2px] leading-none overflow-hidden select-none ${className}`}
     >
-      {/* Warm molten-amber sunrise corona */}
       <div
         className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-0 w-[88%] max-w-[1220px] h-[156px] rounded-full opacity-85"
         style={{
@@ -568,12 +682,10 @@ export function SolarHorizonArch({
           </linearGradient>
         </defs>
 
-        {/* Pure filled diffused burnt-orange solar corona crescent (zero stroke, zero SVG blur) */}
         <path
           d="M0 156V102C360 2 1080 2 1440 102V156H0Z"
           fill={`url(#${coronaId})`}
         />
-
         <path
           d="M0 156V118C360 18 1080 18 1440 118V156H0Z"
           fill={`url(#${fillId})`}

@@ -6,6 +6,7 @@ import {
   motion,
   useReducedMotion,
   useScroll,
+  useSpring,
   useTransform,
 } from "framer-motion";
 import {
@@ -16,7 +17,13 @@ import {
   Mail,
   MessageSquare,
 } from "lucide-react";
-import { IMMEDIATE_VIEWPORT, LUXURY_EASE } from "@/components/SectionCurves";
+import {
+  REPLAY_VIEWPORT,
+  SLOMO_EASE,
+  SectionRevealStage,
+  getSloMoSpringConfig,
+  useIsMobile,
+} from "@/components/SectionCurves";
 import { useAgent } from "@/context/AgentContext";
 
 interface StudioFooterProps {
@@ -27,18 +34,23 @@ const CONTACT_EMAIL = "nextech.amit@gmail.com";
 
 export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
   const prefersReducedMotion = useReducedMotion();
+  const isMobile = useIsMobile();
   const { openAgent } = useAgent();
   const [copied, setCopied] = useState(false);
 
   const footerRef = useRef<HTMLElement | null>(null);
-  // Single lightweight GPU-only scroll listener gently swelling the warm Solar Horizon ember glow
+  // Weighted slo-mo spring-smoothed Solar Horizon ember swell (strict GPU-only transforms)
   const { scrollYProgress } = useScroll({
     target: footerRef,
     offset: ["start end", "end end"],
   });
-  const emberRiseY = useTransform(scrollYProgress, [0, 1], [28, 0]);
-  const emberScale = useTransform(scrollYProgress, [0, 1], [0.94, 1.05]);
-  const emberOpacity = useTransform(scrollYProgress, [0, 1], [0.32, 0.72]);
+  const smoothFooterProgress = useSpring(
+    scrollYProgress,
+    getSloMoSpringConfig(isMobile)
+  );
+  const emberRiseY = useTransform(smoothFooterProgress, [0, 1], [34, 0]);
+  const emberScale = useTransform(smoothFooterProgress, [0, 1], [0.92, 1.06]);
+  const emberOpacity = useTransform(smoothFooterProgress, [0, 1], [0.3, 0.76]);
 
   const handleCopyEmail = async () => {
     try {
@@ -65,7 +77,7 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
       id="contact"
       className="relative -mt-[2px] bg-[#0A0604] text-[#FAF6F0] silk-grain-dark pt-6 sm:pt-10 pb-16 sm:pb-20 overflow-y-hidden scroll-mt-24 section-perf"
     >
-      {/* Gentle Scroll-Linked Solar Horizon Ember Swell */}
+      {/* Weighted Slo-Mo Spring-Smoothed Solar Horizon Ember Swell */}
       <motion.div
         aria-hidden="true"
         style={
@@ -73,7 +85,7 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
             ? undefined
             : { y: emberRiseY, scale: emberScale, opacity: emberOpacity }
         }
-        className="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 w-[820px] h-[240px] rounded-full will-change-transform"
+        className="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 w-[820px] h-[240px] rounded-full gpu-layer"
       >
         <div
           className="w-full h-full rounded-full"
@@ -92,15 +104,23 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
         }}
       />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <SectionRevealStage
+        variant="horizon-rise"
+        outerClassName="relative z-10"
+        innerClassName="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
+      >
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-end pb-10">
-          {/* Clean, Weighty Editorial Rise (y: 28 -> 0) */}
+          {/* Headline & Bio Glide from Left (-64 -> 0) */}
           <motion.div
-            initial={prefersReducedMotion ? false : { opacity: 0, y: 28 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={IMMEDIATE_VIEWPORT}
-            transition={{ duration: 0.65, ease: LUXURY_EASE }}
-            className="lg:col-span-7 will-change-transform"
+            initial={
+              prefersReducedMotion
+                ? false
+                : { opacity: 0, x: isMobile ? -26 : -64 }
+            }
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={REPLAY_VIEWPORT}
+            transition={{ duration: 0.95, ease: SLOMO_EASE }}
+            className="lg:col-span-7 gpu-layer"
           >
             <h2
               className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-[1.08] text-[#FAF6F0]"
@@ -119,13 +139,17 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
             </p>
           </motion.div>
 
-          {/* Right Email Copy Pill & Primary CTA Buttons */}
+          {/* Right Email Copy Pill & Primary CTA Buttons Glide from Right (+64 -> 0) */}
           <motion.div
-            initial={prefersReducedMotion ? false : { opacity: 0, y: 28 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={IMMEDIATE_VIEWPORT}
-            transition={{ duration: 0.65, delay: 0.07, ease: LUXURY_EASE }}
-            className="lg:col-span-5 flex flex-col items-start lg:items-end gap-4 will-change-transform"
+            initial={
+              prefersReducedMotion
+                ? false
+                : { opacity: 0, x: isMobile ? 26 : 64 }
+            }
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={REPLAY_VIEWPORT}
+            transition={{ duration: 0.95, delay: 0.07, ease: SLOMO_EASE }}
+            className="lg:col-span-5 flex flex-col items-start lg:items-end gap-4 gpu-layer"
           >
             {/* One-Click Copyable Email Pill with Spring Pop Copied Micro-Feedback */}
             <button
@@ -213,14 +237,18 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
           </motion.div>
         </div>
 
-        {/* Bottom Brand Bar */}
+        {/* Bottom Brand Bar Rises Smoothly from Bottom (+34 -> 0) */}
         <motion.div
-          initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
+          initial={
+            prefersReducedMotion
+              ? false
+              : { opacity: 0, y: isMobile ? 16 : 34 }
+          }
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={IMMEDIATE_VIEWPORT}
-          transition={{ duration: 0.62, delay: 0.12, ease: LUXURY_EASE }}
+          viewport={REPLAY_VIEWPORT}
+          transition={{ duration: 0.95, delay: 0.12, ease: SLOMO_EASE }}
           onMouseMove={handleBarSpecular}
-          className="specular-surface-dark overflow-hidden rounded-[32px] bg-[#140D09]/92 transition-shadow duration-250 shadow-[inset_0_1px_0_rgba(250,246,240,0.09),0_24px_56px_-28px_rgba(0,0,0,0.85)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.22),0_26px_62px_-26px_rgba(232,93,4,0.25)] px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 text-xs font-medium text-[#A69688] will-change-transform"
+          className="specular-surface-dark overflow-hidden rounded-[32px] bg-[#140D09]/92 transition-shadow duration-250 shadow-[inset_0_1px_0_rgba(250,246,240,0.09),0_24px_56px_-28px_rgba(0,0,0,0.85)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.22),0_26px_62px_-26px_rgba(232,93,4,0.25)] px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 text-xs font-medium text-[#A69688] gpu-layer"
         >
           <div className="relative z-10 flex flex-wrap items-center gap-x-3 gap-y-1">
             <span className="font-display font-bold text-[#FAF6F0] text-sm tracking-[-0.02em]">
@@ -274,7 +302,7 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
             </a>
           </div>
         </motion.div>
-      </div>
+      </SectionRevealStage>
     </footer>
   );
 }

@@ -5,16 +5,18 @@ import {
   motion,
   useReducedMotion,
   useScroll,
+  useSpring,
   useTransform,
 } from "framer-motion";
 import { ArrowDownRight, ArrowUpRight, Mail } from "lucide-react";
 import AmitAvatar3D from "@/components/AmitAvatar3D";
 import {
+  getSloMoSpringConfig,
   HeroHeaderCanopy,
   HeroSilkWave,
-  LUXURY_EASE,
   REPLAY_VIEWPORT,
   ScrollHorizonSweep,
+  SLOMO_EASE,
   useIsMobile,
 } from "@/components/SectionCurves";
 import { useAgent } from "@/context/AgentContext";
@@ -50,17 +52,23 @@ export default function HeroSection({
   const { openAgent } = useAgent();
   const heroRef = useRef<HTMLElement | null>(null);
 
-  // Single ultra-lightweight GPU-only scroll listener for subtle silk wave & 3D avatar parallax
+  // Bidirectional weighted slo-mo scroll-exit parallax (strict GPU-only transforms)
   const { scrollYProgress } = useScroll({
     target: heroRef,
     offset: ["start start", "end start"],
   });
-
-  const avatarY = useTransform(
+  const smoothExit = useSpring(
     scrollYProgress,
-    [0, 1],
-    [0, isMobile ? -10 : -24]
+    getSloMoSpringConfig(isMobile)
   );
+
+  const copyY = useTransform(smoothExit, [0, 1], [0, isMobile ? -14 : -32]);
+  const copyScale = useTransform(
+    smoothExit,
+    [0, 1],
+    [1, isMobile ? 0.98 : 0.96]
+  );
+  const avatarY = useTransform(smoothExit, [0, 1], [0, isMobile ? -18 : -42]);
 
   const handleScrollToContact = () => {
     const el = document.getElementById("contact");
@@ -96,25 +104,34 @@ export default function HeroSection({
         }}
       />
 
-      {/* Signature Translucent Apricot & Burnt-Orange Filled Silk Wave with Subtle Vertical Parallax */}
+      {/* Translucent Apricot & Burnt-Orange Silk Wave with Smooth Sideways Scroll Drift (x: 0 -> 54) */}
       <HeroSilkWave
         idPrefix="hero-signature-silk"
-        scrollProgress={scrollYProgress}
+        scrollProgress={smoothExit}
       />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 lg:pt-10 pb-6 sm:pb-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
-          {/* Left Column: Crisp Instant Staggered Editorial Entrance on Load */}
-          <div className="lg:col-span-7 flex flex-col justify-center">
-            {/* 1. Identity + Role Pill */}
+          {/* Left Column: Weighted Slo-Mo Load Sequence + Bidirectional Scroll-Exit Depth */}
+          <motion.div
+            style={
+              prefersReducedMotion
+                ? undefined
+                : { y: copyY, scale: copyScale, transformOrigin: "top left" }
+            }
+            className="lg:col-span-7 flex flex-col justify-center gpu-layer"
+          >
+            {/* 1. Amit Kumar + Role Pill Glide from Left */}
             <motion.div
               data-testid="hero-identity-lockup"
               initial={
-                prefersReducedMotion ? false : { opacity: 0, y: 18 }
+                prefersReducedMotion
+                  ? false
+                  : { opacity: 0, x: isMobile ? -20 : -44 }
               }
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.58, delay: 0.04, ease: LUXURY_EASE }}
-              className="flex flex-wrap items-center gap-x-3 gap-y-2 will-change-transform"
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.85, delay: 0.06, ease: SLOMO_EASE }}
+              className="flex flex-wrap items-center gap-x-3 gap-y-2 gpu-layer"
             >
               <span className="font-display text-xl sm:text-2xl font-semibold tracking-tight text-[#16100C]">
                 Amit Kumar
@@ -128,40 +145,46 @@ export default function HeroSection({
               </span>
             </motion.div>
 
-            {/* 2. Hero H1 lines staggered cleanly upward */}
+            {/* 2. Hero H1 Lines Glide from Left (Staggered) */}
             <h1 className="mt-4 font-display font-bold text-[#16100C] text-[30px] sm:text-[36px] lg:text-[42px] leading-[1.1] tracking-[-0.025em] max-w-[26ch]">
               <motion.span
                 initial={
-                  prefersReducedMotion ? false : { opacity: 0, y: 22 }
+                  prefersReducedMotion
+                    ? false
+                    : { opacity: 0, x: isMobile ? -20 : -44 }
                 }
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.62, delay: 0.1, ease: LUXURY_EASE }}
-                className="block will-change-transform"
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.88, delay: 0.14, ease: SLOMO_EASE }}
+                className="block gpu-layer"
               >
                 I Architect DeFi Protocols
               </motion.span>
               <motion.span
                 initial={
-                  prefersReducedMotion ? false : { opacity: 0, y: 22 }
+                  prefersReducedMotion
+                    ? false
+                    : { opacity: 0, x: isMobile ? -20 : -44 }
                 }
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.62, delay: 0.17, ease: LUXURY_EASE }}
-                className="block mt-1 will-change-transform"
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.88, delay: 0.24, ease: SLOMO_EASE }}
+                className="block mt-1 gpu-layer"
               >
                 Built to{" "}
                 <span className="text-[#E85D04]">Hold Under Fire.</span>
               </motion.span>
             </h1>
 
-            {/* 3. Bio paragraphs */}
+            {/* 3. Bio Paragraphs Rise from Bottom */}
             <div className="mt-5 space-y-3 text-[15px] sm:text-[16px] leading-[1.66] text-[#4A3F37] max-w-[60ch]">
               <motion.p
                 initial={
-                  prefersReducedMotion ? false : { opacity: 0, y: 20 }
+                  prefersReducedMotion
+                    ? false
+                    : { opacity: 0, y: isMobile ? 16 : 30 }
                 }
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.62, delay: 0.24, ease: LUXURY_EASE }}
-                className="will-change-transform"
+                transition={{ duration: 0.85, delay: 0.32, ease: SLOMO_EASE }}
+                className="gpu-layer"
               >
                 I&apos;m Amit Kumar, a Smart Contract Engineer shipping complete
                 DeFi systems across Ethereum and EVM-compatible mainnets, from
@@ -171,11 +194,13 @@ export default function HeroSection({
               </motion.p>
               <motion.p
                 initial={
-                  prefersReducedMotion ? false : { opacity: 0, y: 20 }
+                  prefersReducedMotion
+                    ? false
+                    : { opacity: 0, y: isMobile ? 16 : 30 }
                 }
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.62, delay: 0.3, ease: LUXURY_EASE }}
-                className="text-[#5C4E45] will-change-transform"
+                transition={{ duration: 0.85, delay: 0.4, ease: SLOMO_EASE }}
+                className="text-[#5C4E45] gpu-layer"
               >
                 Strongest in the security-critical layer: enforcing compliance
                 directly inside token transfer hooks, keeping vault accounting
@@ -184,14 +209,16 @@ export default function HeroSection({
               </motion.p>
             </div>
 
-            {/* 4. Primary Actions with Diagonal Specular Sheen & Directional Icon Nudge */}
+            {/* 4. Primary Actions Rise from Bottom with Specular Sheen & Icon Nudge */}
             <motion.div
               initial={
-                prefersReducedMotion ? false : { opacity: 0, y: 18 }
+                prefersReducedMotion
+                  ? false
+                  : { opacity: 0, y: isMobile ? 16 : 28 }
               }
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.36, ease: LUXURY_EASE }}
-              className="mt-6 flex flex-wrap items-center gap-3.5 will-change-transform"
+              transition={{ duration: 0.85, delay: 0.48, ease: SLOMO_EASE }}
+              className="mt-6 flex flex-wrap items-center gap-3.5 gpu-layer"
             >
               <a
                 href="#protocols"
@@ -221,11 +248,13 @@ export default function HeroSection({
             {/* 5. Direct Social & Contact Row */}
             <motion.div
               initial={
-                prefersReducedMotion ? false : { opacity: 0, y: 16 }
+                prefersReducedMotion
+                  ? false
+                  : { opacity: 0, y: isMobile ? 12 : 22 }
               }
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.58, delay: 0.42, ease: LUXURY_EASE }}
-              className="mt-5 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-x-5 gap-y-2 text-[13.5px] font-medium text-[#4A3F37] will-change-transform"
+              transition={{ duration: 0.82, delay: 0.56, ease: SLOMO_EASE }}
+              className="mt-5 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-x-5 gap-y-2 text-[13.5px] font-medium text-[#4A3F37] gpu-layer"
             >
               <div className="flex items-center gap-4">
                 <a
@@ -273,22 +302,22 @@ export default function HeroSection({
                 <span>nextech.amit@gmail.com</span>
               </a>
             </motion.div>
-          </div>
+          </motion.div>
 
-          {/* Right Column: Subtle Vertical Parallax Float + Refined Editorial Entrance */}
+          {/* Right Column: Live Counter-Parallax Float + Slo-Mo Glide from Right */}
           <motion.div
             style={prefersReducedMotion ? undefined : { y: avatarY }}
-            className="lg:col-span-5 relative z-20 flex flex-col items-center will-change-transform"
+            className="lg:col-span-5 relative z-20 flex flex-col items-center gpu-layer"
           >
             <motion.div
               initial={
                 prefersReducedMotion
                   ? false
-                  : { opacity: 0, x: isMobile ? 16 : 28, scale: 0.96 }
+                  : { opacity: 0, x: isMobile ? 24 : 56, scale: 0.92 }
               }
               animate={{ opacity: 1, x: 0, scale: 1 }}
-              transition={{ duration: 0.72, delay: 0.14, ease: LUXURY_EASE }}
-              className="relative w-full flex flex-col items-center justify-center will-change-transform"
+              transition={{ duration: 0.92, delay: 0.16, ease: SLOMO_EASE }}
+              className="relative w-full flex flex-col items-center justify-center gpu-layer"
             >
               <div
                 aria-hidden="true"
@@ -311,7 +340,7 @@ export default function HeroSection({
           </motion.div>
         </div>
 
-        {/* All 12 Skill Pills — Clean Wave Reveal with Flicker-Free Replay */}
+        {/* All 12 Skill Pills — Smooth Replayable Slo-Mo Wave */}
         <div
           data-testid="hero-core-skills"
           aria-label="Core engineering skills"
@@ -324,7 +353,7 @@ export default function HeroSection({
                 initial={
                   prefersReducedMotion
                     ? false
-                    : { opacity: 0, y: 18, scale: 0.97 }
+                    : { opacity: 0, y: isMobile ? 12 : 22, scale: 0.93 }
                 }
                 whileInView={{ opacity: 1, y: 0, scale: 1 }}
                 viewport={REPLAY_VIEWPORT}
@@ -335,17 +364,17 @@ export default function HeroSection({
                         y: -3,
                         transition: {
                           type: "spring",
-                          stiffness: 380,
+                          stiffness: 360,
                           damping: 22,
                         },
                       }
                 }
                 transition={{
-                  duration: 0.55,
-                  delay: idx * 0.03,
-                  ease: LUXURY_EASE,
+                  duration: 0.78,
+                  delay: idx * 0.04,
+                  ease: SLOMO_EASE,
                 }}
-                className="flex items-center justify-center text-center gap-2 min-h-[44px] px-4 py-2.5 rounded-full bg-[#F3EAE0]/88 hover:bg-[#FFFDF9] text-[12px] sm:text-[12.5px] font-medium text-[#4A3F37] hover:text-[#16100C] leading-snug shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_26px_-18px_rgba(20,14,11,0.2)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.98),0_16px_32px_-14px_rgba(232,93,4,0.32)] transition-[background-color,color,box-shadow] duration-200 will-change-transform cursor-default"
+                className="flex items-center justify-center text-center gap-2 min-h-[44px] px-4 py-2.5 rounded-full bg-[#F3EAE0]/88 hover:bg-[#FFFDF9] text-[12px] sm:text-[12.5px] font-medium text-[#4A3F37] hover:text-[#16100C] leading-snug shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_26px_-18px_rgba(20,14,11,0.2)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.98),0_16px_32px_-14px_rgba(232,93,4,0.32)] transition-[background-color,color,box-shadow] duration-200 gpu-layer cursor-default"
               >
                 <span
                   aria-hidden="true"

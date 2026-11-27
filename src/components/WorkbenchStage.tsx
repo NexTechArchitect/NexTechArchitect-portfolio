@@ -5,11 +5,12 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Check, Copy, FileCode2, MessageSquare } from "lucide-react";
 import { ARCHITECTURE_INSIGHTS } from "@/data/projects";
 import {
-  IMMEDIATE_VIEWPORT,
   LUXURY_EASE,
+  SLOMO_EASE,
   SectionRevealStage,
   SheetSilkCrest,
   SolarHorizonArch,
+  WORKBENCH_VIEWPORT,
   useIsMobile,
 } from "@/components/SectionCurves";
 import { useAgent } from "@/context/AgentContext";
@@ -163,12 +164,11 @@ export default function WorkbenchStage({
     );
   };
 
-  const lateralShift = isMobile ? 14 : 24;
-
   return (
-    /* Section 5: Solidity Workbench — Static Sculpted Sheet + Immediate Zero-Lag Split Reveal */
+    /* Section 5: Solidity Workbench — Early Bottom-Zoom Stage (Completes at 68% viewport, ZERO late arrival) */
     <SectionRevealStage
       id="workbench"
+      variant="early-zoom"
       sculptedTop
       outerClassName="bg-[#1B120D] -mt-[2px] scroll-mt-24"
       backdropNode={<SheetSilkCrest idPrefix="archive-to-workbench" />}
@@ -197,14 +197,18 @@ export default function WorkbenchStage({
         />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20">
-          {/* Immediate Entry: Headline & Subtitle Appear Effortlessly as Section Crosses Lower Viewport */}
+          {/* Immediate Early Entry: Headline from Top-Left, Subtitle from Left */}
           <div className="max-w-3xl">
             <motion.h2
-              initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={IMMEDIATE_VIEWPORT}
-              transition={{ duration: 0.55, ease: LUXURY_EASE }}
-              className="font-display font-bold text-[#16100C] text-3xl sm:text-4xl lg:text-[3rem] leading-[1.08] tracking-[-0.032em] will-change-transform"
+              initial={
+                prefersReducedMotion
+                  ? false
+                  : { opacity: 0, x: isMobile ? -22 : -52, y: -12 }
+              }
+              whileInView={{ opacity: 1, x: 0, y: 0 }}
+              viewport={WORKBENCH_VIEWPORT}
+              transition={{ duration: 0.85, ease: SLOMO_EASE }}
+              className="font-display font-bold text-[#16100C] text-3xl sm:text-4xl lg:text-[3rem] leading-[1.08] tracking-[-0.032em] gpu-layer"
               style={{ textWrap: "balance" }}
             >
               Production Contract{" "}
@@ -213,28 +217,32 @@ export default function WorkbenchStage({
 
             <motion.p
               data-testid="section-subtitle-workbench"
-              initial={prefersReducedMotion ? false : { opacity: 0, y: 18 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={IMMEDIATE_VIEWPORT}
-              transition={{ duration: 0.55, delay: 0.06, ease: LUXURY_EASE }}
-              className="mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#4A3F37] will-change-transform"
+              initial={
+                prefersReducedMotion
+                  ? false
+                  : { opacity: 0, x: isMobile ? -16 : -32 }
+              }
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={WORKBENCH_VIEWPORT}
+              transition={{ duration: 0.85, delay: 0.05, ease: SLOMO_EASE }}
+              className="mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#4A3F37] gpu-layer"
             >
               Inspect real Solidity and inline Yul guards extracted from
               deployed DeFi, RWA, keeper, and governance systems.
             </motion.p>
           </div>
 
-          {/* File-Switcher Dock Glides Smoothly (x: -24 -> 0) Immediately on Entry */}
+          {/* File-Switcher Dock Glides Smoothly from Left Immediately on Entry */}
           <motion.div
             initial={
               prefersReducedMotion
                 ? false
-                : { opacity: 0, x: -lateralShift }
+                : { opacity: 0, x: isMobile ? -24 : -60 }
             }
             whileInView={{ opacity: 1, x: 0 }}
-            viewport={IMMEDIATE_VIEWPORT}
-            transition={{ duration: 0.55, delay: 0.09, ease: LUXURY_EASE }}
-            className="mt-9 relative z-30 will-change-transform"
+            viewport={WORKBENCH_VIEWPORT}
+            transition={{ duration: 0.85, delay: 0.06, ease: SLOMO_EASE }}
+            className="mt-9 relative z-30 gpu-layer"
           >
             <div
               role="tablist"
@@ -282,19 +290,19 @@ export default function WorkbenchStage({
             </div>
           </motion.div>
 
-          {/* Fast Unified Split Reveal: Left Breakdown (-24 -> 0), Code Studio (+24 -> 0) */}
+          {/* Simultaneous Opposing Split Glide: Left Breakdown (-52 -> 0), Dark Code Studio (+68 -> 0, scale 0.95 -> 1) */}
           <div className="mt-9 relative z-20 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
             {/* Left (5 cols): Editorial Breakdown */}
             <motion.div
               initial={
                 prefersReducedMotion
                   ? false
-                  : { opacity: 0, x: -lateralShift }
+                  : { opacity: 0, x: isMobile ? -22 : -52 }
               }
               whileInView={{ opacity: 1, x: 0 }}
-              viewport={IMMEDIATE_VIEWPORT}
-              transition={{ duration: 0.55, delay: 0.12, ease: LUXURY_EASE }}
-              className="lg:col-span-5 flex flex-col justify-between pt-1 will-change-transform"
+              viewport={WORKBENCH_VIEWPORT}
+              transition={{ duration: 0.85, delay: 0.08, ease: SLOMO_EASE }}
+              className="lg:col-span-5 flex flex-col justify-between pt-1 gpu-layer"
             >
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
@@ -353,19 +361,19 @@ export default function WorkbenchStage({
               </AnimatePresence>
             </motion.div>
 
-            {/* Right (7 cols): Elevated Deep Espresso Code Studio (+24 -> 0, Immediate Entry) */}
+            {/* Right (7 cols): Elevated Deep Espresso Code Studio (+68 -> 0, scale 0.95 -> 1, Immediate Entry) */}
             <motion.div
               initial={
                 prefersReducedMotion
                   ? false
-                  : { opacity: 0, x: lateralShift, scale: 0.98 }
+                  : { opacity: 0, x: isMobile ? 26 : 68, scale: 0.95 }
               }
               whileInView={{ opacity: 1, x: 0, scale: 1 }}
-              viewport={IMMEDIATE_VIEWPORT}
-              transition={{ duration: 0.55, delay: 0.14, ease: LUXURY_EASE }}
+              viewport={WORKBENCH_VIEWPORT}
+              transition={{ duration: 0.85, delay: 0.08, ease: SLOMO_EASE }}
               data-testid="workbench-code-panel"
               onMouseMove={handleStudioSpecular}
-              className="specular-surface-dark relative lg:col-span-7 rounded-[34px] bg-[#130D0A] text-[#FAF6F0] transition-shadow duration-250 flex flex-col overflow-hidden shadow-[inset_0_1px_0_rgba(250,246,240,0.1),0_30px_68px_-28px_rgba(20,14,11,0.6)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.24),0_34px_74px_-26px_rgba(232,93,4,0.28)] will-change-transform"
+              className="specular-surface-dark relative lg:col-span-7 rounded-[34px] bg-[#130D0A] text-[#FAF6F0] transition-shadow duration-250 flex flex-col overflow-hidden shadow-[inset_0_1px_0_rgba(250,246,240,0.1),0_30px_68px_-28px_rgba(20,14,11,0.6)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.24),0_34px_74px_-26px_rgba(232,93,4,0.28)] gpu-layer"
             >
               {/* Soft Ambient Studio Top Radial Wash */}
               <div

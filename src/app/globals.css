@@ -80,6 +80,12 @@ body {
   overflow-x: clip;
 }
 
+.gpu-layer {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+
 /* Frosted Cream Glass for floating light surfaces */
 .cream-glass {
   background: rgba(251, 248, 243, 0.9);

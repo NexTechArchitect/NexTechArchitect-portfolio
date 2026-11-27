@@ -3,7 +3,13 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowDown } from "lucide-react";
-import { LUXURY_EASE, REPLAY_VIEWPORT } from "@/components/SectionCurves";
+import {
+  LUXURY_EASE,
+  REPLAY_VIEWPORT,
+  SLOMO_EASE,
+  SectionRevealStage,
+  useIsMobile,
+} from "@/components/SectionCurves";
 
 interface DomainSpec {
   id: string;
@@ -220,6 +226,7 @@ export default function ArchitectureStage({
   onInspectWorkbench,
 }: ArchitectureStageProps) {
   const prefersReducedMotion = useReducedMotion();
+  const isMobile = useIsMobile();
   const stageRef = useRef<HTMLElement | null>(null);
   const spotlightRef = useRef<HTMLDivElement | null>(null);
 
@@ -256,235 +263,265 @@ export default function ArchitectureStage({
   );
 
   return (
-    <section
-      ref={stageRef}
+    <SectionRevealStage
       id="architecture"
-      aria-label="Engineering Architecture"
-      onMouseMove={handleStageMouseMove}
-      className="relative -mt-[2px] bg-[#140E0B] text-[#FAF6F0] silk-grain-dark pt-10 sm:pt-14 lg:pt-16 pb-24 sm:pb-32 scroll-mt-24 section-perf"
+      variant="glide-right"
+      outerClassName="bg-[#140E0B] -mt-[2px] scroll-mt-24"
+      innerClassName="relative bg-[#140E0B] text-[#FAF6F0] silk-grain-dark pt-10 sm:pt-14 lg:pt-16 pb-24 sm:pb-32 overflow-hidden"
     >
-      {/* Smooth Cursor-Following Warm Molten-Copper Radial Spotlight */}
-      <div
-        ref={spotlightRef}
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 z-0 stage-spotlight-dark transition-opacity duration-300"
-      />
+      <section
+        ref={stageRef}
+        aria-label="Engineering Architecture"
+        onMouseMove={handleStageMouseMove}
+        className="relative section-perf"
+      >
+        {/* Smooth Cursor-Following Warm Molten-Copper Radial Spotlight */}
+        <div
+          ref={spotlightRef}
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-0 stage-spotlight-dark transition-opacity duration-300"
+        />
 
-      {/* Lightweight static warm copper ambient washes */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute top-12 left-[-8%] w-[440px] h-[560px] rounded-full opacity-30"
-        style={{
-          background:
-            "radial-gradient(ellipse at center, rgba(232, 93, 4, 0.2) 0%, rgba(217, 119, 54, 0.07) 46%, rgba(20, 14, 11, 0) 74%)",
-        }}
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute bottom-20 right-[-8%] w-[420px] h-[520px] rounded-full opacity-25"
-        style={{
-          background:
-            "radial-gradient(ellipse at center, rgba(244, 140, 6, 0.14) 0%, rgba(20, 14, 11, 0) 72%)",
-        }}
-      />
+        {/* Lightweight static warm copper ambient washes */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute top-12 left-[-8%] w-[440px] h-[560px] rounded-full opacity-30"
+          style={{
+            background:
+              "radial-gradient(ellipse at center, rgba(232, 93, 4, 0.2) 0%, rgba(217, 119, 54, 0.07) 46%, rgba(20, 14, 11, 0) 74%)",
+          }}
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute bottom-20 right-[-8%] w-[420px] h-[520px] rounded-full opacity-25"
+          style={{
+            background:
+              "radial-gradient(ellipse at center, rgba(244, 140, 6, 0.14) 0%, rgba(20, 14, 11, 0) 72%)",
+          }}
+        />
 
-      <div className="relative z-10 max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Smooth Upward Editorial Reveal (Zero Outer Scroll Competition) */}
-        <div className="max-w-3xl">
-          <motion.h2
-            initial={prefersReducedMotion ? false : { opacity: 0, y: 28 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={REPLAY_VIEWPORT}
-            transition={{ duration: 0.62, ease: LUXURY_EASE }}
-            className="font-display font-bold text-[#FAF6F0] text-3xl sm:text-4xl lg:text-[3rem] leading-[1.08] tracking-[-0.032em] will-change-transform"
-            style={{ textWrap: "balance" }}
-          >
-            Built for Adversarial{" "}
-            <span className="text-[#FF6B1A]">Mainnet Execution.</span>
-          </motion.h2>
-
-          <motion.p
-            data-testid="section-subtitle-architecture"
-            initial={prefersReducedMotion ? false : { opacity: 0, y: 22 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={REPLAY_VIEWPORT}
-            transition={{ duration: 0.6, delay: 0.06, ease: LUXURY_EASE }}
-            className="mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#D8CEC4] will-change-transform"
-          >
-            The core engineering disciplines governing how every smart contract
-            system is specified, verified, and deployed across Ethereum and EVM
-            networks.
-          </motion.p>
-        </div>
-
-        {/* Pillar Navigation Tabs with Silky layoutId Spring Indicator */}
-        <motion.div
-          initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={REPLAY_VIEWPORT}
-          transition={{ duration: 0.58, delay: 0.1, ease: LUXURY_EASE }}
-          className="mt-10 flex justify-start will-change-transform"
-        >
-          <div
-            role="tablist"
-            aria-label="Engineering architecture domains"
-            className="w-full sm:w-auto grid grid-cols-2 sm:inline-flex items-center gap-1 p-1.5 rounded-[28px] sm:rounded-full bg-[#1E1510]/95 shadow-[inset_0_1px_0_rgba(250,246,240,0.08),0_18px_38px_-20px_rgba(0,0,0,0.85)]"
-          >
-            {ARCHITECTURE_DOMAINS.map((domain) => {
-              const isActive = domain.id === activeDomain.id;
-              return (
-                <button
-                  key={domain.id}
-                  type="button"
-                  role="tab"
-                  data-testid={`arch-tab-${domain.id}`}
-                  aria-selected={isActive}
-                  onClick={() => setActiveDomainId(domain.id)}
-                  className={`relative inline-flex items-center justify-center min-h-[44px] px-3.5 sm:px-5 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-colors duration-150 cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B1A] ${
-                    isActive
-                      ? "text-[#FAF6F0]"
-                      : "text-[#A69688] hover:text-[#FAF6F0]"
-                  }`}
-                >
-                  {isActive && (
-                    <motion.span
-                      layoutId="architecture-active-tab"
-                      transition={{
-                        type: "spring",
-                        stiffness: 420,
-                        damping: 34,
-                      }}
-                      className="absolute inset-0 rounded-full bg-[#E85D04] shadow-[0_10px_24px_-10px_rgba(232,93,4,0.85)]"
-                      aria-hidden="true"
-                    />
-                  )}
-                  <span className="relative z-10">{domain.shortLabel}</span>
-                </button>
-              );
-            })}
-          </div>
-        </motion.div>
-
-        {/* Pillar Content Panel — Upward Editorial Reveal + Crisp Horizontal Crossfade on Tab Switch */}
-        <motion.div
-          initial={
-            prefersReducedMotion ? false : { opacity: 0, y: 28, scale: 0.98 }
-          }
-          whileInView={{ opacity: 1, y: 0, scale: 1 }}
-          viewport={REPLAY_VIEWPORT}
-          transition={{ duration: 0.65, delay: 0.12, ease: LUXURY_EASE }}
-          className="mt-10 will-change-transform"
-        >
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-              key={activeDomain.id}
-              initial={prefersReducedMotion ? false : { opacity: 0, x: 16 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={prefersReducedMotion ? undefined : { opacity: 0, x: -16 }}
-              transition={{ duration: 0.28, ease: LUXURY_EASE }}
-              className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start will-change-transform"
+        <div className="relative z-10 max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Layered Slo-Mo Inner Choreography: Headline from Left, Subtitle from Top-Right */}
+          <div className="max-w-3xl">
+            <motion.h2
+              initial={
+                prefersReducedMotion
+                  ? false
+                  : { opacity: 0, x: isMobile ? -26 : -64 }
+              }
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={REPLAY_VIEWPORT}
+              transition={{ duration: 0.95, ease: SLOMO_EASE }}
+              className="font-display font-bold text-[#FAF6F0] text-3xl sm:text-4xl lg:text-[3rem] leading-[1.08] tracking-[-0.032em] gpu-layer"
+              style={{ textWrap: "balance" }}
             >
-              {/* Left: Domain Statement + 4 Tonal Capability Rows */}
-              <div className="lg:col-span-5">
-                <h3 className="font-display text-2xl sm:text-[1.75rem] font-bold text-[#FAF6F0] tracking-[-0.028em] leading-[1.2]">
-                  {activeDomain.headline}
-                </h3>
-                <p className="mt-3.5 text-sm sm:text-[15.5px] leading-[1.72] text-[#D8CEC4]">
-                  {activeDomain.summary}
-                </p>
+              Built for Adversarial{" "}
+              <span className="text-[#FF6B1A]">Mainnet Execution.</span>
+            </motion.h2>
 
-                <ul
-                  aria-label={`${activeDomain.label} capabilities`}
-                  className="mt-8 space-y-3"
-                >
-                  {activeDomain.capabilities.map((item, idx) => (
-                    <motion.li
-                      key={item.name}
-                      initial={
-                        prefersReducedMotion ? false : { opacity: 0, y: 12 }
-                      }
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{
-                        duration: 0.34,
-                        delay: idx * 0.04,
-                        ease: LUXURY_EASE,
-                      }}
-                      className="rounded-[28px] bg-[#1E1510]/90 hover:bg-[#241913] hover:-translate-y-0.5 px-5 py-4 flex items-start gap-3.5 shadow-[inset_0_1px_0_rgba(250,246,240,0.07),0_14px_32px_-22px_rgba(0,0,0,0.75)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.18),0_18px_38px_-20px_rgba(232,93,4,0.22)] transition-[background-color,transform,box-shadow] duration-200"
-                    >
-                      <span
-                        aria-hidden="true"
-                        className="mt-2 w-2 h-2 rounded-full bg-[#FF6B1A] shrink-0 shadow-[0_0_10px_rgba(255,107,26,0.65)]"
-                      />
-                      <div className="min-w-0">
-                        <p className="font-display text-[15px] font-bold text-[#FAF6F0] tracking-[-0.015em]">
-                          {item.name}
-                        </p>
-                        <p className="mt-0.5 text-[13px] leading-relaxed text-[#A69688]">
-                          {item.focus}
-                        </p>
-                      </div>
-                    </motion.li>
-                  ))}
-                </ul>
-              </div>
+            <motion.p
+              data-testid="section-subtitle-architecture"
+              initial={
+                prefersReducedMotion
+                  ? false
+                  : {
+                      opacity: 0,
+                      x: isMobile ? 18 : 40,
+                      y: isMobile ? -10 : -18,
+                    }
+              }
+              whileInView={{ opacity: 1, x: 0, y: 0 }}
+              viewport={REPLAY_VIEWPORT}
+              transition={{ duration: 0.95, delay: 0.08, ease: SLOMO_EASE }}
+              className="mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#D8CEC4] gpu-layer"
+            >
+              The core engineering disciplines governing how every smart
+              contract system is specified, verified, and deployed across
+              Ethereum and EVM networks.
+            </motion.p>
+          </div>
 
-              {/* Right: Numbered Architectural Principles (01, 02, 03) + Action */}
-              <div className="lg:col-span-7">
-                <ol className="space-y-4">
-                  {activeDomain.principles.map((principle, idx) => (
-                    <motion.li
-                      key={principle.num}
-                      initial={
-                        prefersReducedMotion ? false : { opacity: 0, y: 14 }
-                      }
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{
-                        duration: 0.36,
-                        delay: idx * 0.05,
-                        ease: LUXURY_EASE,
-                      }}
-                      onMouseMove={handleSpecularMove}
-                      className="specular-surface-dark overflow-hidden rounded-[32px] bg-[#1C140F]/92 hover:bg-[#221711] hover:-translate-y-0.5 p-6 sm:p-7 flex items-start gap-5 sm:gap-6 shadow-[inset_0_1px_0_rgba(250,246,240,0.08),0_22px_46px_-26px_rgba(0,0,0,0.78)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.22),0_26px_54px_-24px_rgba(232,93,4,0.26)] transition-[background-color,transform,box-shadow] duration-200"
-                    >
-                      <span className="relative z-10 font-mono-tabular text-sm sm:text-base font-semibold text-[#FF6B1A] tracking-[0.06em] pt-0.5 shrink-0">
-                        {principle.num}
-                      </span>
-                      <div className="relative z-10 min-w-0">
-                        <h4 className="font-display text-lg sm:text-xl font-bold text-[#FAF6F0] tracking-[-0.02em]">
-                          {principle.title}
-                        </h4>
-                        <p className="mt-2 text-sm sm:text-[15px] leading-[1.7] text-[#D8CEC4]">
-                          {principle.detail}
-                        </p>
-                      </div>
-                    </motion.li>
-                  ))}
-                </ol>
-
-                <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
-                  <button
+          {/* Pillar Navigation Tabs — Staggered from Left + Silky layoutId Spring Pill */}
+          <div className="mt-10 flex justify-start">
+            <div
+              role="tablist"
+              aria-label="Engineering architecture domains"
+              className="w-full sm:w-auto grid grid-cols-2 sm:inline-flex items-center gap-1 p-1.5 rounded-[28px] sm:rounded-full bg-[#1E1510]/95 shadow-[inset_0_1px_0_rgba(250,246,240,0.08),0_18px_38px_-20px_rgba(0,0,0,0.85)]"
+            >
+              {ARCHITECTURE_DOMAINS.map((domain, idx) => {
+                const isActive = domain.id === activeDomain.id;
+                return (
+                  <motion.button
+                    key={domain.id}
                     type="button"
-                    onClick={() => onInspectWorkbench(activeDomain.workbenchId)}
-                    className="group btn-spring btn-cta-sheen inline-flex items-center justify-center gap-2 min-h-[44px] px-6 py-3 rounded-full bg-[#E85D04] hover:bg-[#D14F00] text-[#FAF6F0] text-sm font-semibold cursor-pointer shadow-[0_14px_30px_-14px_rgba(232,93,4,0.68)] hover:shadow-[0_18px_36px_-14px_rgba(232,93,4,0.82)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FAF6F0]"
+                    role="tab"
+                    data-testid={`arch-tab-${domain.id}`}
+                    aria-selected={isActive}
+                    onClick={() => setActiveDomainId(domain.id)}
+                    initial={
+                      prefersReducedMotion
+                        ? false
+                        : { opacity: 0, x: isMobile ? -24 : -56 }
+                    }
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={REPLAY_VIEWPORT}
+                    transition={{
+                      duration: 0.95,
+                      delay: idx * 0.08,
+                      ease: SLOMO_EASE,
+                    }}
+                    className={`relative inline-flex items-center justify-center min-h-[44px] px-3.5 sm:px-5 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-colors duration-150 cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B1A] gpu-layer ${
+                      isActive
+                        ? "text-[#FAF6F0]"
+                        : "text-[#A69688] hover:text-[#FAF6F0]"
+                    }`}
                   >
-                    <span className="relative z-10">
-                      Inspect Related Solidity Code
-                    </span>
-                    <ArrowDown
-                      className="relative z-10 w-4 h-4 transition-transform duration-200 group-hover:translate-y-0.5"
-                      aria-hidden="true"
-                    />
-                  </button>
+                    {isActive && (
+                      <motion.span
+                        layoutId="architecture-active-tab"
+                        transition={{
+                          type: "spring",
+                          stiffness: 420,
+                          damping: 34,
+                        }}
+                        className="absolute inset-0 rounded-full bg-[#E85D04] shadow-[0_10px_24px_-10px_rgba(232,93,4,0.85)]"
+                        aria-hidden="true"
+                      />
+                    )}
+                    <span className="relative z-10">{domain.shortLabel}</span>
+                  </motion.button>
+                );
+              })}
+            </div>
+          </div>
 
-                  <span className="font-mono-tabular text-xs text-[#A69688]">
-                    Opens {activeDomain.workbenchFile}
-                  </span>
+          {/* Active Engineering Detail Panel — Weighted Slo-Mo Glide from Right + Horizontal Cross-Glide on Tab Switch */}
+          <motion.div
+            initial={
+              prefersReducedMotion
+                ? false
+                : { opacity: 0, x: isMobile ? 28 : 68, scale: 0.95 }
+            }
+            whileInView={{ opacity: 1, x: 0, scale: 1 }}
+            viewport={REPLAY_VIEWPORT}
+            transition={{ duration: 0.95, delay: 0.1, ease: SLOMO_EASE }}
+            className="mt-10 gpu-layer"
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={activeDomain.id}
+                initial={prefersReducedMotion ? false : { opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={
+                  prefersReducedMotion ? undefined : { opacity: 0, x: -20 }
+                }
+                transition={{ duration: 0.3, ease: LUXURY_EASE }}
+                className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start gpu-layer"
+              >
+                {/* Left: Domain Statement + 4 Tonal Capability Rows */}
+                <div className="lg:col-span-5">
+                  <h3 className="font-display text-2xl sm:text-[1.75rem] font-bold text-[#FAF6F0] tracking-[-0.028em] leading-[1.2]">
+                    {activeDomain.headline}
+                  </h3>
+                  <p className="mt-3.5 text-sm sm:text-[15.5px] leading-[1.72] text-[#D8CEC4]">
+                    {activeDomain.summary}
+                  </p>
+
+                  <ul
+                    aria-label={`${activeDomain.label} capabilities`}
+                    className="mt-8 space-y-3"
+                  >
+                    {activeDomain.capabilities.map((item, idx) => (
+                      <motion.li
+                        key={item.name}
+                        initial={
+                          prefersReducedMotion ? false : { opacity: 0, y: 12 }
+                        }
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{
+                          duration: 0.36,
+                          delay: idx * 0.04,
+                          ease: LUXURY_EASE,
+                        }}
+                        className="rounded-[28px] bg-[#1E1510]/90 hover:bg-[#241913] hover:-translate-y-0.5 px-5 py-4 flex items-start gap-3.5 shadow-[inset_0_1px_0_rgba(250,246,240,0.07),0_14px_32px_-22px_rgba(0,0,0,0.75)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.18),0_18px_38px_-20px_rgba(232,93,4,0.22)] transition-[background-color,transform,box-shadow] duration-200"
+                      >
+                        <span
+                          aria-hidden="true"
+                          className="mt-2 w-2 h-2 rounded-full bg-[#FF6B1A] shrink-0 shadow-[0_0_10px_rgba(255,107,26,0.65)]"
+                        />
+                        <div className="min-w-0">
+                          <p className="font-display text-[15px] font-bold text-[#FAF6F0] tracking-[-0.015em]">
+                            {item.name}
+                          </p>
+                          <p className="mt-0.5 text-[13px] leading-relaxed text-[#A69688]">
+                            {item.focus}
+                          </p>
+                        </div>
+                      </motion.li>
+                    ))}
+                  </ul>
                 </div>
-              </div>
-            </motion.div>
-          </AnimatePresence>
-        </motion.div>
-      </div>
-    </section>
+
+                {/* Right: Numbered Architectural Principles (01, 02, 03) + Action */}
+                <div className="lg:col-span-7">
+                  <ol className="space-y-4">
+                    {activeDomain.principles.map((principle, idx) => (
+                      <motion.li
+                        key={principle.num}
+                        initial={
+                          prefersReducedMotion ? false : { opacity: 0, y: 14 }
+                        }
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{
+                          duration: 0.38,
+                          delay: idx * 0.05,
+                          ease: LUXURY_EASE,
+                        }}
+                        onMouseMove={handleSpecularMove}
+                        className="specular-surface-dark overflow-hidden rounded-[32px] bg-[#1C140F]/92 hover:bg-[#221711] hover:-translate-y-0.5 p-6 sm:p-7 flex items-start gap-5 sm:gap-6 shadow-[inset_0_1px_0_rgba(250,246,240,0.08),0_22px_46px_-26px_rgba(0,0,0,0.78)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.22),0_26px_54px_-24px_rgba(232,93,4,0.26)] transition-[background-color,transform,box-shadow] duration-200"
+                      >
+                        <span className="relative z-10 font-mono-tabular text-sm sm:text-base font-semibold text-[#FF6B1A] tracking-[0.06em] pt-0.5 shrink-0">
+                          {principle.num}
+                        </span>
+                        <div className="relative z-10 min-w-0">
+                          <h4 className="font-display text-lg sm:text-xl font-bold text-[#FAF6F0] tracking-[-0.02em]">
+                            {principle.title}
+                          </h4>
+                          <p className="mt-2 text-sm sm:text-[15px] leading-[1.7] text-[#D8CEC4]">
+                            {principle.detail}
+                          </p>
+                        </div>
+                      </motion.li>
+                    ))}
+                  </ol>
+
+                  <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onInspectWorkbench(activeDomain.workbenchId)
+                      }
+                      className="group btn-spring btn-cta-sheen inline-flex items-center justify-center gap-2 min-h-[44px] px-6 py-3 rounded-full bg-[#E85D04] hover:bg-[#D14F00] text-[#FAF6F0] text-sm font-semibold cursor-pointer shadow-[0_14px_30px_-14px_rgba(232,93,4,0.68)] hover:shadow-[0_18px_36px_-14px_rgba(232,93,4,0.82)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FAF6F0]"
+                    >
+                      <span className="relative z-10">
+                        Inspect Related Solidity Code
+                      </span>
+                      <ArrowDown
+                        className="relative z-10 w-4 h-4 transition-transform duration-200 group-hover:translate-y-0.5"
+                        aria-hidden="true"
+                      />
+                    </button>
+
+                    <span className="font-mono-tabular text-xs text-[#A69688]">
+                      Opens {activeDomain.workbenchFile}
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </motion.div>
+        </div>
+      </section>
+    </SectionRevealStage>
   );
 }
