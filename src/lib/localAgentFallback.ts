@@ -1,12 +1,16 @@
 import {
   fullStackProjects,
   coreProjects,
-  TECH_STACK,
   ARCHITECTURE_INSIGHTS,
   type ProjectItem,
   type ArchitectureInsight,
 } from "../data/projects";
 import { sanitizeEditorialCopy } from "./agentKnowledge";
+import {
+  WEB3_KNOWLEDGE_BASE,
+  SUGGESTED_QUESTIONS_POOL,
+  type KnowledgeEntry,
+} from "./offlineKnowledgeBase";
 
 const ALL_PROJECTS: readonly ProjectItem[] = [
   ...fullStackProjects,
@@ -17,51 +21,407 @@ const FLAGSHIP_PROJECTS: readonly ProjectItem[] = fullStackProjects.filter(
   (p) => p.flagship
 );
 
-interface NormalizedQuery {
+const KNOWN_STANDARD_NUMBERS = new Set<string>([
+  "155",
+  "165",
+  "170",
+  "173",
+  "712",
+  "721",
+  "721a",
+  "1115",
+  "1153",
+  "1155",
+  "1559",
+  "1822",
+  "1967",
+  "2535",
+  "2612",
+  "2929",
+  "2981",
+  "3156",
+  "3643",
+  "4337",
+  "4626",
+  "4844",
+  "5192",
+  "5484",
+  "5626",
+  "6551",
+  "6909",
+  "7540",
+  "7579",
+  "7683",
+  "7702",
+  "19000",
+]);
+
+/** Common non-domain words excluded from fuzzy Levenshtein matching to avoid false positives. */
+const FUZZY_STOP_WORDS = new Set<string>([
+  "about",
+  "after",
+  "also",
+  "always",
+  "been",
+  "best",
+  "between",
+  "book",
+  "both",
+  "cake",
+  "capital",
+  "coffee",
+  "compare",
+  "cook",
+  "cooking",
+  "could",
+  "cricket",
+  "define",
+  "difference",
+  "dinner",
+  "does",
+  "doing",
+  "explain",
+  "fast",
+  "film",
+  "first",
+  "food",
+  "football",
+  "france",
+  "from",
+  "funny",
+  "game",
+  "give",
+  "good",
+  "great",
+  "have",
+  "hello",
+  "here",
+  "history",
+  "into",
+  "joke",
+  "just",
+  "know",
+  "like",
+  "love",
+  "lunch",
+  "make",
+  "makes",
+  "many",
+  "more",
+  "movie",
+  "music",
+  "news",
+  "nice",
+  "only",
+  "other",
+  "over",
+  "paris",
+  "pasta",
+  "pizza",
+  "play",
+  "please",
+  "politics",
+  "really",
+  "recipe",
+  "same",
+  "should",
+  "show",
+  "sleep",
+  "soccer",
+  "some",
+  "song",
+  "sport",
+  "story",
+  "such",
+  "take",
+  "tell",
+  "than",
+  "thank",
+  "thanks",
+  "that",
+  "their",
+  "them",
+  "then",
+  "there",
+  "these",
+  "they",
+  "thing",
+  "think",
+  "this",
+  "those",
+  "time",
+  "today",
+  "tomorrow",
+  "using",
+  "very",
+  "want",
+  "weather",
+  "what",
+  "whats",
+  "when",
+  "where",
+  "which",
+  "while",
+  "will",
+  "with",
+  "work",
+  "works",
+  "would",
+  "write",
+  "yesterday",
+  "your",
+]);
+
+export interface NormalizedQuery {
   raw: string;
   normalized: string;
+  softCollapsed: string;
+  hardCollapsed: string;
   compact: string;
+  hardCompact: string;
   tokens: Set<string>;
-}
-
-export function normalizeQuery(input: string): NormalizedQuery {
-  const raw = input.trim();
-  const normalized = raw
-    .toLowerCase()
-    .replace(/['"`]/g, "")
-    .replace(/[^a-z0-9.+]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  const compact = normalized.replace(/[\s.]+/g, "");
-  const tokens = new Set(normalized ? normalized.split(" ") : []);
-  return { raw, normalized, compact, tokens };
-}
-
-function hasPhrase(q: NormalizedQuery, phrase: string): boolean {
-  const clean = phrase
-    .toLowerCase()
-    .replace(/['"`]/g, "")
-    .replace(/[^a-z0-9.+]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  if (!clean) return false;
-  if (clean.includes(" ")) {
-    const padded = ` ${q.normalized} `;
-    if (padded.includes(` ${clean} `)) return true;
-    const compactPhrase = clean.replace(/[\s.]+/g, "");
-    return compactPhrase.length >= 5 && q.compact.includes(compactPhrase);
-  }
-  if (q.tokens.has(clean)) return true;
-  if (clean.length >= 6 && q.compact.includes(clean.replace(/[\s.]+/g, ""))) {
-    return true;
-  }
-  return false;
+  hardTokens: Set<string>;
+  tokenList: readonly string[];
+  hardTokenList: readonly string[];
+  extractedStandards: Set<string>;
 }
 
 export interface FallbackHistoryTurn {
   role: string;
   text?: string;
   content?: string;
+}
+
+function softCollapseText(text: string): string {
+  return text.replace(/(.)\1{2,}/g, "$1");
+}
+
+function hardCollapseText(text: string): string {
+  return text.replace(/(.)\1+/g, "$1");
+}
+
+function isPureNumber(s: string): boolean {
+  return /^\d+$/.test(s);
+}
+
+/** Fast dependency-free bounded Levenshtein edit distance. */
+export function levenshtein(a: string, b: string): number {
+  if (a === b) return 0;
+  const al = a.length;
+  const bl = b.length;
+  if (al === 0) return bl;
+  if (bl === 0) return al;
+
+  let prev = new Array<number>(bl + 1);
+  let curr = new Array<number>(bl + 1);
+  for (let j = 0; j <= bl; j++) prev[j] = j;
+
+  for (let i = 1; i <= al; i++) {
+    curr[0] = i;
+    const ca = a.charCodeAt(i - 1);
+    for (let j = 1; j <= bl; j++) {
+      const cost = ca === b.charCodeAt(j - 1) ? 0 : 1;
+      curr[j] = Math.min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost);
+    }
+    const tmp = prev;
+    prev = curr;
+    curr = tmp;
+  }
+  return prev[bl];
+}
+
+function extractStandardsFromText(
+  softCollapsed: string,
+  hardCollapsed: string,
+  tokens: Set<string>
+): Set<string> {
+  const found = new Set<string>();
+  const stdRegex = /\b(?:erc|eip)\s*\.?\s*(\d{2,5}[a-z]?)\b/g;
+
+  for (const variant of [softCollapsed, hardCollapsed]) {
+    let match: RegExpExecArray | null;
+    while ((match = stdRegex.exec(variant)) !== null) {
+      const num = match[1];
+      if (num) {
+        found.add(num);
+        found.add(`erc${num}`);
+        found.add(`eip${num}`);
+      }
+    }
+  }
+
+  for (const tok of tokens) {
+    if (KNOWN_STANDARD_NUMBERS.has(tok)) {
+      found.add(tok);
+      found.add(`erc${tok}`);
+      found.add(`eip${tok}`);
+    }
+    if (tok === "aa") {
+      found.add("aa");
+      found.add("4337");
+      found.add("erc4337");
+    }
+  }
+
+  return found;
+}
+
+export function normalizeQuery(input: string): NormalizedQuery {
+  const raw = input.trim();
+  const preNormalized = raw
+    .toLowerCase()
+    .replace(/['"`]/g, "")
+    .replace(/\be\s*\.\s*r\s*\.\s*c\b/g, "erc")
+    .replace(/\be\s*\.\s*i\s*\.\s*p\b/g, "eip")
+    .replace(/\be\s+r\s+c(?=\s*\d)/g, "erc")
+    .replace(/\be\s+i\s+p(?=\s*\d)/g, "eip");
+
+  const normalized = preNormalized
+    .replace(/[^a-z0-9.+]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const softCollapsed = softCollapseText(normalized);
+  const hardCollapsed = hardCollapseText(normalized);
+  const compact = softCollapsed.replace(/[\s.]+/g, "");
+  const hardCompact = hardCollapsed.replace(/[\s.]+/g, "");
+  const tokenList = softCollapsed ? softCollapsed.split(" ") : [];
+  const hardTokenList = hardCollapsed ? hardCollapsed.split(" ") : [];
+  const tokens = new Set(tokenList);
+  const hardTokens = new Set(hardTokenList);
+  const extractedStandards = extractStandardsFromText(
+    softCollapsed,
+    hardCollapsed,
+    tokens
+  );
+
+  return {
+    raw,
+    normalized,
+    softCollapsed,
+    hardCollapsed,
+    compact,
+    hardCompact,
+    tokens,
+    hardTokens,
+    tokenList,
+    hardTokenList,
+    extractedStandards,
+  };
+}
+
+function cleanPhraseText(phrase: string): string {
+  return phrase
+    .toLowerCase()
+    .replace(/['"`]/g, "")
+    .replace(/[^a-z0-9.+]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Returns match strength in {1.0 (exact), 0.95 (hardCollapsed), 0.75 (fuzzy Levenshtein), 0 (none)}.
+ * Skips fuzzy matching on pure numbers so 721 never accidentally matches 712.
+ */
+function matchSingleTokenWeight(q: NormalizedQuery, word: string): number {
+  if (!word) return 0;
+  const softWord = softCollapseText(word);
+  if (q.tokens.has(word) || q.tokens.has(softWord)) return 1.0;
+
+  const hardWord = hardCollapseText(word);
+  if (hardWord.length >= 2 && q.hardTokens.has(hardWord)) {
+    return 0.95;
+  }
+
+  if (isPureNumber(word) || word.length < 4 || FUZZY_STOP_WORDS.has(word)) {
+    return 0;
+  }
+
+  const maxDist = word.length <= 6 ? 1 : 2;
+  for (const tok of q.tokenList) {
+    if (
+      tok.length < 4 ||
+      isPureNumber(tok) ||
+      FUZZY_STOP_WORDS.has(tok) ||
+      Math.abs(tok.length - word.length) > maxDist
+    ) {
+      continue;
+    }
+    if (levenshtein(tok, word) <= maxDist) {
+      return 0.75;
+    }
+  }
+
+  return 0;
+}
+
+/**
+ * Evaluates exact, hard-collapsed, compact, or fuzzy multi-word match for a phrase.
+ * Returns weight in {1.0, 0.95, 0.75, 0}.
+ */
+function matchPhraseWeight(
+  q: NormalizedQuery,
+  phrase: string,
+  allowFuzzy = true
+): number {
+  const clean = cleanPhraseText(phrase);
+  if (!clean) return 0;
+
+  const softClean = softCollapseText(clean);
+  const hardClean = hardCollapseText(clean);
+
+  if (clean.includes(" ")) {
+    const paddedSoft = ` ${q.softCollapsed} `;
+    if (paddedSoft.includes(` ${softClean} `)) return 1.0;
+
+    const paddedHard = ` ${q.hardCollapsed} `;
+    if (paddedHard.includes(` ${hardClean} `)) return 0.95;
+
+    const compactPhrase = softClean.replace(/[\s.]+/g, "");
+    if (compactPhrase.length >= 5 && q.compact.includes(compactPhrase)) {
+      return 1.0;
+    }
+    const hardCompactPhrase = hardClean.replace(/[\s.]+/g, "");
+    if (
+      hardCompactPhrase.length >= 5 &&
+      q.hardCompact.includes(hardCompactPhrase)
+    ) {
+      return 0.95;
+    }
+
+    if (!allowFuzzy) return 0;
+    const words = softClean.split(" ").filter((w) => w.length >= 2);
+    if (words.length < 2 || words.length > 4) return 0;
+
+    let minWeight = 1.0;
+    for (const w of words) {
+      const wScore = matchSingleTokenWeight(q, w);
+      if (wScore === 0) return 0;
+      if (wScore < minWeight) minWeight = wScore;
+    }
+    return minWeight;
+  }
+
+  // Single-word phrase
+  if (q.tokens.has(clean) || q.tokens.has(softClean)) return 1.0;
+  if (
+    softClean.length >= 6 &&
+    q.compact.includes(softClean.replace(/[\s.]+/g, ""))
+  ) {
+    return 1.0;
+  }
+  if (hardClean.length >= 3 && q.hardTokens.has(hardClean)) return 0.95;
+  if (
+    hardClean.length >= 6 &&
+    q.hardCompact.includes(hardClean.replace(/[\s.]+/g, ""))
+  ) {
+    return 0.95;
+  }
+  return allowFuzzy ? matchSingleTokenWeight(q, softClean) : 0;
+}
+
+function hasPhrase(q: NormalizedQuery, phrase: string): boolean {
+  return matchPhraseWeight(q, phrase, true) >= 0.75;
 }
 
 function getTurnText(turn: FallbackHistoryTurn): string {
@@ -91,1003 +451,19 @@ const PROJECT_STANDARD_SECONDARY: Record<string, readonly string[]> = {
   c8: ["aggregatorv3"],
 };
 
-interface KnowledgeEntry {
-  id: string;
-  exactCompact?: readonly string[];
-  exactPhrases: readonly string[];
-  keywords: readonly string[];
-  answer: () => string;
-}
-
-const WEB3_KNOWLEDGE_BASE: readonly KnowledgeEntry[] = [
-  {
-    id: "erc-20",
-    exactCompact: ["erc20", "eip20", "20"],
-    exactPhrases: [
-      "erc 20",
-      "erc20",
-      "eip 20",
-      "fungible token",
-      "safeerc20",
-      "fee on transfer",
-      "rebasing token",
-      "approve race condition",
-    ],
-    keywords: [
-      "20",
-      "allowance",
-      "transferfrom",
-      "approve",
-      "totalsupply",
-      "decimals",
-    ],
-    answer: () =>
-      [
-        "### ERC-20: Fungible Token Standard",
-        "**ERC-20** defines the canonical interface for interchangeable tokens on Ethereum and EVM chains: `totalSupply`, `balanceOf`, `transfer`, `approve`, `allowance`, and `transferFrom`, plus `Transfer` and `Approval` events.",
-        "",
-        "- **Allowance Race Condition:** Calling `approve(spender, newAmount)` directly lets a front-running spender consume the old allowance and then the new one. Production protocols use `safeIncreaseAllowance` / `safeDecreaseAllowance`, reset to `0` first, or adopt `ERC-2612` (`permit`).",
-        "- **SafeERC20 Wrapper:** Non-standard tokens (notably USDT) omit the `bool` return value on `transfer` / `transferFrom`. Always wrap calls with OpenZeppelin `SafeERC20` so silent failures revert cleanly.",
-        "- **Weird ERC-20 Edge Cases:** DeFi vaults must account for **fee-on-transfer tokens** (measure `balanceAfter - balanceBefore` instead of trusting the `amount` argument), **rebasing tokens** (like stETH, where balances drift), and non-18 decimals (USDC uses 6).",
-        "- **In Amit's Portfolio:** See **SISO Token Standard** (`ERC-20 / RBAC`, https://github.com/NexTechArchitect/SISO-Token-ERC20) with role-gated minting, hard supply ceilings, custom errors, and Foundry supply-conservation invariants.",
-      ].join("\n"),
-  },
-  {
-    id: "erc-721",
-    exactCompact: ["erc721", "erc721a", "eip721", "721"],
-    exactPhrases: [
-      "erc 721",
-      "erc721",
-      "erc 721a",
-      "erc721a",
-      "eip 721",
-      "non fungible token",
-      "nonfungible token",
-      "ownerof",
-      "safetransferfrom",
-    ],
-    keywords: ["721", "nft", "tokenuri", "onerc721received", "batch mint"],
-    answer: () =>
-      [
-        "### ERC-721 & ERC-721A: Non-Fungible Token (NFT) Standards",
-        "**ERC-721** is the core EVM standard for unique, individually identifiable assets where each `tokenId` has a single owner tracked on-chain.",
-        "",
-        "- **Core Interface & Safety Hooks:** Exposes `ownerOf(tokenId)`, `balanceOf(owner)`, `approve`, `setApprovalForAll`, `transferFrom`, and `safeTransferFrom`. `safeTransferFrom` invokes `onERC721Received` on recipient contracts so tokens are not permanently locked inside contracts that cannot handle NFTs (always follow Checks-Effects-Interactions because that callback is a reentrancy vector).",
-        "- **On-Chain SVG vs. IPFS Metadata:** `tokenURI(tokenId)` either points to content-addressed IPFS JSON (`ipfs://...`) or returns fully on-chain Base64-encoded JSON + SVG generated directly in Solidity for zero external hosting dependency.",
-        "- **ERC-721A Batch Mint Gas Optimization:** Standard OpenZeppelin `ERC721` writes an owner `SSTORE` slot per minted token. **ERC-721A** mints sequential IDs in a single storage write for the batch start index and lazily resolves `ownerOf` by scanning backward, cutting multi-NFT mint gas dramatically.",
-        "- **In Amit's Portfolio:** Amit implemented dual IPFS + Base64 SVG rendering in **CuteCat NFT Protocol** (https://github.com/NexTechArchitect/ERC721-Advanced-IPFS-NFT) and tokenized underwriting policies as ERC-721 assets in **Sentinel Insurance Protocol**.",
-      ].join("\n"),
-  },
-  {
-    id: "erc-1155",
-    exactCompact: ["erc1155", "eip1155", "1155", "1115", "erc1115"],
-    exactPhrases: [
-      "erc 1155",
-      "erc1155",
-      "eip 1155",
-      "erc 1115",
-      "erc1115",
-      "1115",
-      "1155",
-      "multi token",
-      "semi fungible",
-      "safebatchtransferfrom",
-    ],
-    keywords: ["1155", "1115", "balanceofbatch", "onerc1155received"],
-    answer: () =>
-      [
-        "### ERC-1155: Multi-Token Standard (Fungible, Semi-Fungible & NFTs)",
-        "**ERC-1155** (often mistyped as `1115`) allows a single smart contract to manage an arbitrary number of fungible, semi-fungible, and non-fungible token types under one address, keyed by `(address owner, uint256 id) => uint256 balance`.",
-        "",
-        "- **Atomic Batch Operations:** `safeBatchTransferFrom` and `balanceOfBatch` move or query multiple token IDs in one transaction, eliminating per-token contract deployments and saving substantial gas across gaming inventories, LP positions, and RWA tranches.",
-        "- **Semi-Fungibility Lifecycle:** A single ID can behave like a fungible ticket or bond tranche during minting/trading, and then transition into a unique collectible or redeemed receipt after settlement.",
-        "- **Mandatory Receiver Hook:** Both single and batch transfers call `onERC1155Received` / `onERC1155BatchReceived` on contract recipients. Update internal accounting before invoking transfers to prevent callback reentrancy.",
-      ].join("\n"),
-  },
-  {
-    id: "erc-4337",
-    exactCompact: ["erc4337", "eip4337", "4337", "aa"],
-    exactPhrases: [
-      "erc 4337",
-      "erc4337",
-      "eip 4337",
-      "4337",
-      "account abstraction",
-      "useroperation",
-      "userop",
-      "entrypoint",
-      "paymaster",
-      "bundler",
-      "what is aa",
-    ],
-    keywords: ["aa", "smart account", "gasless", "validateuserop", "alt mempool"],
-    answer: () =>
-      [
-        "### ERC-4337: Account Abstraction (AA, Smart Accounts, Bundlers & Paymasters)",
-        "**ERC-4337 (Account Abstraction / AA)** brings programmable smart-contract wallets to Ethereum without consensus-layer changes by routing pseudo-transactions called **UserOperations (`UserOp`)** through an alternative mempool.",
-        "",
-        "- **Execution Pipeline:** Users sign a `UserOperation` -> off-chain **Bundlers** simulate and pack multiple UserOps into one transaction -> the singleton **EntryPoint** contract calls `validateUserOp` on each Smart Account (supporting ECDSA, passkeys, multisig, or session keys) -> **EntryPoint** executes the wallet's calldata.",
-        "- **Paymasters (Gas Sponsorship):** A `Paymaster` stakes ETH in the EntryPoint and implements `validatePaymasterUserOp` + `postOp` so users can pay gas in ERC-20 tokens (like USDC) or enjoy fully sponsored gasless UX.",
-        "- **Security Boundaries:** Account execution functions must strictly gate `msg.sender == address(entryPoint)` (or owner), and bundlers enforce ERC-7562 storage access rules during validation to block mempool DoS attacks.",
-        "- **In Amit's Portfolio:** Built both **ERC-4337 Account Abstraction Core** (https://github.com/NexTechArchitect/ERC4337-Account-Abstraction-Foundry) and **NexusPaymaster** (`0x20e302881494F79eF5E536d5533be04F913eE652`) for gasless 50x perp trading in **Nexus Perpetuals DEX**.",
-      ].join("\n"),
-  },
-  {
-    id: "erc-4626",
-    exactCompact: ["erc4626", "eip4626", "4626", "5626", "erc5626"],
-    exactPhrases: [
-      "erc 4626",
-      "erc4626",
-      "eip 4626",
-      "4626",
-      "5626",
-      "erc 5626",
-      "erc5626",
-      "tokenized vault",
-      "inflation attack",
-      "first depositor",
-    ],
-    keywords: ["vault", "converttoassets", "converttoshares", "totalassets", "shares"],
-    answer: () =>
-      [
-        "### ERC-4626: Tokenized Vault Standard",
-        "**ERC-4626** (sometimes mistyped as `5626`) standardizes yield-bearing vaults on top of ERC-20 so any DeFi protocol can compose with vaults through uniform `deposit`, `mint`, `withdraw`, `redeem`, `totalAssets`, `convertToShares`, and `convertToAssets` methods.",
-        "",
-        "- **Share/Asset Rounding Rule:** Conversions must always round in favor of the vault (round **down** shares minted on `deposit` and assets returned on `redeem`; round **up** assets pulled on `mint` and shares burned on `withdraw`) so attackers cannot extract dust via repeated deposit/redeem loops.",
-        "- **First-Depositor Inflation Attack:** In a naive empty vault, an attacker deposits 1 wei for 1 share, donates 10,000 USDC directly via `transfer`, inflating share price so the next victim's deposit rounds down to `0` shares.",
-        "- **Mitigations:** Use **virtual shares & virtual assets offsets** (OpenZeppelin `_decimalsOffset()`), burn initial dead shares (`1e3` to `address(0)`), or track internal accounted balances instead of raw `asset.balanceOf(address(this))`.",
-        "- **In Amit's Portfolio:** **Sentinel Insurance Protocol** deploys `CoveragePool` (`0x374d949c7A575212d423Ecc0e765a59664d7C3eD`), an ERC-4626 vault routing idle underwriting capital into Aave V3 with virtual share inflation guards.",
-      ].join("\n"),
-  },
-  {
-    id: "erc-3643",
-    exactCompact: ["erc3643", "eip3643", "3643", "trex"],
-    exactPhrases: [
-      "erc 3643",
-      "erc3643",
-      "eip 3643",
-      "3643",
-      "t rex",
-      "onchainid",
-      "permissioned token",
-      "rwa standard",
-      "real world asset",
-    ],
-    keywords: ["rwa", "tokenization", "kyc", "compliance", "identity registry"],
-    answer: () =>
-      [
-        "### ERC-3643 (T-REX): Permissioned Institutional RWA Token Standard",
-        "**ERC-3643** extends ERC-20 with modular on-chain identity and regulatory compliance checks executed automatically on every token transfer, mint, and burn.",
-        "",
-        "- **ONCHAINID & IdentityRegistry:** Investor wallets map to on-chain identity contracts holding cryptographic claims (KYC status, accredited investor tier, jurisdiction, sanctions clearance) signed by trusted claim issuers.",
-        "- **Modular Transfer Compliance Hooks:** Before any transfer succeeds, the token queries `IdentityRegistry.isVerified(to)` and `Compliance.canTransfer(from, to, amount)` to enforce country caps, investor count limits, lockups, or OFAC screening natively on-chain without centralized signing servers.",
-        "- **Forced Transfer & Recovery:** Regulated issuers retain auditable `forcedTransfer`, `freezePartialTokens`, and wallet-recovery hooks required for securities law compliance.",
-        "- **In Amit's Portfolio:** **Nexus RWA Protocol** (https://nexus-rwa-protocol.vercel.app/) implements `ComplianceEngine` (`0x00c0E82e0C81c4Df096aAd98f2aA5A399b34131c`), `IdentityRegistry` (`0x18026c0BF58c978caDc8Df7f31b1cbC2f6A94c5A`), `nUSTB` token, O(1) Merkle yield distribution, and a 15% Chainlink NAV circuit breaker.",
-      ].join("\n"),
-  },
-  {
-    id: "erc-5484",
-    exactCompact: ["erc5484", "eip5484", "5484"],
-    exactPhrases: [
-      "erc 5484",
-      "erc5484",
-      "eip 5484",
-      "5484",
-      "soulbound token",
-      "soulbound",
-      "burnauth",
-    ],
-    keywords: ["sbt", "non transferable", "reputation token"],
-    answer: () =>
-      [
-        "### ERC-5484: Consensual Soulbound Tokens (SBTs)",
-        "**ERC-5484** extends ERC-721 to define non-transferable **Soulbound Tokens** with explicit, immutable burn authorization agreed upon at issuance.",
-        "",
-        "- **Non-Transferability:** Transfer functions revert once minted, binding credentials, audit badges, DAO reputation, or KYC attestations permanently to a recipient address.",
-        "- **Immutable `BurnAuth` Enum:** Every token records one of four immutable burn permissions at mint time: `IssuerOnly`, `OwnerOnly`, `Both`, or `Neither`, emitted via `Issued(from, to, tokenId, burnAuth)` and readable via `burnAuth(tokenId)`.",
-        "- **In Amit's Portfolio:** **ERC-5484 Soulbound Reputation** (https://rst-reputation-protocol.vercel.app/) renders dynamic on-chain SVG medals directly from packed contract state behind a storage-gap-safe UUPS proxy (`ReputationStorageV1.sol`).",
-      ].join("\n"),
-  },
-  {
-    id: "erc-2612",
-    exactCompact: ["erc2612", "eip2612", "2612"],
-    exactPhrases: [
-      "erc 2612",
-      "erc2612",
-      "eip 2612",
-      "2612",
-      "permit",
-      "gasless approval",
-      "gasless approve",
-    ],
-    keywords: ["permit", "nonces", "domain_separator"],
-    answer: () =>
-      [
-        "### ERC-2612: Gasless Token Approvals via `permit()`",
-        "**ERC-2612** adds a `permit(owner, spender, value, deadline, v, r, s)` function to ERC-20 tokens, letting users grant allowances with an off-chain **EIP-712** signature instead of sending an on-chain `approve()` transaction.",
-        "",
-        "- **Single-Transaction UX:** A DeFi router or vault submits the user's `permit` signature and executes `transferFrom` inside the same transaction, removing the two-tx approve-then-deposit flow and letting relayers pay gas.",
-        "- **Security Gotchas:** Always verify `block.timestamp <= deadline`, increment per-owner `nonces[owner]++` to prevent replay, check `ecrecover != address(0)`, and wrap `permit()` in `try/catch` inside routers so an attacker cannot front-run and DoS a user's `permit + deposit` bundle by submitting the signature first.",
-      ].join("\n"),
-  },
-  {
-    id: "erc-2981",
-    exactCompact: ["erc2981", "eip2981", "2981"],
-    exactPhrases: [
-      "erc 2981",
-      "erc2981",
-      "eip 2981",
-      "2981",
-      "nft royalty",
-      "nft royalties",
-      "royaltyinfo",
-    ],
-    keywords: ["royalties", "royalty"],
-    answer: () =>
-      [
-        "### ERC-2981: NFT Royalty Standard",
-        "**ERC-2981** provides a standardized read-only interface for ERC-721 and ERC-1155 contracts to declare secondary-sale royalty payouts across marketplaces.",
-        "",
-        "- **Single Function Interface:** `royaltyInfo(uint256 tokenId, uint256 salePrice)` returns `(address receiver, uint256 royaltyAmount)` computed in basis points (e.g., `500 / 10_000` for 5%) and advertises support via ERC-165 (`0x2a55205a`).",
-        "- **Important Limitation:** ERC-2981 is **advisory, not protocol-enforced** at the transfer layer. Compliant marketplaces (or protocols with transfer validators) query `royaltyInfo` and route the payment during settlement.",
-      ].join("\n"),
-  },
-  {
-    id: "erc-3156",
-    exactCompact: ["erc3156", "eip3156", "3156"],
-    exactPhrases: [
-      "erc 3156",
-      "erc3156",
-      "eip 3156",
-      "3156",
-      "flash loan standard",
-      "onflashloan",
-      "ierc3156",
-    ],
-    keywords: ["3156", "flashlender", "flashborrower"],
-    answer: () =>
-      [
-        "### ERC-3156: Standardized Flash Loans (`IERC3156FlashLender` & `Borrower`)",
-        "**ERC-3156** defines a uniform interface for single-asset uncollateralized flash loans across DeFi lenders (MakerDAO/Spark, ERC-4626 lenders, custom pools) so borrowers do not need per-protocol adapters.",
-        "",
-        "- **Core Methods:** `maxFlashLoan(token)`, `flashFee(token, amount)`, and `flashLoan(receiver, token, amount, data)` on the lender; `onFlashLoan(initiator, token, amount, fee, data)` on the borrower returning `keccak256(\"ERC3156FlashBorrower.onFlashLoan\")`.",
-        "- **Critical Borrower Security Checks:** Inside `onFlashLoan`, ALWAYS verify BOTH `msg.sender == trustedLender` AND `initiator == address(this)` (or authorized caller). Skipping either check lets an attacker trigger your borrower callback with arbitrary `data` and drain approved tokens.",
-      ].join("\n"),
-  },
-  {
-    id: "erc-1967-uups",
-    exactCompact: [
-      "erc1967",
-      "eip1967",
-      "1967",
-      "erc1822",
-      "eip1822",
-      "1822",
-      "19000",
-      "erc19000",
-      "uups",
-    ],
-    exactPhrases: [
-      "erc 1967",
-      "erc1967",
-      "eip 1967",
-      "1967",
-      "erc 1822",
-      "erc1822",
-      "eip 1822",
-      "1822",
-      "19000",
-      "erc 19000",
-      "uups",
-      "transparent proxy",
-      "storage collision",
-      "storage gap",
-      "upgradeable proxy",
-    ],
-    keywords: ["proxy", "upgradeable", "beacon proxy", "__gap", "initializer"],
-    answer: () =>
-      [
-        "### ERC-1967 & EIP-1822 (UUPS): Upgradeable Proxies & Storage Safety",
-        "**ERC-1967** (sometimes mistyped as `19000`) and **EIP-1822 (UUPS)** define how upgradeable EVM contracts separate persistent state (Proxy) from upgradeable logic (Implementation) via `delegatecall`.",
-        "",
-        "- **ERC-1967 Unstructured Storage Slots:** Stores the implementation, admin, and beacon addresses at deterministic pseudo-random slots such as `bytes32(uint256(keccak256('eip1967.proxy.implementation')) - 1)` so proxy metadata can never collide with Slot 0 of the implementation contract.",
-        "- **UUPS (EIP-1822) vs. Transparent Proxy:** Transparent proxies keep upgrade logic in the proxy and check `msg.sender == admin` on every call. **UUPS** moves `upgradeToAndCall` + `_authorizeUpgrade` into the implementation contract, making proxies cheaper to deploy and execute (every V2+ implementation must retain UUPS inheritance or upgrades lock permanently).",
-        "- **Storage Collisions & `__gap`:** Never reorder, delete, or change the type of existing state variables across upgrades. Reserve `uint256[48] private __gap;` (or adopt ERC-7201 namespaced storage), call `_disableInitializers()` in the implementation constructor, and diff storage layouts in Foundry CI.",
-        "- **In Amit's Portfolio:** Inspect **UUPS Upgradeable Protocol** (https://github.com/NexTechArchitect/uups-protocol-config) and `ReputationStorageV1.sol` in the Workbench.",
-      ].join("\n"),
-  },
-  {
-    id: "erc-2535",
-    exactCompact: ["erc2535", "eip2535", "2535"],
-    exactPhrases: [
-      "erc 2535",
-      "erc2535",
-      "eip 2535",
-      "2535",
-      "diamond proxy",
-      "diamond standard",
-      "diamondcut",
-      "diamondloupe",
-    ],
-    keywords: ["facets", "diamond"],
-    answer: () =>
-      [
-        "### ERC-2535: Diamond Proxy Standard (Multi-Facet Proxies)",
-        "**ERC-2535 (Diamonds)** lets a single proxy contract delegate function calls to an unlimited number of modular implementation contracts called **Facets**, mapped by 4-byte function selector.",
-        "",
-        "- **Bypassing the 24KB EIP-170 Limit:** Complex protocols split logic across focused facets while sharing one unified address and storage state.",
-        "- **Core Interfaces:** `IDiamondCut.diamondCut(...)` atomically adds, replaces, or removes function selectors across facets; `IDiamondLoupe` provides on-chain introspection (`facets()`, `facetAddress(selector)`) so block explorers and auditors can inspect active routing.",
-        "- **AppStorage / Diamond Storage:** Facets isolate state inside structs anchored at unique `keccak256` storage positions (similar to ERC-7201) to avoid slot collisions across independent upgrades.",
-      ].join("\n"),
-  },
-  {
-    id: "erc-6551",
-    exactCompact: ["erc6551", "eip6551", "6551"],
-    exactPhrases: [
-      "erc 6551",
-      "erc6551",
-      "eip 6551",
-      "6551",
-      "token bound account",
-      "token bound accounts",
-    ],
-    keywords: ["tba", "6551"],
-    answer: () =>
-      [
-        "### ERC-6551: Token Bound Accounts (TBAs)",
-        "**ERC-6551** gives any existing or new **ERC-721 NFT** its own deterministic smart contract wallet without modifying the original NFT contract.",
-        "",
-        "- **Deterministic Registry (`CREATE2`):** A permissionless singleton Registry deploys minimal ERC-1167 proxies whose address is deterministically derived from `(chainId, tokenContract, tokenId, implementation, salt)`.",
-        "- **Dynamic Ownership:** Whoever currently owns the NFT (`IERC721(tokenContract).ownerOf(tokenId)`) automatically controls the TBA, allowing an NFT to hold ETH, ERC-20s, other NFTs, DeFi positions, or on-chain reputation that travel atomically when the NFT is sold or transferred.",
-      ].join("\n"),
-  },
-  {
-    id: "erc-7702",
-    exactCompact: ["erc7702", "eip7702", "7702"],
-    exactPhrases: [
-      "erc 7702",
-      "erc7702",
-      "eip 7702",
-      "7702",
-      "eoa code delegation",
-      "pectra",
-      "set eoa account code",
-    ],
-    keywords: ["7702", "delegation indicator"],
-    answer: () =>
-      [
-        "### EIP-7702: EOA Smart Account Code Delegation",
-        "**EIP-7702** (shipped in Ethereum's Pectra upgrade) introduces a transaction type (`0x04`) that lets a standard **EOA** sign an authorization tuple pointing its account code to a smart contract delegation indicator (`0xef0100 || contractAddress`).",
-        "",
-        "- **Smart Wallet UX Without Migration:** Existing EOAs gain atomic batching (`approve + swap` in one tx), gas sponsorship, and session keys without moving funds to a new ERC-4337 smart account address.",
-        "- **Synergy with ERC-4337:** An EOA can delegate to an ERC-4337-compatible account implementation and immediately use existing bundlers and paymasters.",
-        "- **Security Caution:** Delegated code executes in the EOA's storage context; use ERC-7201 namespaced storage to prevent collisions on re-delegation, and guard against phishing authorizations.",
-      ].join("\n"),
-  },
-  {
-    id: "eip-712",
-    exactCompact: ["eip712", "erc712", "712"],
-    exactPhrases: [
-      "eip 712",
-      "eip712",
-      "erc 712",
-      "712",
-      "typed structured data",
-      "domain separator",
-      "signtypeddata",
-      "signature replay",
-      "signature malleability",
-    ],
-    keywords: ["712", "ecrecover", "malleability"],
-    answer: () =>
-      [
-        "### EIP-712, Signature Replay & ECDSA Malleability Defense",
-        "**EIP-712** replaces opaque hex signing with human-readable, domain-scoped structured signatures (`eth_signTypedData_v4`).",
-        "",
-        "- **Domain Separator (`DOMAIN_SEPARATOR`):** Hashes `(name, version, chainId, verifyingContract)` with the typed struct hash prefixed by `0x1901`. Binding `chainId` and `verifyingContract` closes cross-chain and cross-contract replay vectors.",
-        "- **Nonce & Deadline Guards:** Track per-signer `nonces[signer]++` (or claimed bitmaps) and enforce `block.timestamp <= deadline` so valid signatures cannot be replayed or held indefinitely.",
-        "- **ECDSA Malleability & Zero-Address Check:** Raw `ecrecover` returns `address(0)` on invalid signatures and accepts flipped `s` values (`secp256k1n - s`). Always use OpenZeppelin `ECDSA.recover`, which rejects `s > secp256k1n/2` and reverts on `address(0)`.",
-        "- **In Amit's Portfolio:** Used in **Merkle-712 Airdrop Protocol** (https://github.com/NexTechArchitect/Siso-Merkle-Airdrop) for relayer-sponsored gasless Merkle proof claims.",
-      ].join("\n"),
-  },
-  {
-    id: "eip-1153",
-    exactCompact: ["eip1153", "erc1153", "1153"],
-    exactPhrases: [
-      "eip 1153",
-      "eip1153",
-      "1153",
-      "transient storage",
-      "tload",
-      "tstore",
-    ],
-    keywords: ["transient"],
-    answer: () =>
-      [
-        "### EIP-1153: Transient Storage (`TLOAD` & `TSTORE`)",
-        "**EIP-1153** (activated in Dencun) adds transaction-scoped key-value storage via `TLOAD` and `TSTORE` opcodes that behave like `SLOAD`/`SSTORE` during a transaction and automatically reset to zero when the transaction ends.",
-        "",
-        "- **100 Gas Flat Cost:** Both `TLOAD` and `TSTORE` cost **100 gas** with zero storage refund complexity, compared to 2,100-22,100 gas for persistent `SLOAD`/`SSTORE`.",
-        "- **Key DeFi Use Cases:** Ultra-cheap **ReentrancyGuard** locks (`ReentrancyGuardTransient`), temporary callback context passing, and **Uniswap V4 Flash Accounting** where multi-hop swap deltas are tracked transiently and settled once at the end of `unlock()`.",
-        "- **Security Rule:** Never assume transient storage clears between nested subcalls inside the same transaction unless you explicitly reset it, and remember `TSTORE` reverts inside `staticcall` frames.",
-      ].join("\n"),
-  },
-  {
-    id: "eip-1559",
-    exactCompact: ["eip1559", "1559"],
-    exactPhrases: [
-      "eip 1559",
-      "eip1559",
-      "1559",
-      "base fee",
-      "priority fee",
-      "fee burn",
-    ],
-    keywords: ["1559", "basefee", "maxfeepergas", "maxpriorityfeepergas"],
-    answer: () =>
-      [
-        "### EIP-1559: Ethereum Fee Market & Base Fee Burn",
-        "**EIP-1559** replaced first-price gas auctions with a two-part fee model and elastic block sizes targeting 50% capacity (15M gas target, 30M+ gas cap).",
-        "",
-        "- **Dynamic `baseFeePerGas`:** Protocol-adjusted block by block (up to +/-12.5% per block) based on whether the previous block exceeded or stayed below target gas. **100% of the base fee is burned**, removing ETH supply and preventing validators from spoofing congestion for fee capture.",
-        "- **`maxPriorityFeePerGas` (Tip) & `maxFeePerGas`:** Users specify the tip paid to the block builder/validator and an absolute fee ceiling; any excess `maxFee - (baseFee + priorityFee)` is refunded automatically.",
-      ].join("\n"),
-  },
-  {
-    id: "eip-4844",
-    exactCompact: ["eip4844", "4844"],
-    exactPhrases: [
-      "eip 4844",
-      "eip4844",
-      "4844",
-      "proto danksharding",
-      "danksharding",
-      "blob transactions",
-      "blob gas",
-      "blobs",
-    ],
-    keywords: ["4844", "kzg", "data availability", "l2 fees", "blob"],
-    answer: () =>
-      [
-        "### EIP-4844: Proto-Danksharding (Blobs & L2 Data Availability)",
-        "**EIP-4844** introduced Type-3 **blob-carrying transactions** with a dedicated, independent fee market designed specifically for L2 rollup data availability.",
-        "",
-        "- **Ephemeral Blobs (~128 KB each):** Rollups (Arbitrum, Optimism, Base, zkSync, Scroll) post compressed transaction batches inside blobs instead of permanent EVM `calldata`. Nodes prune blob data after ~18 days while preserving cryptographic **KZG versioned hash commitments** accessible on-chain via the `BLOBHASH` opcode.",
-        "- **10x-100x L2 Cost Reduction:** Because blobs have their own multidimensional fee market (`BLOBBASEFEE`), L1 execution spikes no longer price out L2 rollups.",
-      ].join("\n"),
-  },
-  {
-    id: "call-delegatecall-staticcall",
-    exactPhrases: [
-      "delegatecall",
-      "staticcall",
-      "delegatecall vs call",
-      "call vs delegatecall",
-      "call vs staticcall",
-      "return data bomb",
-    ],
-    keywords: ["low level call", "returndatacopy"],
-    answer: () =>
-      [
-        "### EVM External Calls: `call` vs. `delegatecall` vs. `staticcall`",
-        "Understanding execution context is critical for proxies, routers, and security reviews:",
-        "",
-        "- **`call`:** Executes target code in the **target's** storage context (`msg.sender` becomes the calling contract; `address(this)` is the target; can send ETH and mutate target storage).",
-        "- **`delegatecall`:** Executes target code in the **caller's** storage context (`msg.sender`, `msg.value`, and storage slots stay identical to the caller). Powers UUPS, Transparent, and Diamond proxies, but any `delegatecall` to an untrusted target lets the target overwrite caller storage or `selfdestruct`.",
-        "- **`staticcall`:** Same as `call` except any state-modifying opcode (`SSTORE`, `TSTORE`, `LOG*`, `CREATE`, ETH transfer) reverts immediately. Used by `view`/`pure` external calls.",
-        "- **Return-Data Bomb Defense:** Calling an untrusted contract via Solidity high-level or raw `.call` automatically copies all returned bytes into memory, letting a malicious callee spike quadratic memory expansion gas. Use bounded inline assembly (`returndatacopy` capped to max bytes) when invoking untrusted targets.",
-      ].join("\n"),
-  },
-  {
-    id: "create2-deterministic",
-    exactPhrases: [
-      "create2",
-      "deterministic address",
-      "deterministic deployment",
-      "counterfactual",
-      "metamorphic contract",
-    ],
-    keywords: ["create2", "salt", "initcode"],
-    answer: () =>
-      [
-        "### `CREATE2`: Deterministic Smart Contract Deployment",
-        "`CREATE2` (EIP-1014) computes a contract's deployment address before it is ever deployed on-chain:",
-        "",
-        "- **Formula:** `address = keccak256(0xff ++ deployerAddress ++ salt ++ keccak256(initCode))[12:]` (unlike `CREATE`, it does NOT depend on the deployer's nonce).",
-        "- **Key Web3 Use Cases:** Identical multi-chain protocol addresses across Ethereum/L2s, counterfactual **ERC-4337** smart accounts (receive funds before wallet deployment), **Uniswap V2/V3** deterministic pair addresses, and **ERC-6551** Token Bound Accounts.",
-        "- **Security Note:** Including constructor args inside `initCode` binds configuration to the address; historically `CREATE2` + `SELFDESTRUCT` enabled metamorphic contract swaps (largely neutralized post-Dencun EIP-6780, which restricts `SELFDESTRUCT` to same-transaction creation).",
-      ].join("\n"),
-  },
-  {
-    id: "abi-encoding",
-    exactPhrases: [
-      "abi encode",
-      "abi encodepacked",
-      "abi encodecall",
-      "abi encoding",
-      "abi decoding",
-      "hash collision",
-      "function selector",
-    ],
-    keywords: ["encodepacked", "encodewithselector", "calldata layout"],
-    answer: () =>
-      [
-        "### Solidity ABI Encoding & Hash Collision Prevention",
-        "Choosing the wrong ABI encoder is a frequent source of subtle signature and Merkle bugs:",
-        "",
-        "- **`abi.encode(...)`:** Pads every argument to 32-byte words with explicit length/offset pointers for dynamic types (`string`, `bytes`, arrays). Safe for hashing multiple dynamic arguments.",
-        "- **`abi.encodePacked(...)` Collision Hazard:** Concatenates tight raw bytes without padding. Passing two dynamic types like `(\"ab\", \"c\")` and `(\"a\", \"bc\")` produces the **exact same keccak256 hash**, breaking signature verification or Merkle leaves! Never pass multiple dynamic arguments to `abi.encodePacked`.",
-        "- **`abi.encodeCall(IFoo.bar, (a, b))`:** Compile-time type-checked alternative to `abi.encodeWithSignature` / `abi.encodeWithSelector`, eliminating silent selector typos.",
-      ].join("\n"),
-  },
-  {
-    id: "rounding-fixed-point",
-    exactPhrases: [
-      "rounding direction",
-      "muldiv",
-      "fixed point math",
-      "precision loss",
-      "divide before multiply",
-      "wad",
-      "ray",
-    ],
-    keywords: ["muldivup", "muldivdown", "rounding"],
-    answer: () =>
-      [
-        "### DeFi Fixed-Point Math, `mulDiv` & Rounding Direction",
-        "Solidity has no native floating-point types, so DeFi protocols encode fractional values as scaled integers (typically **WAD = `1e18`** or **RAY = `1e27`**).",
-        "",
-        "- **Always Multiply Before Dividing:** `(a / b) * c` truncates toward zero early and destroys precision; use 512-bit intermediate math (`Math.mulDiv(a, c, b)` from OpenZeppelin or Solady `FixedPointMathLib`) so `a * c` never overflows `uint256` before dividing by `b`.",
-        "- **Protocol-Favorable Rounding Rule:** Every vault, AMM, and lending market must round **against the user** (round DOWN payouts/shares minted; round UP debt/assets pulled). Rounding in the user's favor by even 1 wei enables zero-cost dust extraction loops.",
-      ].join("\n"),
-  },
-  {
-    id: "access-control-timelock",
-    exactPhrases: [
-      "access control",
-      "ownable2step",
-      "timelock",
-      "timelockcontroller",
-      "rbac",
-      "multisig",
-      "pause breaker",
-    ],
-    keywords: ["ownable", "gnosis safe", "pausable"],
-    answer: () =>
-      [
-        "### Smart Contract Access Control, RBAC & Timelocks",
-        "Privileged admin keys are one of the highest-impact single points of failure in DeFi:",
-        "",
-        "- **Two-Step Ownership (`Ownable2Step`):** Prevents permanently bricking admin control from a mistyped address by requiring the new owner to explicitly call `acceptOwnership()`.",
-        "- **Granular RBAC (`AccessControl`):** Separates duties (`PAUSER_ROLE`, `ORACLE_ADMIN_ROLE`, `UPGRADER_ROLE`) instead of granting one god-key total authority.",
-        "- **TimelockController + Multisig:** Parameter updates, treasury sweeps, and UUPS upgrades queue behind a 24h-72h `TimelockController` controlled by a multisig or DAO so users can inspect changes and exit before execution (used in Amit's **Sentinel DAO Governance** and **Sentinel Insurance Protocol**).",
-      ].join("\n"),
-  },
-  {
-    id: "custom-errors",
-    exactPhrases: [
-      "custom error",
-      "custom errors",
-      "revert string",
-      "revert strings",
-      "require vs",
-    ],
-    keywords: ["eip-170", "4-byte", "revert"],
-    answer: () =>
-      [
-        "### Custom Errors vs. Revert Strings in Solidity 0.8+",
-        "Custom errors (`error Unauthorized(address caller);`) outperform string-based `require(..., \"...\")` checks in production EVM contracts:",
-        "",
-        "- **Deployment Bytecode Savings:** Revert strings embed full UTF-8 byte arrays into runtime bytecode, inflating deploy gas and pushing protocols toward the 24KB EIP-170 contract size limit. Custom errors encode only a 4-byte function selector (`keccak256(\"Unauthorized(address)\")[0:4]`).",
-        "- **Runtime Revert Gas:** Reverting with a custom error skips dynamic string ABI headers and memory expansion, saving gas on failing transactions and keeper simulations.",
-        "- **Typed Diagnostics:** Structured error parameters (like `FlashLoanSnapshotViolation(uint256 queryBlock, uint256 currentBlock)` in Amit's `ClaimsGovernor.sol`) decode cleanly in Foundry, Viem, and Wagmi.",
-      ].join("\n"),
-  },
-  {
-    id: "yul-storage-gas",
-    exactPhrases: [
-      "yul",
-      "inline assembly",
-      "storage packing",
-      "slot packing",
-      "calldata vs memory",
-      "memory vs calldata",
-      "storage vs memory",
-      "unchecked arithmetic",
-      "evm opcodes",
-      "gas optimization",
-      "gas mechanics",
-      "mload",
-      "mstore",
-      "sload",
-      "sstore",
-    ],
-    keywords: [
-      "assembly",
-      "opcodes",
-      "calldata",
-      "unchecked",
-      "cold sload",
-      "warm sload",
-    ],
-    answer: () =>
-      [
-        "### EVM Gas Mechanics, Storage Packing & Inline Yul Assembly",
-        "On the EVM, state I/O dominates execution cost: a cold `SLOAD` costs **2,100 gas** (warm: 100), and a zero-to-nonzero `SSTORE` costs **22,100 gas** (vs. ~3 gas for `ADD`/`MLOAD`).",
-        "",
-        "- **Storage Slot Packing:** Group struct fields totaling <= 32 bytes into one 256-bit word (e.g., `uint64 score; uint64 lastUpdated; uint16 tier; bool revoked;` in Amit's `ReputationStorageV1.sol`) to turn multiple `SSTORE`s into one.",
-        "- **`calldata` vs. `memory` vs. `storage`:** Keep read-only external params in `calldata` (immutable, zero copy cost); cache repeated `storage` reads into local stack/`memory` variables; wrap provably bounded loop increments in `unchecked { ++i; }`.",
-        "- **Targeted Inline Yul (`mload`, `mstore`, `sload`, `sstore`):** Use Yul strictly on proven hot paths. In Amit's `SwapPopQueue.yul` (**On-Chain Automation Protocol**), 1-based index mappings + swap-and-pop removal + direct `sstore(activeIds.slot, lastIdx)` eliminate linear loop DoS and cut execution gas by up to **35%**.",
-      ].join("\n"),
-  },
-  {
-    id: "reentrancy-cei",
-    exactPhrases: [
-      "reentrancy",
-      "checks effects interactions",
-      "read only reentrancy",
-      "cross function reentrancy",
-      "reentrancyguard",
-    ],
-    keywords: ["cei"],
-    answer: () =>
-      [
-        "### Reentrancy & Checks-Effects-Interactions (CEI) Pattern",
-        "Reentrancy happens when an external call (native ETH `.call`, ERC-721/1155 receiver hooks, or ERC-777 callbacks) hands control to an untrusted contract before internal state balances or nonces finish updating.",
-        "",
-        "- **Strict CEI Ordering:** Validate all preconditions first (**Checks**), mutate every balance, debt, and nonce second (**Effects**), and perform external transfers or calls last (**Interactions**).",
-        "- **Cross-Function & Read-Only Reentrancy:** Guard state-changing functions with OpenZeppelin `ReentrancyGuard` (or gas-cheap **EIP-1153 `TLOAD`/`TSTORE` transient storage locks**), and beware **read-only reentrancy** where an external protocol reads a stale view function (like LP share price) mid-callback.",
-        "- **In Amit's Portfolio:** In `CCIPMarginReceiver.sol` (**Nexus Perpetuals DEX**), `processedMessages[messageId] = true` is locked strictly before `_depositMargin(...)` executes.",
-      ].join("\n"),
-  },
-  {
-    id: "flash-loan-governance",
-    exactPhrases: [
-      "flash loan",
-      "flash loans",
-      "flashloan",
-      "governance attack",
-      "snapshot defense",
-      "vote buying",
-    ],
-    keywords: ["erc20votes", "checkpoint"],
-    answer: () =>
-      [
-        "### Flash-Loan Attacks & Governance Snapshot Defense",
-        "Flash loans provide uncollateralized, millions-of-dollars capital within a single atomic transaction as long as principal + fee are returned before the tx ends.",
-        "",
-        "- **Governance Takeover Vector:** If a DAO checks live `balanceOf(voter)` at the current `block.number`, an attacker can flash-borrow voting tokens, pass or swing a treasury proposal, and repay the loan inside one block.",
-        "- **Oracle & Vault Manipulation Vector:** Attackers also use flash loans to skew spot AMM reserves (`getReserves()`) or inflate empty ERC-4626 share prices.",
-        "- **Architectural Defenses:** Anchor voting weight to prior-block checkpoints (`snapshotBlock < block.number` via `ERC20Votes`, as implemented in Amit's `ClaimsGovernor.sol` for **Sentinel Insurance** and **Sentinel DAO**), enforce a `TimelockController` + Veto Council delay, and never price collateral from spot AMM reserves.",
-      ].join("\n"),
-  },
-  {
-    id: "oracle-manipulation",
-    exactPhrases: [
-      "oracle manipulation",
-      "chainlink data feeds",
-      "price oracle",
-      "stale price",
-      "circuit breaker",
-      "twap",
-      "aggregatorv3",
-    ],
-    keywords: ["oracle", "sequencer uptime", "staleness", "deviation"],
-    answer: () =>
-      [
-        "### Oracle Manipulation, Chainlink Data Feeds & Circuit Breakers",
-        "Spot DEX pool balances can be manipulated inside a single transaction via flash loans; production DeFi protocols rely on decentralized oracles with strict on-chain sanity checks.",
-        "",
-        "- **Mandatory Chainlink `latestRoundData()` Checks:** Verify `answer > 0`, `updatedAt > 0`, `block.timestamp - updatedAt <= HEARTBEAT`, `answeredInRound >= roundId`, and on L2s (Arbitrum/Optimism/Base) check the **Chainlink L2 Sequencer Uptime Feed** + grace period so liquidations do not fire on stale post-outage prices.",
-        "- **Deviation Circuit Breakers:** Enforce max price-delta thresholds between updates so a misconfigured or compromised feed halts minting/redemptions automatically.",
-        "- **In Amit's Portfolio:** `ComplianceHook.sol` (**Nexus RWA Protocol**) enforces a **15% 24-hour Chainlink NAV circuit breaker**, and **DSC StableCoin Engine** wraps Chainlink feeds in a dedicated `OracleLib` staleness guard.",
-      ].join("\n"),
-  },
-  {
-    id: "mev-sandwich",
-    exactPhrases: [
-      "mev",
-      "sandwich attack",
-      "front running",
-      "frontrunning",
-      "slippage protection",
-      "back running",
-      "flashbots",
-    ],
-    keywords: ["sandwich", "slippage", "mempool", "deadline", "amountoutmin"],
-    answer: () =>
-      [
-        "### MEV, Sandwich Attacks, Front-Running & Slippage Protection",
-        "**MEV (Maximal Extractable Value)** is profit extracted by block builders/searchers who reorder, insert, or censor transactions in the public mempool.",
-        "",
-        "- **Sandwich Attacks:** A searcher spots a large swap with loose slippage, **front-runs** it to push the pool price up, lets the victim execute at a worse rate, and **back-runs** by selling immediately for risk-free profit.",
-        "- **Protocol-Level Protections:** Never hardcode `amountOutMin = 0`; require user-supplied `minAmountOut` and short `deadline` parameters (not `block.timestamp`, which is always satisfied when a stale tx gets mined later).",
-        "- **Commit-Reveal & Private RPCs:** For auctions, mints, or sensitive liquidations, use commit-reveal schemes, batch auctions (CoW Swap / intent solvers), or private orderflow (Flashbots Protect / MEV-Share).",
-      ].join("\n"),
-  },
-  {
-    id: "amms-uniswap",
-    exactPhrases: [
-      "amm",
-      "amms",
-      "uniswap",
-      "uniswap v2",
-      "uniswap v3",
-      "uniswap v4",
-      "concentrated liquidity",
-      "constant product",
-      "impermanent loss",
-      "uniswap hooks",
-    ],
-    keywords: ["x*y=k", "ticks", "poolmanager", "flash accounting"],
-    answer: () =>
-      [
-        "### AMMs: Uniswap V2, V3 Concentrated Liquidity & V4 Hooks",
-        "Automated Market Makers replace orderbooks with deterministic liquidity pool invariants:",
-        "",
-        "- **Uniswap V2 (`x * y = k`):** Spreads liquidity uniformly from price `0` to `infinity`. Simple, composable, and LP positions are fungible ERC-20 tokens, though capital efficiency is low.",
-        "- **Uniswap V3 (Concentrated Liquidity):** LPs allocate capital within custom `[tickLower, tickUpper]` price ranges, multiplying capital efficiency and fee yield inside the active range (represented as ERC-721 positions, with steeper impermanent loss if price exits the range).",
-        "- **Uniswap V4 (Singleton `PoolManager` & Hooks):** Consolidates all pools into a single contract with **EIP-1153 flash accounting** (netting multi-hop token deltas once at the end of a swap) and programmable **Hooks** (`beforeSwap`, `afterSwap`, `beforeAddLiquidity`) enabling dynamic fees, TWAMM orders, and on-chain KYC gates.",
-      ].join("\n"),
-  },
-  {
-    id: "lending-aave",
-    exactPhrases: [
-      "aave",
-      "aave v3",
-      "lending protocol",
-      "health factor",
-      "interest rate curve",
-      "liquidation bonus",
-      "collateralization",
-    ],
-    keywords: ["lending", "liquidation", "emode", "ltv", "kink", "utilization"],
-    answer: () =>
-      [
-        "### DeFi Lending Protocols: Aave V3 Health Factor, Liquidations & Interest Curves",
-        "Over-collateralized lending pools match passive depositors (earning yield via `aTokens`) with borrowers backed by collateral ratios enforced deterministically on-chain:",
-        "",
-        "- **Health Factor Formula:** `HF = (CollateralValueUSD * LiquidationThreshold) / TotalDebtUSD`. Whenever `HF < 1.0`, permissionless liquidators can repay part of the debt (close factor) and seize discounted collateral (`+ liquidationBonus`, e.g., 5%-10%) before bad debt accrues.",
-        "- **Kinked Interest Rate Curve:** Borrow APY rises gradually with pool utilization (`Borrowed / TotalLiquidity`) up to an optimal utilization kink (e.g., 80%-90%), then climbs steeply past the kink to incentivize repayments and fresh liquidity.",
-        "- **Aave V3 Risk Isolation:** Adds Efficiency Mode (**eMode**) for higher LTV on correlated pairs (e.g., wstETH/ETH), Isolation Mode debt ceilings, and supply/borrow caps.",
-        "- **In Amit's Portfolio:** **Sentinel Insurance Protocol** routes ERC-4626 capital directly into Aave V3 reserves, and **DSC StableCoin Engine** implements a 200% min-collateral CDP with 10% liquidation bonuses verified via Foundry invariant fuzzing.",
-      ].join("\n"),
-  },
-  {
-    id: "perpetual-dex",
-    exactPhrases: [
-      "perpetual dex",
-      "perpetuals",
-      "perp dex",
-      "funding rate",
-      "funding rates",
-      "isolated margin",
-      "cross margin",
-      "mark price",
-    ],
-    keywords: ["perps", "leverage", "liquidation price", "open interest"],
-    answer: () =>
-      [
-        "### Perpetual DEX Architecture: Funding Rates, Margin & Liquidations",
-        "Perpetual futures let traders hold leveraged long/short exposure with no expiry date by anchoring contract prices to spot via continuous funding payments:",
-        "",
-        "- **Funding Rates:** When perp **mark price** trades above spot **index price** (long-heavy skew), longs pay periodic funding to shorts; when mark < index, shorts pay longs. This keeps open interest balanced and protects LP vaults from directional insolvency.",
-        "- **Isolated vs. Cross Margin:** Isolated margin caps a position's max loss to its dedicated collateral slice; cross margin pools account collateral across positions (higher capital efficiency, wider liquidation blast radius).",
-        "- **Oracle Mark Pricing & Keepers:** Liquidations trigger deterministically when remaining margin drops below maintenance margin, executed by incentivized keeper bots using manipulation-resistant oracle feeds.",
-        "- **In Amit's Portfolio:** Explore **Nexus Perpetuals DEX** (50x leverage, ERC-4337 gasless execution, Chainlink CCIP cross-chain margin: https://nexus-protocol-os.vercel.app/) and **Nexus Perps v2 on Polkadot Hub EVM**.",
-      ].join("\n"),
-  },
-  {
-    id: "staking-restaking",
-    exactPhrases: [
-      "staking",
-      "restaking",
-      "liquid staking",
-      "eigenlayer",
-      "avs",
-      "steth",
-      "reth",
-      "slashing",
-    ],
-    keywords: ["lst", "lrt", "validator"],
-    answer: () =>
-      [
-        "### Staking, Liquid Staking (LSTs) & Restaking (EigenLayer)",
-        "Ethereum Proof-of-Stake secures L1 consensus with staked ETH, while LSTs and restaking extend that economic security across DeFi and middleware:",
-        "",
-        "- **Liquid Staking Tokens (LSTs):** Rebasing tokens like `stETH` adjust user balances daily (requiring wrapped `wstETH` inside DeFi vaults), whereas exchange-rate tokens like `rETH` or `cbETH` accrue yield by increasing the ETH-per-token redemption ratio.",
-        "- **Restaking & AVSs (EigenLayer):** Validators opt into additional slashing conditions to secure Actively Validated Services (bridges, data availability layers, oracles, keeper networks) in exchange for extra yield.",
-        "- **DeFi Integration Risks:** Watch withdrawal queue unbonding delays (depeg risk during mass exits), oracle pricing (price LSTs via exchange-rate + market bounds, never blindly 1:1 with ETH), and cascading slashing exposure in LRTs.",
-      ].join("\n"),
-  },
-  {
-    id: "l2-rollups",
-    exactPhrases: [
-      "l2",
-      "layer 2",
-      "rollup",
-      "rollups",
-      "optimistic rollup",
-      "zk rollup",
-      "arbitrum",
-      "optimism",
-      "zksync",
-      "fraud proof",
-      "validity proof",
-    ],
-    keywords: ["sequencer", "starknet", "scroll", "op stack"],
-    answer: () =>
-      [
-        "### L2 Rollups: Optimistic vs. ZK Architecture",
-        "Rollups execute transactions off L1 and inherit Ethereum security by posting compressed batch data (via EIP-4844 blobs) and state commitments back to L1:",
-        "",
-        "- **Optimistic Rollups (Arbitrum, Optimism, Base):** Assume state transitions are valid unless challenged during a ~7-day fraud-proof window. Offer near-100% EVM equivalence and simple prover infrastructure; fast exits rely on liquidity bridges.",
-        "- **ZK Rollups (zkSync, Scroll, Starknet, Linea):** Attach succinct cryptographic **validity proofs** (SNARKs/STARKs) verifying execution immediately on L1, eliminating the 7-day withdrawal delay at the cost of heavier proving computation and subtle zkEVM opcode differences.",
-        "- **L2 Smart Contract Gotchas:** Always check the **Chainlink L2 Sequencer Uptime Feed** before trusting prices, remember `block.number` semantics differ on Arbitrum (`ArbSys`), and avoid relying on L1-only assumptions about gas pricing (`L1 data fee + L2 execution fee`).",
-      ].join("\n"),
-  },
-  {
-    id: "fullstack-web3",
-    exactPhrases: [
-      "wagmi",
-      "wagmi v2",
-      "viem",
-      "ethers",
-      "ethers js",
-      "the graph",
-      "subgraph",
-      "ipfs",
-      "alchemy sdk",
-      "full stack web3",
-      "fullstack web3",
-    ],
-    keywords: ["multicall", "simulatecontract", "walletconnect", "rainbowkit"],
-    answer: () =>
-      [
-        "### Full-Stack Web3 Engineering: Wagmi v2, Viem, Next.js, The Graph & IPFS",
-        "Shipping a production DeFi application requires rock-solid client architecture on top of the Solidity layer:",
-        "",
-        "- **Viem & Wagmi v2:** TypeScript-first replacements for legacy Ethers.js v5 with strict ABI type inference, automatic **Multicall3** read batching, and `simulateContract` dry runs before prompting a user's wallet to sign `writeContract`.",
-        "- **The Graph (Subgraphs) & Indexing:** RPC `eth_getLogs` does not scale for historical positions, liquidations, or yield leaderboards. Subgraphs index contract events into GraphQL schemas for instant, deterministic UI queries.",
-        "- **IPFS & Decentralized Metadata:** Content-addressed CIDs (`ipfs://...`) guarantee NFT and governance proposal metadata cannot be silently swapped by a centralized web server.",
-        "- **In Amit's Portfolio:** All 7 full-stack protocols (including **Nexus RWA**, **On-Chain Automation**, **Sentinel Insurance**, and **Nexus Perpetuals DEX**) pair Foundry Solidity cores with live Next.js, TypeScript, Wagmi, and Viem frontends.",
-      ].join("\n"),
-  },
-  {
-    id: "chainlink-suite",
-    exactPhrases: [
-      "chainlink",
-      "chainlink ccip",
-      "chainlink vrf",
-      "chainlink automation",
-      "cross chain interoperability",
-      "verifiable random",
-    ],
-    keywords: ["ccip", "vrf", "upkeep", "automation"],
-    answer: () =>
-      [
-        "### Chainlink Infrastructure: CCIP, VRF v2.5 & Automation",
-        "Chainlink provides decentralized off-chain computation, verifiable randomness, and cross-chain messaging across EVM networks:",
-        "",
-        "- **Chainlink CCIP (Cross-Chain Interoperability Protocol):** Passes arbitrary data and token transfers across chains through independent Risk Management Networks. Receivers (`_ccipReceive`) must enforce **source-chain selector allowlists**, **trusted sender checks**, and **`messageId` replay protection** (see Amit's `CCIPMarginReceiver.sol`).",
-        "- **Chainlink VRF v2.5:** Supplies cryptographically verifiable randomness via off-chain proof verified on-chain inside `fulfillRandomWords`, preventing miners/validators from biasing raffles or NFT trait reveals (used in Amit's **Automated Provably Fair Raffle**).",
-        "- **Chainlink Automation (Keepers):** Decentralized nodes monitor off-chain `checkUpkeep` conditions and call `performUpkeep` on-chain (always re-validate upkeep conditions on-chain inside `performUpkeep`!).",
-      ].join("\n"),
-  },
-  {
-    id: "foundry-testing",
-    exactPhrases: [
-      "foundry",
-      "forge test",
-      "invariant testing",
-      "stateful fuzzing",
-      "fuzz testing",
-      "fork testing",
-      "anvil",
-      "handler based",
-    ],
-    keywords: ["forge", "fuzz", "invariant", "cheatcodes", "chisel", "cast"],
-    answer: () =>
-      [
-        "### Foundry Testing: Unit, Fuzz, Stateful Invariants & Mainnet Forks",
-        "**Foundry** (`forge`, `anvil`, `cast`) runs Solidity-native tests directly on a Rust EVM at orders-of-magnitude higher speed than JS test runners:",
-        "",
-        "- **Stateless Fuzzing (`forge test`):** Pass arguments into `testFuzz_Deposit(uint256 amount)` and use `bound(amount, min, max)` (preferred over `vm.assume` to avoid wasted rejections) to test thousands of edge-case inputs automatically.",
-        "- **Stateful Handler-Based Invariant Testing:** Define protocol invariants (e.g., `totalCollateralUsd >= totalDscMinted` in Amit's **DSC StableCoin Engine**) and route random multi-actor call sequences (`deposit -> mint -> crashPrice -> liquidate`) through bounded Handler contracts to uncover multi-step exploits.",
-        "- **Mainnet Fork Testing (`--fork-url` / Anvil):** Run integration tests directly against live Ethereum/L2 state to verify real Aave V3 pools, Chainlink feeds, and ERC-4337 EntryPoint interactions before shipping.",
-      ].join("\n"),
-  },
-  {
-    id: "slither-auditing",
-    exactPhrases: [
-      "slither",
-      "echidna",
-      "smart contract audit",
-      "auditing workflow",
-      "static analysis",
-      "formal verification",
-      "security review",
-    ],
-    keywords: ["audit", "auditing", "halmos", "certora", "mythril"],
-    answer: () =>
-      [
-        "### Smart Contract Auditing, Slither & Echidna Security Workflow",
-        "Production DeFi security layers automated tooling on top of manual threat modeling:",
-        "",
-        "- **Static Analysis (Slither):** Parses Solidity AST/IR in seconds inside CI to catch reentrancy paths, uninitialized proxies, unchecked low-level calls, arbitrary `from` in `transferFrom`, shadowing, and divide-before-multiply precision loss.",
-        "- **Property Fuzzing (Foundry Invariants & Echidna):** Explores stateful call sequences across actors to break accounting conservation, solvency, and access-control invariants.",
-        "- **Manual Line-by-Line Threat Modeling:** Maps trust boundaries, economic attacks (flash loans, oracle lag, ERC-4626 inflation, rounding direction, weird ERC-20s, cross-chain replay, and UUPS storage layout diffs) before mainnet deployment.",
-      ].join("\n"),
-  },
-  {
-    id: "solidity-vyper-rust",
-    exactPhrases: [
-      "solidity vs vyper",
-      "solidity vs rust",
-      "vyper vs solidity",
-      "rust vs solidity",
-      "solana vs ethereum",
-      "vyper",
-      "solana",
-    ],
-    keywords: ["rust", "anchor", "vyper", "evm vs svm"],
-    answer: () =>
-      [
-        "### Solidity vs. Vyper vs. Rust (Solana)",
-        "Each smart contract language optimizes a different trade-off between ecosystem depth, auditability, and execution model:",
-        "",
-        "- **Solidity (EVM):** Dominant EVM language with the deepest audited library ecosystem (OpenZeppelin, Solmate, Solady), Foundry/Slither tooling, inline Yul assembly for low-level gas control, and universal deployment across Ethereum + EVM L2s.",
-        "- **Vyper (EVM):** Pythonic EVM language intentionally omitting inheritance, function overloading, and inline assembly to prioritize readability and simple bytecode (famously used by Curve Finance), though with a smaller ecosystem.",
-        "- **Rust / Anchor (Solana SVM):** Compiles to BPF/SBF on Solana's account-separated parallel runtime (Sealevel). High throughput and strong memory/type safety via Rust's borrow checker, paired with a steeper mental model around PDAs, explicit account passing, and signer/owner checks.",
-      ].join("\n"),
-  },
-  {
-    id: "tech-stack",
-    exactPhrases: [
-      "tech stack",
-      "engineering stack",
-      "skills",
-      "what tools",
-      "languages",
-    ],
-    keywords: ["stack", "tools", "experience"],
-    answer: () => {
-      const domains = [
-        "Protocol & EVM",
-        "Security & Testing",
-        "DeFi Standards",
-        "Full-Stack Web3",
-      ] as const;
-      const grouped = domains.map((domain) => {
-        const items = TECH_STACK.filter((t) => t.domain === domain)
-          .map((t) => `**${t.name}** (${t.focus})`)
-          .join("; ");
-        return `- **${domain}:** ${items}`;
-      });
-      return [
-        "### Amit Kumar's Engineering Stack",
-        ...grouped,
-        "",
-        "Ask about any standard or protocol in his gallery to inspect how these tools fit together in production.",
-      ].join("\n");
-    },
-  },
-];
-
 function findInsightForProject(
   project: ProjectItem
 ): ArchitectureInsight | undefined {
-  const lowerTitle = project.title.toLowerCase();
-  const lowerShort = project.shortTitle.toLowerCase();
+  const titleLower = project.title.toLowerCase();
+  const shortLower = project.shortTitle.toLowerCase();
   return ARCHITECTURE_INSIGHTS.find((insight) => {
-    const p = insight.protocol.toLowerCase();
+    const proto = insight.protocol.toLowerCase();
     return (
-      p.includes(lowerShort) ||
-      lowerTitle.includes(p) ||
-      (project.id === "sentinel-insurance" && insight.id === "l1") ||
-      (project.id === "fs2" && insight.id === "l1") ||
-      (project.id === "onchain-automation" && insight.id === "l2") ||
+      proto.includes(shortLower) ||
+      titleLower.includes(proto) ||
       (project.id === "nexus-rwa" && insight.id === "l3") ||
+      (project.id === "onchain-automation" && insight.id === "l2") ||
+      (project.id === "sentinel-insurance" && insight.id === "l1") ||
       (project.id === "fs1" && insight.id === "l4") ||
       (project.id === "fs4" && insight.id === "l5")
     );
@@ -1322,29 +698,32 @@ function formatProjectComparison(a: ProjectItem, b: ProjectItem): string {
 }
 
 function detectProjectIntent(q: NormalizedQuery): ProjectIntent {
+  const s = q.softCollapsed;
   const asksWalkthrough =
     /\b(walkthrough|walk me through|overview|full breakdown|everything about|deep dive|summarize|summary|all details)\b/.test(
-      q.normalized
+      s
     );
   const asksGas =
     /\b(gas|yul|assembly|optimi[sz]\w*|sload|sstore|storage pack\w*|cheaper|cost|calldata|efficiency)\b/.test(
-      q.normalized
-    );
+      s
+    ) || matchSingleTokenWeight(q, "optimization") >= 0.75;
   const asksSecurity =
     /\b(security|invariants?|audit\w*|vulnerab\w*|attack\w*|threat\w*|risks?|reentrancy|flash ?loan|exploit\w*|safeguard\w*|fuzz\w*|slither|defen[cs]e)\b/.test(
-      q.normalized
-    );
+      s
+    ) ||
+    matchSingleTokenWeight(q, "security") >= 0.75 ||
+    matchSingleTokenWeight(q, "invariant") >= 0.75;
   const asksArchitecture =
     /\b(architecture|smart contracts?|contracts?|components?|modules?|tech stack|stack|how does it work|how it works|design)\b/.test(
-      q.normalized
-    );
+      s
+    ) || matchSingleTokenWeight(q, "architecture") >= 0.75;
   const asksLinks =
     /\b(github|repo|repository|source code|live app|live demo|demo|url|links?|website|contract address\w*|addresses)\b/.test(
-      q.normalized
+      s
     );
   const asksStory =
     /\b(story|why did|motivation|problem solved|what problem|purpose|background)\b/.test(
-      q.normalized
+      s
     );
 
   const dimensionCount =
@@ -1373,6 +752,7 @@ function matchWorkbenchSnippet(
     if (
       q.raw.toLowerCase().includes(fname) ||
       q.compact.includes(baseName) ||
+      q.hardCompact.includes(hardCollapseText(baseName)) ||
       hasPhrase(q, baseName)
     ) {
       return insight;
@@ -1414,26 +794,31 @@ function scoreProjects(
   for (const project of ALL_PROJECTS) {
     let score = 0;
 
-    if (hasPhrase(q, project.title)) score += 220;
-    if (project.shortTitle.length >= 4 && hasPhrase(q, project.shortTitle)) {
-      score += 150;
+    const titleW = matchPhraseWeight(q, project.title, true);
+    if (titleW > 0) score += 220 * titleW;
+
+    if (project.shortTitle.length >= 4) {
+      const shortW = matchPhraseWeight(q, project.shortTitle, true);
+      if (shortW > 0) score += 150 * shortW;
     }
 
     const repoSlug = extractRepoSlug(project.link);
-    if (repoSlug.length >= 6 && hasPhrase(q, repoSlug)) {
-      score += 160;
+    if (repoSlug.length >= 6) {
+      const slugW = matchPhraseWeight(q, repoSlug, false);
+      if (slugW > 0) score += 160 * slugW;
     }
 
     for (const alias of project.aliases) {
-      if (hasPhrase(q, alias)) {
-        score += alias.length >= 6 ? 120 : 90;
+      const aliasW = matchPhraseWeight(q, alias, alias.length >= 6);
+      if (aliasW > 0) {
+        score += (alias.length >= 6 ? 120 : 90) * aliasW;
       }
     }
 
     for (const c of project.smartContracts) {
       const cleanName = c.name.replace(/\.(sol|yul)$/i, "").split(" ")[0] ?? "";
       if (
-        (cleanName.length >= 5 && hasPhrase(q, cleanName)) ||
+        (cleanName.length >= 5 && matchPhraseWeight(q, cleanName, true) > 0) ||
         (c.address && q.raw.toLowerCase().includes(c.address.toLowerCase()))
       ) {
         score += 140;
@@ -1442,7 +827,7 @@ function scoreProjects(
 
     const secondary = PROJECT_STANDARD_SECONDARY[project.id] ?? [];
     for (const term of secondary) {
-      if (hasPhrase(q, term)) {
+      if (matchPhraseWeight(q, term, false) > 0) {
         if (score > 0) {
           score += 25;
         } else if (hasPortfolioContext) {
@@ -1472,7 +857,7 @@ function resolveProjectFromHistory(
     const text = getTurnText(turn);
     if (!text) continue;
 
-    // 1. Check exact heading match in recent assistant replies (e.g., "### Nexus Perps v2 (Polkadot Hub)")
+    // 1. Check exact heading match in recent assistant replies
     const firstLine = text.split("\n")[0]?.toLowerCase() ?? "";
     if (firstLine.startsWith("### ")) {
       for (const project of ALL_PROJECTS) {
@@ -1498,19 +883,25 @@ function resolveProjectFromHistory(
 }
 
 function isLikelyProjectFollowUp(q: NormalizedQuery): boolean {
+  const s = q.softCollapsed;
   const hasPronounOrDeictic =
     /\b(it|its|this one|that one|this project|that project|this protocol|that protocol|the project|the protocol|the contract|the contracts|same project|same protocol)\b/.test(
-      q.normalized
+      s
     );
 
   const isShortDimensionFollowUp =
     q.tokens.size <= 8 &&
-    /\b(gas|security|invariants?|risks?|contracts?|architecture|stack|github|repo|link|demo|live|story|why|address|addresses|audit|vulnerabilities|tradeoffs?|how does it|what about)\b/.test(
-      q.normalized
-    );
+    (/\b(gas|security|invariants?|risks?|contracts?|architecture|stack|github|repo|link|demo|live|story|why|address|addresses|audit|vulnerabilities|tradeoffs?|how does it|what about)\b/.test(
+      s
+    ) ||
+      matchSingleTokenWeight(q, "security") >= 0.75 ||
+      matchSingleTokenWeight(q, "architecture") >= 0.75 ||
+      matchSingleTokenWeight(q, "optimization") >= 0.75);
 
   return hasPronounOrDeictic || isShortDimensionFollowUp;
 }
+
+const MIN_KNOWLEDGE_SCORE = 8.5;
 
 function scoreKnowledgeBase(
   q: NormalizedQuery,
@@ -1521,36 +912,65 @@ function scoreKnowledgeBase(
   for (const entry of WEB3_KNOWLEDGE_BASE) {
     let score = 0;
 
-    if (entry.exactCompact) {
-      for (const compactTerm of entry.exactCompact) {
-        if (q.compact === compactTerm || q.tokens.has(compactTerm)) {
-          score += 24;
-        } else if (
-          compactTerm.length >= 4 &&
-          q.compact.includes(compactTerm)
-        ) {
-          score += 18;
+    // 1. Noise-resistant ERC/EIP standard number extraction (handles "ercccccccc 20", "e.r.c 4626", "5626", "1115", "19000", "aa")
+    if (entry.standardNumbers) {
+      let stdHit = false;
+      for (const std of entry.standardNumbers) {
+        if (q.extractedStandards.has(std)) {
+          stdHit = true;
+          break;
         }
       }
+      if (stdHit) {
+        score += 34;
+      }
     }
 
+    // 2. Compact token matches
+    if (entry.exactCompact) {
+      let compactBoost = 0;
+      for (const compactTerm of entry.exactCompact) {
+        const hardTerm = hardCollapseText(compactTerm);
+        if (q.compact === compactTerm || q.tokens.has(compactTerm)) {
+          compactBoost = Math.max(compactBoost, 24);
+        } else if (
+          q.hardCompact === hardTerm ||
+          (hardTerm.length >= 3 && q.hardTokens.has(hardTerm))
+        ) {
+          compactBoost = Math.max(compactBoost, 22);
+        } else if (
+          compactTerm.length >= 4 &&
+          (q.compact.includes(compactTerm) || q.hardCompact.includes(hardTerm))
+        ) {
+          compactBoost = Math.max(compactBoost, 18);
+        }
+      }
+      score += compactBoost;
+    }
+
+    // 3. Exact / hard-collapsed / fuzzy phrase matches
     for (const phrase of entry.exactPhrases) {
-      if (hasPhrase(q, phrase)) {
-        score += phrase.includes(" ") ? 15 : 12;
+      const w = matchPhraseWeight(q, phrase, true);
+      if (w > 0) {
+        const base = phrase.includes(" ") ? 16 : 12;
+        score += base * w;
       }
     }
 
+    // 4. Supporting domain keywords (exact / hard / fuzzy)
     for (const kw of entry.keywords) {
-      if (hasPhrase(q, kw)) {
-        score += 6;
+      const w = matchPhraseWeight(q, kw, true);
+      if (w > 0) {
+        const kwBase = kw.length >= 7 ? 12 : 9;
+        score += kwBase * w;
       }
     }
 
-    if (score > 0 && isConceptualQuestion) {
-      score += 8;
+    if (score >= MIN_KNOWLEDGE_SCORE && isConceptualQuestion) {
+      score += 6;
     }
 
-    if (score > 0) {
+    if (score >= MIN_KNOWLEDGE_SCORE) {
       scored.push({ entry, score });
     }
   }
@@ -1595,7 +1015,7 @@ function buildFlagshipOverview(): string {
 function buildContactAndBioReply(): string {
   return [
     "### Connect with Amit Kumar (NexTechArchitect)",
-    "Amit Kumar is a **Smart Contract Engineer & DeFi Protocol Architect** based in **Jammu, India (IST)**, available for remote Smart Contract Engineer, DeFi Protocol Architect, and Smart Contract Security roles worldwide.",
+    "Amit Kumar is a **Smart Contract Engineer & DeFi Protocol Architect** based in **Jammu, India (IST)**, available for remote Smart Contract Engineer, Protocol Engineer, DeFi Security/Foundry, and Full-Stack Web3 roles worldwide (full-time or contract/audit).",
     "",
     "- **Email:** nextech.amit@gmail.com",
     "- **GitHub:** https://github.com/NexTechArchitect",
@@ -1604,11 +1024,69 @@ function buildContactAndBioReply(): string {
     "- **Portfolio:** https://nex-tech-architect-portfolio.vercel.app/",
     "",
     "**Credentials & Education:**",
-    "- **Cyfrin Updraft:** Advanced Solidity & Smart Contract Security",
+    "- **Cyfrin Updraft:** Smart Contract & Security Engineering graduate",
     "- **Alchemy University:** Ethereum Developer Bootcamp",
-    "- **Cluster University of Jammu:** B.Sc. Science",
+    "- **Cluster University of Jammu:** Associate of Science / B.Sc. Science candidate",
     "",
     "You can also click **Resume** in the top navigation bar or footer to view and download Amit's full CV.",
+  ].join("\n");
+}
+
+function buildWhyHireAmitReply(): string {
+  return [
+    "### Why Teams Hire Amit Kumar (NexTechArchitect)",
+    "Amit brings a **security-first DeFi architect** mindset paired with full-stack shipping velocity:",
+    "",
+    "- **Raw EIP-Spec Implementation:** Builds directly from protocol standards (`ERC-3643`, `ERC-4626`, `ERC-4337`, `ERC-5484`, `EIP-1822 UUPS`, `EIP-712`) rather than stitching opaque boilerplate.",
+    "- **Security Closed at Design Time:** Enforces compliance inside transfer hooks, blocks flash-loan governance via prior-block checkpoints + Timelocks, hardens ERC-4626 vaults with virtual shares, and verifies invariants via stateful **Foundry** handler fuzzing and **Slither** CI sweeps.",
+    "- **EVM Hot-Path Optimization:** Uses packed 256-bit storage slots, O(1) swap-and-pop queues, and targeted inline **Yul** (proven 35% gas savings in `SwapPopQueue.yul`).",
+    "- **End-to-End Ownership:** Ships audited Solidity cores alongside production **Next.js, TypeScript, Wagmi v2 & Viem** frontends across Ethereum and EVM L2s.",
+    "",
+    "Reach Amit directly at `nextech.amit@gmail.com` or open his **Resume** in the top navigation bar.",
+  ].join("\n");
+}
+
+function buildExperienceTrackRecordReply(): string {
+  return [
+    "### Amit Kumar's Web3 Experience & Track Record",
+    "- **In Web3 Since 2019:** Deep familiarity across DeFi cycles, EVM internals, and protocol security patterns.",
+    "- **Protocol Architecture & Web3 Labs (Jan 2024 - Present):** Operating as **NexTechArchitect**, designing and shipping full-stack decentralized protocols and core EVM primitives.",
+    "- **Verified Output:** **15+ shipped projects** and **60+ deployed smart contracts** spanning RWA tokenization (**Nexus RWA**), decentralized keeper networks (**On-Chain Automation**), yield-bearing parametric insurance (**Sentinel Insurance**), cross-chain leveraged perpetuals (**Nexus Perpetuals DEX** & **Nexus Perps v2 on Polkadot Hub**), DAO governance, and CDP stablecoins.",
+    "- **Chain-Agnostic EVM Engineering:** Production experience across Ethereum, Arbitrum, Base, Optimism, Sepolia, and Polkadot Hub EVM.",
+    "",
+    "Want to inspect his flagship builds or check his availability for remote roles?",
+  ].join("\n");
+}
+
+function buildAvailabilityRolesReply(): string {
+  return [
+    "### Availability, Remote Work, Timezone & Target Roles",
+    "- **Open Roles:** Remote **Smart Contract Engineer**, **Protocol Engineer**, **DeFi Security / Foundry Engineer**, and **Full-Stack Web3 Engineer** (open to full-time positions as well as contract/audit engagements).",
+    "- **Location & Timezone:** Based in **Jammu, India (IST, UTC+5:30)** with flexible daily overlap for **US, EU, and global remote engineering teams**.",
+    "- **Direct Contact:** Email `nextech.amit@gmail.com`, connect on [LinkedIn](https://www.linkedin.com/in/amit-kumar-811a11277), or view/download his CV via the **Resume** button in the top navigation bar.",
+  ].join("\n");
+}
+
+function buildEducationCredentialsReply(): string {
+  return [
+    "### Amit Kumar's Education & Web3 Security Credentials",
+    "- **Cyfrin Updraft:** Smart Contract & Security Engineering graduate (Solidity, Foundry stateful invariant fuzzing, auditing workflows, and DeFi threat modeling).",
+    "- **Alchemy University:** Ethereum Developer Bootcamp graduate.",
+    "- **Cluster University of Jammu:** Associate of Science / B.Sc. Science candidate.",
+    "- **Proof of Work:** 15+ open-source protocols and 60+ deployed contracts verifiable on [GitHub](https://github.com/NexTechArchitect).",
+  ].join("\n");
+}
+
+function buildToughestChallengePhilosophyReply(): string {
+  return [
+    "### Toughest Engineering Challenges & Security Philosophy",
+    "Amit treats smart contract engineering as **adversarial systems design**, threat-modeling every economic and technical invariant before writing production Solidity:",
+    "",
+    "- **Compliance at the Transfer Boundary (`Nexus RWA`):** Enforcing `ERC-3643` KYC/OFAC identity checks and a 15% 24h Chainlink NAV circuit breaker directly inside token transfer hooks without centralized off-chain signers.",
+    "- **O(1) Keeper Gas Engineering (`On-Chain Automation`):** Replacing unbounded job loops with 1-based index mappings and inline Yul swap-and-pop compaction (`SwapPopQueue.yul`), cutting keeper execution gas by **35%** while preventing block-gas-limit DoS.",
+    "- **Flash-Loan & Inflation Hardening (`Sentinel Insurance`):** Combining prior-block vote checkpoints (`ClaimsGovernor.sol`), Timelock delays, and ERC-4626 virtual-share offsets verified through handler-based Foundry stateful invariant fuzzing.",
+    "",
+    "Ask me to walk through `SwapPopQueue.yul`, `ClaimsGovernor.sol`, or `ComplianceHook.sol` to inspect the code directly.",
   ].join("\n");
 }
 
@@ -1645,14 +1123,14 @@ function buildSecurityAndGasReply(): string {
 function buildOverviewMenu(isGreeting: boolean): string {
   const opener = isGreeting
     ? "Hey! Great to meet you. I'm **Ask Amit**, Amit Kumar's personal protocol assistant."
-    : "I can help with **Amit Kumar's (NexTechArchitect)** DeFi protocols, Solidity & Yul code, or deep Web3/EVM engineering questions:";
+    : "I can help with **Amit Kumar's (NexTechArchitect)** DeFi protocols, Solidity & Yul code, hiring details, or deep Web3/EVM engineering questions:";
 
   return [
     opener,
     "",
     "- **Flagship & Gallery Protocols:** Ask for a deep dive or comparison on **Nexus RWA**, **On-Chain Automation**, **Sentinel Insurance**, **Nexus Perpetuals DEX**, **Nexus Perps v2 (Polkadot Hub)**, **DSC StableCoin**, **VRF Raffle**, **Merkle-712 Airdrop**, or any other gallery project.",
     "- **ERC / EIP Standards & DeFi Mechanics:** Ask about `ERC-20`, `ERC-721/721A`, `ERC-1155`, `ERC-4337` (AA), `ERC-4626`, `ERC-3643`, `ERC-5484`, `ERC-2612`, `ERC-2981`, `ERC-3156`, `ERC-1967/UUPS`, `ERC-2535` Diamonds, `ERC-6551`, `EIP-7702`, `EIP-712`, `EIP-1153`, `EIP-1559`, `EIP-4844`, `CREATE2`, Uniswap V2/V3/V4, Aave V3, MEV, L2 rollups, or Foundry invariant testing.",
-    "- **Workbench & Contact:** Inspect `SwapPopQueue.yul`, `ClaimsGovernor.sol`, `ComplianceHook.sol`, `CCIPMarginReceiver.sol`, or reach Amit at `nextech.amit@gmail.com`.",
+    "- **Hiring, Workbench & Contact:** Ask why teams hire Amit, his availability/timezone, inspect `SwapPopQueue.yul` or `ClaimsGovernor.sol`, or email `nextech.amit@gmail.com`.",
     "",
     "What would you like to explore first?",
   ].join("\n");
@@ -1662,72 +1140,61 @@ function matchConversationalTurn(
   q: NormalizedQuery,
   history?: readonly FallbackHistoryTurn[]
 ): string | null {
-  const text = q.normalized;
+  const variants = [q.softCollapsed, q.hardCollapsed];
   const activeProject = resolveProjectFromHistory(history);
 
-  // 1. Check-ins (e.g. "how are you", "what's up", "hey kaise ho")
-  if (
-    /^(?:(?:hi|hey|hello|yo|gm)\s+)?(how are you|how are u|how r u|how are you doing|hows it going|how is it going|how you doing|hows everything|how is everything|whats up|what is up|wassup|sup|kaise ho|kya haal|kya haal hai)(?:\s+(amit|bro|mate|man|today|there))?$/.test(
-      text
-    )
-  ) {
-    return "Doing great, thanks for asking! Always energized to talk DeFi architecture, Solidity internals, and **Amit Kumar's** deployed protocols. What's on your mind today: a walkthrough of a flagship system like **Nexus Perps v2** or **Nexus RWA**, a Solidity/EVM question, or Amit's background?";
+  // 1. Check-ins & casual Hinglish/English chat
+  const checkInRe =
+    /^(?:(?:hi|hey|helo|hello|hlo|yo|gm|bro|bhai)\s+)?(how are you|how are u|how r u|how are you doing|hows it going|how is it going|how you doing|hows everything|how is everything|whats up|whatsup|what is up|wasup|wassup|sup|kaise ho|kya hal|kya haal|kya hal hai|kya haal hai|al god|all good|sab badiya|sab badhiya)(?:\s+(amit|bro|bhai|mate|man|today|there))?$/;
+  if (variants.some((v) => checkInRe.test(v))) {
+    return "Doing great, thanks for asking! Always energized to talk DeFi architecture, Solidity internals, and **Amit Kumar's** deployed protocols. What's on your mind today: a walkthrough of a flagship system like **Nexus Perps v2** or **Nexus RWA**, a Solidity/EVM deep dive, or Amit's hiring details?";
   }
 
-  // 2. Greetings (e.g. "hi", "hello", "gm", "namaste")
-  if (
-    /^(hi|hello|hey|yo|hola|namaste|gm|good morning|good afternoon|good evening|greetings)(?:\s+(there|amit|bro|mate|man|friend|everyone))?$/.test(
-      text
-    )
-  ) {
+  // 2. Greetings (English + Hinglish + stretched forms like "hiiiiii", "heyy", "helloo", "hlo")
+  const greetingRe =
+    /^(hi|hello|helo|hlo|hey|yo|hola|namaste|salam|salaam|gm|good morning|god morning|good afternoon|god afternoon|good evening|god evening|greetings|bro|bhai)(?:\s+(there|amit|bro|bhai|mate|man|friend|everyone))?$/;
+  if (variants.some((v) => greetingRe.test(v))) {
     return buildOverviewMenu(true);
   }
 
-  // 3. Identity questions (e.g. "who are you", "what are you", "tell me about yourself")
-  if (
-    /^(who are you|what are you|tell me about yourself|what is your name|whats your name|who am i talking to|are you amit|are you a bot|are you ai)(?:\s+please)?$/.test(
-      text
-    )
-  ) {
-    return "I'm **Ask Amit**, the protocol assistant for **Amit Kumar (NexTechArchitect)**, a Smart Contract Engineer and DeFi Protocol Architect. Think of me as an interactive engineering guide to his 15 deployed protocols, inline Yul and Solidity primitives, security invariants, and EVM/DeFi architecture. Ask me anything about his work or Web3 engineering!";
+  // 3. Identity & Meta questions
+  const identityRe =
+    /^(who are you|what are you|tell me about yourself|tel me about yourself|what is your name|whats your name|who am i talking to|are you amit|are you a bot|are you bot|are you ai|are you an ai|help|menu|options)(?:\s+please)?$/;
+  if (variants.some((v) => identityRe.test(v))) {
+    if (q.softCollapsed === "help" || q.softCollapsed === "menu" || q.softCollapsed === "options") {
+      return buildOverviewMenu(false);
+    }
+    return "I'm **Ask Amit**, the protocol assistant for **Amit Kumar (NexTechArchitect)**, a Smart Contract Engineer and DeFi Protocol Architect. Think of me as an interactive engineering guide to his 15+ deployed protocols, inline Yul and Solidity primitives, security invariants, hiring details, and deep Web3/EVM architecture. Ask me anything about his work or Solidity/DeFi engineering!";
   }
 
-  // 4. Pleasantries (e.g. "nice to meet you", "pleasure meeting you")
-  if (
-    /^(nice to meet you|pleasure meeting you|pleasure to meet you|glad to meet you|good to meet you|happy to meet you|great to meet you)(?:\s+(too|amit|as well))?$/.test(
-      text
-    )
-  ) {
+  // 4. Pleasantries
+  const pleasantryRe =
+    /^(nice to meet you|nice to met you|pleasure meeting you|pleasure meting you|pleasure to meet you|glad to meet you|good to meet you|god to met you|happy to meet you|hapy to met you|great to meet you)(?:\s+(too|to|amit|as well|as wel))?$/;
+  if (variants.some((v) => pleasantryRe.test(v))) {
     return "Likewise, great to meet you! Whether you're evaluating **Amit Kumar** for a Smart Contract Engineer role, reviewing a protocol walkthrough, or exploring EVM and DeFi internals, I'm here to help. Where would you like to start?";
   }
 
-  // 5. Gratitude (e.g. "thankyou", "thanks", "appreciate it", "ok thanks")
-  if (
-    /^(?:(?:ok|okay|cool|great|awesome|got it|nice)\s+)?(thank you|thanks|thankyou|thx|ty|tysm|appreciate it|much appreciated|cheers|grateful)(?:\s+(so much|very much|a lot|amit|bro|mate|man|again|for that|for explaining|for the info|for helping|for the help))?$/.test(
-      text
-    )
-  ) {
+  // 5. Gratitude (English + Hinglish)
+  const gratitudeRe =
+    /^(?:(?:ok|okay|k|cool|col|great|awesome|got it|nice)\s+)?(thank you|thanks|thankyou|thx|ty|tysm|shukriya|dhanyawad|apreciate it|appreciate it|much appreciated|much apreciated|cheers|chers|grateful)(?:\s+(so much|very much|a lot|amit|bro|bhai|mate|man|again|for that|for explaining|for the info|for helping|for the help))?$/;
+  if (variants.some((v) => gratitudeRe.test(v))) {
     if (activeProject) {
       return `You're very welcome! Glad that helped unpack **${activeProject.title}**. If you want to dig deeper into its smart contracts, gas optimizations, or security invariants, or compare it against another protocol in Amit's gallery, just say the word.`;
     }
     return "You're very welcome! Happy to help anytime. If you'd like to walk through any of Amit's DeFi protocols, inspect a Solidity or Yul snippet, or reach out to Amit directly at `nextech.amit@gmail.com`, just let me know.";
   }
 
-  // 6. Farewells (e.g. "bye", "see you", "take care")
-  if (
-    /^(bye|goodbye|good bye|see you|see ya|cya|take care|later|catch you later|have a good day|have a great day|good night|gn|peace out|peace)(?:\s+(amit|bro|mate|man|soon))?$/.test(
-      text
-    )
-  ) {
+  // 6. Farewells (including "gn", "good night", "bye", "cya")
+  const farewellRe =
+    /^(bye|by|goodbye|godbye|good bye|god bye|see you|se you|see ya|se ya|cya|take care|later|catch you later|have a good day|have a great day|good night|god night|gn|peace out|peace|tata)(?:\s+(amit|bro|bhai|mate|man|soon|son))?$/;
+  if (variants.some((v) => farewellRe.test(v))) {
     return "Take care, and thanks for stopping by **Amit Kumar's** portfolio! Whenever you want to connect directly with Amit, you can reach him at `nextech.amit@gmail.com`, check his repositories on [GitHub](https://github.com/NexTechArchitect), or connect on [LinkedIn](https://www.linkedin.com/in/amit-kumar-811a11277). See you around!";
   }
 
-  // 7. Positive reactions & acknowledgements (e.g. "nice", "cool", "awesome", "got it", "ok")
-  if (
-    /^(nice|cool|awesome|great|amazing|fire|dope|impressive|love it|loved it|sick|sweet|solid|good|sounds good|ok|okay|got it|makes sense|understood|noted|wow|brilliant|clean|neat|super|perfect|fair enough|nice work|good job|great work|awesome work|very nice|so cool|pretty cool|thats cool|that is cool|thats awesome|that is awesome|thats nice|that is nice|thats great|that is great)(?:\s+(work|stuff|job|man|bro|mate|amit))?$/.test(
-      text
-    )
-  ) {
+  // 7. Short positive reactions & acknowledgments (English + Hinglish)
+  const reactionRe =
+    /^(nice|cool|col|awesome|great|amazing|fire|dope|impressive|impresive|love it|loved it|sick|sweet|swet|solid|good|god|sounds good|sounds god|ok|okay|k|got it|makes sense|makes sence|understood|understod|noted|wow|brilliant|briliant|clean|neat|super|superb|perfect|fair enough|interesting|mast|badiya|badhiya|sahi|sahi hai|lol|haha|hahaha|hehe|nice work|good job|great work|awesome work|very nice|so cool|pretty cool|thats cool|that is cool|thats awesome|that is awesome|thats nice|that is nice|thats great|that is great)(?:\s+(work|stuff|stuf|job|man|bro|bhai|mate|amit))?$/;
+  if (variants.some((v) => reactionRe.test(v))) {
     if (activeProject) {
       return `Glad you like how **${activeProject.title}** is put together! Want to inspect its security invariants, check its gas optimizations, or compare it side by side with another protocol in Amit's portfolio?`;
     }
@@ -1744,20 +1211,112 @@ function matchConversationalTurn(
   return null;
 }
 
-function buildHelpfulOffTopicReply(): string {
+function matchRecruiterQuestion(q: NormalizedQuery): string | null {
+  const s = q.softCollapsed;
+
+  // 1. Why hire Amit / strengths / stand out
+  if (
+    /\b(why hire|why should (we|i|a team|teams|a defi team) hire|what makes (amit|him) stand out|stand out|his strengths|amit strengths|strengths|why amit)\b/.test(
+      s
+    )
+  ) {
+    return buildWhyHireAmitReply();
+  }
+
+  // 2. Toughest challenge / proudest build / security philosophy
+  if (
+    /\b(toughest challenge|hardest (problem|challenge|bug)|proudest|favorite (project|build)|security philosophy|engineering philosophy|approach to security)\b/.test(
+      s
+    )
+  ) {
+    return buildToughestChallengePhilosophyReply();
+  }
+
+  // 3. Experience & track record
+  if (
+    /\b(experience|years of experience|track record|how long has amit|how many (projects|contracts)|career|work history)\b/.test(
+      s
+    ) &&
+    !q.tokens.has("foundry") &&
+    !q.tokens.has("uniswap")
+  ) {
+    return buildExperienceTrackRecordReply();
+  }
+
+  // 4. Availability, remote work, timezone, roles
+  if (
+    /\b(available|availability|open to work|open for|remote|timezone|time zone|relocate|what roles|target roles|full time|freelance|contract role)\b/.test(
+      s
+    ) &&
+    !q.tokens.has("contact") &&
+    !q.tokens.has("connect") &&
+    !q.tokens.has("email")
+  ) {
+    return buildAvailabilityRolesReply();
+  }
+
+  // 5. Education & credentials (standalone)
+  if (
+    /\b(education|degree|university|college|qualification|credentials|certifications?)\b/.test(
+      s
+    ) &&
+    !q.tokens.has("contact") &&
+    !q.tokens.has("connect") &&
+    !q.tokens.has("email")
+  ) {
+    return buildEducationCredentialsReply();
+  }
+
+  // 6. Contact, hiring, resume, bio, socials, Cyfrin/Alchemy credentials
+  if (
+    /\b(contact|connect|hire|hiring|email|reach|linkedin|github|twitter|resume|cv|location|where is amit|cyfrin|alchemy|who is amit|about amit|background)\b/.test(
+      s
+    ) &&
+    !s.includes("alchemy sdk")
+  ) {
+    return buildContactAndBioReply();
+  }
+
+  return null;
+}
+
+function buildDataUnavailableReply(
+  history?: readonly FallbackHistoryTurn[]
+): string {
+  const recentText = (history ?? [])
+    .slice(-6)
+    .map((turn) => getTurnText(turn).toLowerCase())
+    .join(" ");
+
+  const freshPool = SUGGESTED_QUESTIONS_POOL.filter(
+    (question) => !recentText.includes(question.toLowerCase())
+  );
+  const sourcePool =
+    freshPool.length >= 3 ? [...freshPool] : [...SUGGESTED_QUESTIONS_POOL];
+
+  // Fisher-Yates shuffle for true randomized suggestions
+  for (let i = sourcePool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = sourcePool[i];
+    sourcePool[i] = sourcePool[j];
+    sourcePool[j] = tmp;
+  }
+
+  const picked = sourcePool.slice(0, 3);
+
   return [
-    "That's a bit outside my usual lane. I'm tuned specifically for **Amit Kumar's DeFi protocols, Solidity & Yul architecture, and Web3/EVM engineering**.",
+    "I don't have offline data available for that specific question right now.",
     "",
-    "Here are a few things I can answer in depth right now:",
-    "- **Project Deep Dives & Comparisons:** Ask about **Nexus Perps v2**, **Nexus RWA**, **Sentinel Insurance**, **On-Chain Automation**, **DSC StableCoin**, or compare any two protocols side by side.",
-    "- **Web3 & Solidity Engineering:** Ask about ERC/EIP standards (`ERC-4337`, `ERC-4626`, `ERC-3643`, `EIP-712`, `EIP-1153`, `EIP-4844`), Foundry invariant testing, Yul gas optimization, MEV, or DeFi security.",
-    "- **Connect Directly with Amit:** Email `nextech.amit@gmail.com` or open his **Resume** in the top navigation bar.",
+    "Here are 3 things you can ask me instead:",
+    ...picked.map((q) => `- ${q}`),
+    "",
+    "For anything outside my offline knowledge base, you can reach **Amit Kumar** directly at `nextech.amit@gmail.com`.",
   ].join("\n");
 }
 
 /**
- * Project-First + Multi-Turn + Sub-Intent offline reasoning engine grounded in
- * `src/data/projects.ts` and deep EVM/DeFi engineering knowledge.
+ * Project-First + Multi-Turn + Extreme Typo-Tolerant Offline Reasoning Engine
+ * grounded in `src/data/projects.ts` and `src/lib/offlineKnowledgeBase.ts`.
  */
 export function generateLocalFallbackReply(
   userMessage: string,
@@ -1777,12 +1336,12 @@ export function generateLocalFallbackReply(
 
   const hasPortfolioContext =
     /\b(amit|nextecharchitect|portfolio|his|your|flagship|built|shipped|deployed|protocol gallery|case study|walkthrough)\b/.test(
-      q.normalized
+      q.softCollapsed
     );
 
   const isConceptualQuestion =
-    /^(what is|what are|whats|explain|define|how does|how do|difference between|compare|tell me about)\b/.test(
-      q.normalized
+    /^(what is|what iz|what are|whats|tel me|tell me|explain|define|how does|how do|difference between|compare|tell me about)\b/.test(
+      q.hardCollapsed
     ) && !hasPortfolioContext;
 
   // Step 1: Project Detection First (10x Priority over generic words like "security" or "gas")
@@ -1794,7 +1353,7 @@ export function generateLocalFallbackReply(
   // Side-by-side comparison if 2+ distinct projects are explicitly mentioned
   const asksComparison =
     /\b(compare|comparison|vs|versus|difference between|differ|better)\b/.test(
-      q.normalized
+      q.softCollapsed
     );
   if (
     explicitProjects.length >= 2 &&
@@ -1816,15 +1375,15 @@ export function generateLocalFallbackReply(
     );
   }
 
-  // Step 2: Natural Human Small Talk (Greetings, Check-ins, Identity, Pleasantries, Gratitude, Reactions, Farewells) & Capabilities Menu
+  // Step 2: Natural Human Small Talk (English + Hinglish) & Capabilities Menu
   const conversationalReply = matchConversationalTurn(q, history);
   if (conversationalReply) {
     return sanitizeEditorialCopy(conversationalReply);
   }
 
   const asksCapabilities =
-    /\b(what can you do|how can you help|help me|what do you know|menu|options)\b/.test(
-      q.normalized
+    /\b(what can you do|how can you help|help me|what do you know)\b/.test(
+      q.softCollapsed
     );
   if (asksCapabilities) {
     return sanitizeEditorialCopy(buildOverviewMenu(false));
@@ -1833,7 +1392,7 @@ export function generateLocalFallbackReply(
   // Step 3: Explicit Flagship / Portfolio gallery overview
   const asksFlagshipOverview =
     /\b(flagship|top projects|best projects|all projects|what projects|his projects|your projects|project gallery|what has amit built|what did amit build|portfolio projects)\b/.test(
-      q.normalized
+      q.softCollapsed
     );
   if (asksFlagshipOverview) {
     return sanitizeEditorialCopy(buildFlagshipOverview());
@@ -1846,7 +1405,7 @@ export function generateLocalFallbackReply(
     Boolean(topKnowledge) &&
     topKnowledge.score >= 22 &&
     !/\b(it|its|this project|that project|this protocol|that protocol)\b/.test(
-      q.normalized
+      q.softCollapsed
     );
 
   if (!strongNewWeb3Concept && isLikelyProjectFollowUp(q)) {
@@ -1859,27 +1418,29 @@ export function generateLocalFallbackReply(
     }
   }
 
-  // Step 5: Contact, hiring, resume, bio, or credentials (only when not asking for a project's github link)
-  if (
-    /\b(contact|connect|hire|hiring|email|reach|linkedin|github|twitter|resume|cv|location|where is amit|available|remote|background|education|certif|cyfrin|alchemy|who is amit|about amit)\b/.test(
-      q.normalized
-    ) &&
-    !q.normalized.includes("alchemy sdk")
-  ) {
-    return sanitizeEditorialCopy(buildContactAndBioReply());
-  }
-
-  // Step 6: General Amit security & gas engineering overview (only when NO project matched)
-  if (
-    q.normalized.includes("security") &&
-    (q.normalized.includes("gas") ||
-      q.normalized.includes("approach") ||
-      q.normalized.includes("optimization"))
-  ) {
+  // Step 5: General Amit security & gas engineering overview (check before generic contact/bio)
+  const mentionsSecurity =
+    q.softCollapsed.includes("security") ||
+    matchSingleTokenWeight(q, "security") >= 0.75;
+  const mentionsGasOrApproach =
+    q.softCollapsed.includes("gas") ||
+    q.softCollapsed.includes("approach") ||
+    matchSingleTokenWeight(q, "optimization") >= 0.75;
+  if (hasPortfolioContext && mentionsSecurity && mentionsGasOrApproach) {
     return sanitizeEditorialCopy(buildSecurityAndGasReply());
   }
 
-  // Step 7: Portfolio-contextualized secondary project match vs. Deep Web3 Knowledge Base
+  // Step 6: Recruiter, Hiring Manager, Contact, Credentials & Philosophy Q&A
+  const recruiterReply = matchRecruiterQuestion(q);
+  if (recruiterReply) {
+    return sanitizeEditorialCopy(recruiterReply);
+  }
+
+  if (mentionsSecurity && mentionsGasOrApproach) {
+    return sanitizeEditorialCopy(buildSecurityAndGasReply());
+  }
+
+  // Step 7: Portfolio-contextualized secondary project match vs. Offline Web3/EVM/DeFi Encyclopedia
   const topProject = projectMatches[0];
   if (
     topProject &&
@@ -1901,6 +1462,6 @@ export function generateLocalFallbackReply(
     return sanitizeEditorialCopy(buildFlagshipOverview());
   }
 
-  // Step 9: Helpful off-topic fallback (never dead-end or robotic disclaimer)
-  return sanitizeEditorialCopy(buildHelpfulOffTopicReply());
+  // Step 9: Honest "data not available" fallback with 3 random non-duplicate suggested questions
+  return sanitizeEditorialCopy(buildDataUnavailableReply(history));
 }
