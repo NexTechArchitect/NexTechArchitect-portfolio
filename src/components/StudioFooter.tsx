@@ -196,14 +196,14 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
           </motion.div>
         </div>
 
-        {/* Bottom Tonal Identity & Verified Links Bar (Zero Straight Divider Line) */}
+        {/* Bottom Tonal Identity & Verified Links Bar (Zero Rigid Box Outline) */}
         <motion.div
           initial={{ opacity: 0, y: 14 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.5, delay: 0.14, ease: [0.22, 1, 0.36, 1] }}
           onMouseMove={handleBarSpecular}
-          className="specular-surface-dark overflow-hidden rounded-3xl bg-[#130C08]/88 border border-[#FAF6F0]/[0.07] hover:border-[#E85D04]/32 transition-colors duration-250 shadow-[inset_0_1px_0_rgba(250,246,240,0.05)] px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs font-medium text-[#B8A89B]"
+          className="specular-surface-dark overflow-hidden rounded-[36px] bg-[#140D09]/92 transition-shadow duration-250 shadow-[inset_0_1px_0_rgba(250,246,240,0.09),0_24px_56px_-28px_rgba(0,0,0,0.85)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.22),0_26px_62px_-26px_rgba(232,93,4,0.25)] px-7 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs font-medium text-[#B8A89B]"
         >
           <div className="relative z-10 flex flex-wrap items-center gap-x-3 gap-y-1">
             <span className="font-display font-bold text-[#FAF6F0] text-sm tracking-[-0.02em]">

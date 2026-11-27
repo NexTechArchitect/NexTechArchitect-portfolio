@@ -322,7 +322,7 @@ export default function ArchitectureStage({
           <div
             role="tablist"
             aria-label="Engineering architecture domains"
-            className="w-full sm:w-auto grid grid-cols-2 sm:inline-flex items-center gap-1 p-1.5 rounded-2xl sm:rounded-full bg-[#1E1510] border border-[#FAF6F0]/12 shadow-[0_14px_34px_-18px_rgba(0,0,0,0.8)]"
+            className="w-full sm:w-auto grid grid-cols-2 sm:inline-flex items-center gap-1 p-1.5 rounded-[28px] sm:rounded-full bg-[#1E1510]/95 shadow-[inset_0_1px_0_rgba(250,246,240,0.08),0_18px_38px_-20px_rgba(0,0,0,0.85)]"
           >
             {ARCHITECTURE_DOMAINS.map((domain) => {
               const isActive = domain.id === activeDomain.id;
@@ -334,7 +334,7 @@ export default function ArchitectureStage({
                   data-testid={`arch-tab-${domain.id}`}
                   aria-selected={isActive}
                   onClick={() => setActiveDomainId(domain.id)}
-                  className={`relative inline-flex items-center justify-center min-h-[44px] px-3.5 sm:px-5 py-2.5 rounded-xl sm:rounded-full text-xs sm:text-sm font-semibold transition-colors duration-150 cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] ${
+                  className={`relative inline-flex items-center justify-center min-h-[44px] px-3.5 sm:px-5 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-colors duration-150 cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] ${
                     isActive
                       ? "text-[#FAF6F0]"
                       : "text-[#B8A699] hover:text-[#FAF6F0]"
@@ -348,7 +348,7 @@ export default function ArchitectureStage({
                         stiffness: 420,
                         damping: 34,
                       }}
-                      className="absolute inset-0 rounded-xl sm:rounded-full bg-[#E85D04] shadow-[0_10px_24px_-10px_rgba(232,93,4,0.85)]"
+                      className="absolute inset-0 rounded-full bg-[#E85D04] shadow-[0_10px_24px_-10px_rgba(232,93,4,0.85)]"
                       aria-hidden="true"
                     />
                   )}
@@ -392,7 +392,7 @@ export default function ArchitectureStage({
                       delay: idx * 0.045,
                       ease: [0.22, 1, 0.36, 1],
                     }}
-                    className="rounded-2xl bg-[#1D140F]/88 border border-[#FAF6F0]/[0.07] hover:border-[#E85D04]/38 hover:bg-[#221711] hover:-translate-y-0.5 px-4 py-3.5 flex items-start gap-3.5 shadow-[inset_0_1px_0_rgba(250,246,240,0.04)] transition-[background-color,border-color,transform] duration-200"
+                    className="rounded-[28px] bg-[#1E1510]/90 hover:bg-[#241913] hover:-translate-y-0.5 px-5 py-4 flex items-start gap-3.5 shadow-[inset_0_1px_0_rgba(250,246,240,0.07),0_14px_32px_-22px_rgba(0,0,0,0.75)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.18),0_18px_38px_-20px_rgba(232,93,4,0.22)] transition-[background-color,transform,box-shadow] duration-200"
                   >
                     <span
                       aria-hidden="true"
@@ -425,7 +425,7 @@ export default function ArchitectureStage({
                       ease: [0.22, 1, 0.36, 1],
                     }}
                     onMouseMove={handleSpecularMove}
-                    className="specular-surface-dark overflow-hidden rounded-[24px] bg-[#1B130E]/92 border border-[#FAF6F0]/[0.08] hover:border-[#E85D04]/42 hover:-translate-y-0.5 p-5 sm:p-6 flex items-start gap-5 sm:gap-6 shadow-[inset_0_1px_0_rgba(250,246,240,0.05),0_18px_38px_-24px_rgba(0,0,0,0.72)] hover:shadow-[inset_0_1px_0_rgba(244,140,6,0.14),0_22px_44px_-22px_rgba(232,93,4,0.2)] transition-[border-color,transform,box-shadow] duration-200"
+                    className="specular-surface-dark overflow-hidden rounded-[32px] bg-[#1C140F]/92 hover:bg-[#221711] hover:-translate-y-0.5 p-6 sm:p-7 flex items-start gap-5 sm:gap-6 shadow-[inset_0_1px_0_rgba(250,246,240,0.08),0_22px_46px_-26px_rgba(0,0,0,0.78)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.22),0_26px_54px_-24px_rgba(232,93,4,0.26)] transition-[background-color,transform,box-shadow] duration-200"
                   >
                     <span className="relative z-10 font-mono-tabular text-sm sm:text-base font-semibold text-[#F48C06] tracking-[0.06em] pt-0.5 shrink-0">
                       {principle.num}

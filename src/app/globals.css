@@ -223,9 +223,9 @@ body {
 
 .specular-surface-dark::before {
   background: radial-gradient(
-    380px circle at var(--mx) var(--my),
-    rgba(232, 93, 4, 0.2) 0%,
-    rgba(217, 119, 54, 0.09) 38%,
+    420px circle at var(--mx) var(--my),
+    rgba(255, 94, 14, 0.22) 0%,
+    rgba(244, 162, 97, 0.1) 36%,
     rgba(20, 14, 11, 0) 72%
   );
 }

@@ -188,7 +188,7 @@ export default function WorkbenchStage({
             ? undefined
             : { y: folioY, scale: folioScale, transformOrigin: "top center" }
         }
-        className="relative z-20 bg-[#F3EAE0] text-[#140E0B] silk-grain rounded-t-[44px] md:rounded-t-[72px] pt-14 sm:pt-20 scroll-mt-20 overflow-x-clip shadow-[0_-28px_72px_-26px_rgba(10,6,4,0.55)] will-change-transform"
+        className="relative z-20 bg-[#F3EAE0] text-[#140E0B] silk-grain rounded-t-[48px] md:rounded-t-[76px] pt-14 sm:pt-20 scroll-mt-20 overflow-x-clip shadow-[0_-28px_72px_-26px_rgba(10,6,4,0.55)] will-change-transform"
       >
         {/* Subtle warm-amber edge ambient light over Soft Champagne Sand canvas with GPU silk drift */}
         <div
@@ -251,7 +251,7 @@ export default function WorkbenchStage({
             <div
               role="tablist"
               aria-label="Solidity and Yul contract primitives"
-              className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar-hide p-1.5 rounded-2xl lg:rounded-full bg-[#E7DCCE]/88 border border-[#140E0B]/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.65),0_12px_30px_-20px_rgba(20,14,11,0.2)] w-full lg:w-fit"
+              className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar-hide p-1.5 rounded-full bg-[#E7DCCE]/92 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_12px_30px_-20px_rgba(20,14,11,0.2)] w-full lg:w-fit"
             >
               {ARCHITECTURE_INSIGHTS.map((insight) => {
                 const isSelected = insight.id === activeInsight.id;
@@ -263,7 +263,7 @@ export default function WorkbenchStage({
                     data-testid={`workbench-tab-${insight.id}`}
                     aria-selected={isSelected}
                     onClick={() => handleSelectTab(insight.id)}
-                    className={`relative z-30 inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-xl lg:rounded-full font-mono-tabular text-xs font-semibold transition-colors duration-150 whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] ${
+                    className={`relative z-30 inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-full font-mono-tabular text-xs font-semibold transition-colors duration-150 whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] ${
                       isSelected
                         ? "text-[#FAF6F0]"
                         : "text-[#594A42] hover:text-[#140E0B]"
@@ -277,7 +277,7 @@ export default function WorkbenchStage({
                           stiffness: 420,
                           damping: 34,
                         }}
-                        className="absolute inset-0 rounded-xl lg:rounded-full bg-[#E85D04] shadow-[0_10px_24px_-10px_rgba(232,93,4,0.75)]"
+                        className="absolute inset-0 rounded-full bg-[#E85D04] shadow-[0_10px_24px_-10px_rgba(232,93,4,0.75)]"
                         aria-hidden="true"
                       />
                     )}
@@ -329,9 +329,9 @@ export default function WorkbenchStage({
                       {activeInsight.body}
                     </p>
 
-                    {/* Two Tonal Editorial Callout Cards (Zero Straight Divider Lines) */}
+                    {/* Two Tonal Editorial Callout Cards (Zero Rigid Borders, Organic Curvature) */}
                     <div className="mt-7 space-y-3.5">
-                      <div className="rounded-2xl bg-[#EAE0D3]/85 border border-[#140E0B]/[0.06] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] px-5 py-4">
+                      <div className="rounded-[28px] bg-[#EAE0D3]/88 shadow-[inset_0_1px_0_rgba(255,255,255,0.72),0_14px_34px_-26px_rgba(20,14,11,0.22)] px-6 py-5">
                         <p className="font-mono-tabular text-[11px] uppercase tracking-[0.12em] font-semibold text-[#7D6C61]">
                           Engineering Tradeoff
                         </p>
@@ -340,7 +340,7 @@ export default function WorkbenchStage({
                         </p>
                       </div>
 
-                      <div className="rounded-2xl bg-[#EFE5D8] border border-[#E85D04]/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] px-5 py-4">
+                      <div className="rounded-[28px] bg-[#EFE5D8] shadow-[inset_0_1px_0_rgba(255,255,255,0.78),0_16px_38px_-26px_rgba(232,93,4,0.22)] px-6 py-5">
                         <p className="font-mono-tabular text-[11px] uppercase tracking-[0.12em] font-semibold text-[#E85D04]">
                           Verified Outcome
                         </p>
@@ -356,7 +356,7 @@ export default function WorkbenchStage({
                 <div
                   data-testid="workbench-code-panel"
                   onMouseMove={handleStudioSpecular}
-                  className="specular-surface-dark lg:col-span-7 rounded-[26px] bg-[#130D0A] text-[#FAF6F0] border border-[#FAF6F0]/10 hover:border-[#E85D04]/38 transition-[border-color,box-shadow] duration-250 flex flex-col overflow-hidden shadow-[inset_0_1px_0_rgba(250,246,240,0.08),0_32px_72px_-28px_rgba(20,14,11,0.56)]"
+                  className="specular-surface-dark lg:col-span-7 rounded-[34px] bg-[#130D0A] text-[#FAF6F0] transition-[box-shadow] duration-250 flex flex-col overflow-hidden shadow-[inset_0_1px_0_rgba(250,246,240,0.1),0_34px_76px_-28px_rgba(20,14,11,0.62)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.22),0_38px_82px_-26px_rgba(232,93,4,0.28)]"
                 >
                   {/* Tonal Window Header (Zero Straight Hairline Border) */}
                   <div className="relative z-10 px-5 sm:px-6 py-4 bg-[#1C130E] flex flex-wrap items-center justify-between gap-3">

@@ -137,10 +137,10 @@ function FlagshipCard({
             ? undefined
             : { rotateX, rotateY, transformStyle: "preserve-3d" }
         }
-        className={`h-full rounded-[28px] p-6 sm:p-8 flex flex-col justify-between transition-[border-color,box-shadow] duration-250 border overflow-hidden ${
+        className={`h-full rounded-[34px] sm:rounded-[38px] p-6 sm:p-8 flex flex-col justify-between transition-[box-shadow,transform] duration-250 overflow-hidden ${
           darkVariant
-            ? "specular-surface-dark bg-[#140E0B] text-[#FAF6F0] border-[#FAF6F0]/12 hover:border-[#E85D04]/50 shadow-[inset_0_1px_0_rgba(250,246,240,0.08),0_24px_64px_-32px_rgba(20,14,11,0.74)] hover:shadow-[inset_0_1px_0_rgba(244,140,6,0.18),0_28px_72px_-28px_rgba(232,93,4,0.26)]"
-            : "specular-surface bg-[#FFFDF9] text-[#140E0B] border-[#140E0B]/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_20px_54px_-36px_rgba(20,14,11,0.22)] hover:border-[#E85D04]/45 hover:shadow-[0_26px_62px_-32px_rgba(232,93,4,0.22)]"
+            ? "specular-surface-dark bg-[#140E0B] text-[#FAF6F0] shadow-[inset_0_1px_0_rgba(250,246,240,0.1),0_28px_72px_-32px_rgba(20,14,11,0.78)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.24),0_32px_80px_-28px_rgba(232,93,4,0.3)]"
+            : "specular-surface bg-[#FFFDF9] text-[#140E0B] shadow-[inset_0_1px_0_rgba(255,255,255,0.96),0_24px_60px_-34px_rgba(20,14,11,0.2)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,1),0_30px_68px_-30px_rgba(232,93,4,0.24)]"
         }`}
       >
         <div className="relative z-10">
@@ -175,10 +175,10 @@ function FlagshipCard({
           {/* Icon + Title + Security Highlight */}
           <div className="mt-5 flex items-start gap-4">
             <div
-              className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 border ${
+              className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${
                 darkVariant
-                  ? "bg-[#221813] border-[#FAF6F0]/12 text-[#E85D04]"
-                  : "bg-[#F5EFE6] border-[#140E0B]/10 text-[#E85D04]"
+                  ? "bg-[#221813] text-[#FF5E0E] shadow-[inset_0_1px_0_rgba(250,246,240,0.1)]"
+                  : "bg-[#F3EAE0] text-[#E85D04] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]"
               }`}
             >
               <Icon className="w-5 h-5" aria-hidden="true" />
@@ -214,8 +214,10 @@ function FlagshipCard({
                 {project.contracts.map((contract) => (
                   <div
                     key={contract.label}
-                    className={`rounded-xl px-3.5 py-2.5 flex items-center justify-between gap-3 ${
-                      darkVariant ? "bg-[#201611]/90" : "bg-[#F4EDE3]/85"
+                    className={`rounded-2xl px-4 py-2.5 flex items-center justify-between gap-3 ${
+                      darkVariant
+                        ? "bg-[#201611]/92 shadow-[inset_0_1px_0_rgba(250,246,240,0.05)]"
+                        : "bg-[#F4EDE3]/88 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]"
                     }`}
                   >
                     <p
@@ -369,7 +371,7 @@ export default function ProtocolShowcase({
               ? undefined
               : { y: sheetY, scale: sheetScale, transformOrigin: "top center" }
           }
-          className="relative z-10 bg-[#FBF8F3] text-[#140E0B] silk-grain rounded-t-[44px] md:rounded-t-[72px] pt-14 sm:pt-20 scroll-mt-16 overflow-x-clip shadow-[0_-28px_72px_-26px_rgba(10,6,4,0.52)] will-change-transform"
+          className="relative z-10 bg-[#FBF8F3] text-[#140E0B] silk-grain rounded-t-[48px] md:rounded-t-[76px] pt-14 sm:pt-20 scroll-mt-16 overflow-x-clip shadow-[0_-28px_72px_-26px_rgba(10,6,4,0.52)] will-change-transform"
         >
           {/* Subtle edge-hugging warm apricot/bronze ambient light washes with GPU silk drift */}
           <div
@@ -522,11 +524,11 @@ export default function ProtocolShowcase({
               viewport={{ once: true, amount: 0.16 }}
               transition={{ duration: 0.54, ease: [0.22, 1, 0.36, 1] }}
               onMouseMove={handlePortalSpecular}
-              className="specular-surface overflow-hidden group rounded-[28px] bg-[#FBF8F3] text-[#140E0B] border border-[#FAF6F0]/25 hover:border-[#E85D04]/70 hover:-translate-y-1 p-6 sm:p-8 lg:p-9 flex flex-col justify-between transition-[border-color,box-shadow,transform] duration-250 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_28px_68px_-30px_rgba(0,0,0,0.68)] hover:shadow-[0_34px_76px_-28px_rgba(232,93,4,0.3)]"
+              className="specular-surface overflow-hidden group rounded-[36px] sm:rounded-[40px] bg-[#FBF8F3] text-[#140E0B] hover:-translate-y-1 p-7 sm:p-9 lg:p-10 flex flex-col justify-between transition-[box-shadow,transform] duration-250 shadow-[inset_0_1px_0_rgba(255,255,255,0.96),0_30px_72px_-30px_rgba(0,0,0,0.72)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,1),0_36px_80px_-28px_rgba(232,93,4,0.32)]"
             >
               <div className="relative z-10">
                 <div className="flex items-center justify-between gap-3">
-                  <div className="w-11 h-11 rounded-2xl bg-[#EFE6DA] border border-[#140E0B]/10 flex items-center justify-center text-[#E85D04]">
+                  <div className="w-12 h-12 rounded-full bg-[#EFE6DA] flex items-center justify-center text-[#E85D04] shadow-[inset_0_1px_0_rgba(255,255,255,0.85)]">
                     <FolderKanban className="w-5 h-5" aria-hidden="true" />
                   </div>
                   <span className="font-mono-tabular text-xs font-semibold text-[#7D6C61]">
@@ -543,7 +545,7 @@ export default function ProtocolShowcase({
                   Solidity cores with live Next.js and Wagmi interfaces.
                 </p>
 
-                <p className="mt-5 rounded-2xl bg-[#EFE6DA]/75 px-4 py-3 text-xs font-mono-tabular text-[#594A42] leading-relaxed">
+                <p className="mt-5 rounded-[24px] bg-[#EFE6DA]/82 px-4 py-3.5 text-xs font-mono-tabular text-[#594A42] leading-relaxed">
                   {fullStackProjects.map((p) => p.shortTitle).join(" · ")}
                 </p>
               </div>
@@ -571,11 +573,11 @@ export default function ProtocolShowcase({
                 ease: [0.22, 1, 0.36, 1],
               }}
               onMouseMove={handlePortalSpecular}
-              className="specular-surface-dark overflow-hidden group rounded-[28px] bg-[#110B08] text-[#FAF6F0] border border-[#E85D04]/25 hover:border-[#E85D04]/70 hover:-translate-y-1 p-6 sm:p-8 lg:p-9 flex flex-col justify-between transition-[border-color,box-shadow,transform] duration-250 shadow-[inset_0_1px_0_rgba(250,246,240,0.08),0_28px_68px_-30px_rgba(0,0,0,0.8)] hover:shadow-[inset_0_1px_0_rgba(244,140,6,0.18),0_34px_76px_-28px_rgba(232,93,4,0.34)]"
+              className="specular-surface-dark overflow-hidden group rounded-[36px] sm:rounded-[40px] bg-[#110B08] text-[#FAF6F0] hover:-translate-y-1 p-7 sm:p-9 lg:p-10 flex flex-col justify-between transition-[box-shadow,transform] duration-250 shadow-[inset_0_1px_0_rgba(250,246,240,0.1),0_30px_72px_-30px_rgba(0,0,0,0.84)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.24),0_36px_80px_-28px_rgba(232,93,4,0.36)]"
             >
               <div className="relative z-10">
                 <div className="flex items-center justify-between gap-3">
-                  <div className="w-11 h-11 rounded-2xl bg-[#221610] border border-[#E85D04]/25 flex items-center justify-center text-[#F48C06]">
+                  <div className="w-12 h-12 rounded-full bg-[#221610] flex items-center justify-center text-[#FF5E0E] shadow-[inset_0_1px_0_rgba(244,162,97,0.18)]">
                     <Terminal className="w-5 h-5" aria-hidden="true" />
                   </div>
                   <span className="font-mono-tabular text-xs font-semibold text-[#F48C06]">
@@ -592,7 +594,7 @@ export default function ProtocolShowcase({
                   smart accounts, UUPS proxies, and Merkle-712 claim vaults.
                 </p>
 
-                <p className="mt-5 rounded-2xl bg-[#1D130E] border border-[#FAF6F0]/[0.05] px-4 py-3 text-xs font-mono-tabular text-[#B8A89B] leading-relaxed">
+                <p className="mt-5 rounded-[24px] bg-[#1D130E]/92 px-4 py-3.5 text-xs font-mono-tabular text-[#B8A89B] leading-relaxed shadow-[inset_0_1px_0_rgba(250,246,240,0.05)]">
                   {coreProjects.map((p) => p.shortTitle).join(" · ")}
                 </p>
               </div>

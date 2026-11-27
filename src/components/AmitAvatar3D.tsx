@@ -12,6 +12,7 @@ interface AmitAvatar3DProps {
   onOpenResume: () => void;
   onAskAnything: () => void;
   onScrollToContact: () => void;
+  darkTopStage?: boolean;
 }
 
 const WELCOME_HEADLINES = [
@@ -68,6 +69,7 @@ export default function AmitAvatar3D({
   onOpenResume,
   onAskAnything,
   onScrollToContact,
+  darkTopStage = false,
 }: AmitAvatar3DProps) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const waveProgressRef = useRef(0);
@@ -975,23 +977,30 @@ export default function AmitAvatar3D({
           >
             <span
               aria-hidden="true"
-              className="w-2 h-2 rounded-full bg-[#E85D04] shrink-0"
+              className="w-2 h-2 rounded-full bg-[#FF5E0E] shrink-0 shadow-[0_0_12px_rgba(255,94,14,0.7)]"
             />
-            <p className="font-display text-xl sm:text-2xl font-semibold tracking-tight text-[#1C1410]">
+            <p
+              className={`font-display text-xl sm:text-2xl font-semibold tracking-tight ${
+                darkTopStage
+                  ? "text-[#1C1410] lg:text-[#FAF6F0]"
+                  : "text-[#1C1410]"
+              }`}
+            >
               {WELCOME_HEADLINES[welcomeIndex]}
             </p>
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {/* Compact Studio Stage + Interactive 3D Amit Character (~0.95x, Clean Soft Studio Lighting) */}
+      {/* Compact Studio Stage + Interactive 3D Amit Character (~0.95x, Warm Rim Lighting Across Horizon) */}
       <div className="relative w-full max-w-[360px] h-[280px] sm:h-[310px]">
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-4 rounded-full opacity-75"
+          className="pointer-events-none absolute inset-2 rounded-full opacity-90"
           style={{
-            background:
-              "radial-gradient(circle, rgba(244, 140, 6, 0.14) 0%, rgba(232, 93, 4, 0.05) 48%, rgba(250, 246, 240, 0) 74%)",
+            background: darkTopStage
+              ? "radial-gradient(circle at 50% 42%, rgba(255, 94, 14, 0.24) 0%, rgba(244, 162, 97, 0.14) 42%, rgba(250, 246, 240, 0) 74%)"
+              : "radial-gradient(circle, rgba(244, 140, 6, 0.14) 0%, rgba(232, 93, 4, 0.05) 48%, rgba(250, 246, 240, 0) 74%)",
           }}
         />
         {webglReady ? (

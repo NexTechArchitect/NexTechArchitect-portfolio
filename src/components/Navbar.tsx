@@ -10,7 +10,12 @@ const NAV_LINKS = [
   { id: "contact", label: "Contact", href: "#contact" },
 ] as const;
 
-const DARK_STAGE_IDS = ["architecture", "archive", "contact"] as const;
+const DARK_STAGE_IDS = [
+  "hero-dark-stage",
+  "architecture",
+  "archive",
+  "contact",
+] as const;
 
 interface NavbarProps {
   onOpenResume: () => void;
@@ -24,7 +29,7 @@ export default function Navbar({
   onNavigate,
 }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
-  const [overDarkStage, setOverDarkStage] = useState(false);
+  const [overDarkStage, setOverDarkStage] = useState(true);
   const [activeSection, setActiveSection] = useState<string>("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -94,10 +99,10 @@ export default function Navbar({
   };
 
   const pillSurfaceClass = overDarkStage
-    ? "bg-[rgba(22,15,11,0.88)] border-[#FAF6F0]/14 shadow-[inset_0_1px_0_rgba(250,246,240,0.12),0_20px_50px_-20px_rgba(0,0,0,0.78)] hover:bg-[rgba(26,17,12,0.94)] hover:border-[#E85D04]/48 hover:shadow-[inset_0_1px_0_rgba(244,140,6,0.22),0_20px_48px_-18px_rgba(232,93,4,0.28)]"
+    ? "bg-[rgba(18,12,9,0.82)] border-[#F4A261]/22 shadow-[inset_0_1px_0_rgba(250,246,240,0.12),0_20px_52px_-20px_rgba(0,0,0,0.82)] hover:bg-[rgba(24,16,12,0.92)] hover:border-[#FF5E0E]/50 hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.24),0_20px_50px_-18px_rgba(232,93,4,0.3)]"
     : scrolled
-      ? "bg-[rgba(255,253,249,0.92)] border-[#8B786B]/24 shadow-[inset_0_1px_0_rgba(255,255,255,0.92),0_18px_44px_-22px_rgba(20,14,11,0.24)] hover:bg-[#FFFDF9] hover:border-[#E85D04]/42 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.96),0_18px_42px_-16px_rgba(232,93,4,0.2)]"
-      : "bg-[rgba(255,253,249,0.88)] border-[#8B786B]/22 shadow-[inset_0_1px_0_rgba(255,255,255,0.96),0_14px_38px_-18px_rgba(20,14,11,0.15)] hover:bg-[#FFFDF9] hover:border-[#E85D04]/42 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.98),0_18px_42px_-16px_rgba(232,93,4,0.2)]";
+      ? "bg-[rgba(255,253,249,0.92)] border-[#8B786B]/18 shadow-[inset_0_1px_0_rgba(255,255,255,0.94),0_18px_44px_-22px_rgba(20,14,11,0.22)] hover:bg-[#FFFDF9] hover:border-[#E85D04]/40 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.98),0_18px_42px_-16px_rgba(232,93,4,0.2)]"
+      : "bg-[rgba(255,253,249,0.88)] border-[#8B786B]/16 shadow-[inset_0_1px_0_rgba(255,255,255,0.96),0_14px_38px_-18px_rgba(20,14,11,0.14)] hover:bg-[#FFFDF9] hover:border-[#E85D04]/40 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.98),0_18px_42px_-16px_rgba(232,93,4,0.2)]";
 
   return (
     <header className="fixed top-4 sm:top-5 inset-x-0 z-40 pointer-events-none">
@@ -229,10 +234,10 @@ export default function Navbar({
       {/* Mobile & Portrait Tablet Drawer */}
       {mobileMenuOpen && (
         <div
-          className={`pointer-events-auto lg:hidden mt-2.5 w-[calc(100%-1.5rem)] max-w-6xl mx-auto rounded-2xl border backdrop-blur-xl p-4 sm:p-5 transition-colors duration-300 ${
+          className={`pointer-events-auto lg:hidden mt-2.5 w-[calc(100%-1.5rem)] max-w-6xl mx-auto rounded-[28px] border backdrop-blur-xl p-4 sm:p-5 transition-colors duration-300 ${
             overDarkStage
-              ? "border-[#FAF6F0]/14 bg-[rgba(22,15,11,0.96)] shadow-[0_24px_56px_-18px_rgba(0,0,0,0.82)]"
-              : "border-[#18110D]/12 bg-[rgba(251,248,243,0.97)] shadow-[0_22px_54px_-18px_rgba(24,17,13,0.28)]"
+              ? "border-[#F4A261]/22 bg-[rgba(18,12,9,0.96)] shadow-[0_24px_56px_-18px_rgba(0,0,0,0.84)]"
+              : "border-[#18110D]/10 bg-[rgba(251,248,243,0.97)] shadow-[0_22px_54px_-18px_rgba(24,17,13,0.26)]"
           }`}
         >
           <nav
