@@ -85,10 +85,15 @@ function GalleryCard({
 
   const handleMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      const rect = ref.current?.getBoundingClientRect();
-      if (!rect) return;
-      const relX = (e.clientX - rect.left) / rect.width;
-      const relY = (e.clientY - rect.top) / rect.height;
+      const el = ref.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const px = e.clientX - rect.left;
+      const py = e.clientY - rect.top;
+      el.style.setProperty("--mx", `${px}px`);
+      el.style.setProperty("--my", `${py}px`);
+      const relX = px / rect.width;
+      const relY = py / rect.height;
       mx.set(relX - 0.5);
       my.set(relY - 0.5);
       setSheenPos({ x: Math.round(relX * 100), y: Math.round(relY * 100) });
@@ -106,11 +111,14 @@ function GalleryCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24, scale: 0.97 }}
+      layout
+      initial={{ opacity: 0, y: 20, scale: 0.96 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -12, scale: 0.96 }}
       transition={{
-        delay: index * 0.045,
-        duration: 0.36,
+        layout: { type: "spring", stiffness: 320, damping: 30 },
+        delay: Math.min(index * 0.04, 0.2),
+        duration: 0.34,
         ease: [0.16, 1, 0.3, 1],
       }}
       style={{ perspective: 1100 }}
@@ -122,10 +130,10 @@ function GalleryCard({
         onMouseMove={handleMove}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={handleLeave}
-        className={`relative h-full rounded-[24px] border transition-colors duration-200 flex flex-col overflow-hidden ${
+        className={`relative h-full rounded-[24px] border transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-1 flex flex-col overflow-hidden ${
           isDarkLab
-            ? "bg-[#1C120C] border-[#FAF6F0]/12 hover:border-[#E85D04]/65 shadow-[0_22px_54px_-28px_rgba(0,0,0,0.85)]"
-            : "bg-[#FFFCF7] border-[#140E0B]/12 hover:border-[#E85D04]/55 shadow-[0_14px_38px_-24px_rgba(20,14,11,0.22)] hover:shadow-[0_26px_54px_-28px_rgba(232,93,4,0.24)]"
+            ? "specular-surface-dark bg-[#1C120C] border-[#FAF6F0]/12 hover:border-[#FF6B1A]/65 shadow-[0_22px_54px_-28px_rgba(0,0,0,0.85)] hover:shadow-[0_28px_60px_-26px_rgba(232,93,4,0.34)]"
+            : "specular-surface bg-[#FFFCF7] border-[#16100C]/12 hover:border-[#E85D04]/55 shadow-[0_14px_38px_-24px_rgba(20,14,11,0.22)] hover:shadow-[0_28px_58px_-26px_rgba(232,93,4,0.28)]"
         }`}
       >
         {/* Dynamic pointer-tracked copper specular sheen */}
@@ -473,18 +481,23 @@ export default function ProjectGalleryOverlay({
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredProjects.map((project, index) => (
-                  <GalleryCard
-                    key={project.id}
-                    project={project}
-                    index={index}
-                    isDarkLab={isDarkLab}
-                    onSelect={() => onProjectClick(project)}
-                    onAskAmit={() => onAskAmit(project)}
-                  />
-                ))}
-              </div>
+              <motion.div
+                layout
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              >
+                <AnimatePresence mode="popLayout">
+                  {filteredProjects.map((project, index) => (
+                    <GalleryCard
+                      key={project.id}
+                      project={project}
+                      index={index}
+                      isDarkLab={isDarkLab}
+                      onSelect={() => onProjectClick(project)}
+                      onAskAmit={() => onAskAmit(project)}
+                    />
+                  ))}
+                </AnimatePresence>
+              </motion.div>
             )}
           </div>
         </div>

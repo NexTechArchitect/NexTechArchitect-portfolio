@@ -252,6 +252,59 @@ body {
   opacity: 1;
 }
 
+/* Hover specular copper rim border sheen (GPU opacity-only, zero layout shift) */
+.specular-surface::after,
+.specular-surface-dark::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 2;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+}
+
+.specular-surface::after {
+  background: radial-gradient(
+    280px circle at var(--mx) var(--my),
+    rgba(232, 93, 4, 0.72) 0%,
+    rgba(244, 162, 97, 0.36) 40%,
+    rgba(232, 93, 4, 0) 76%
+  );
+}
+
+.specular-surface-dark::after {
+  background: radial-gradient(
+    320px circle at var(--mx) var(--my),
+    rgba(255, 126, 45, 0.85) 0%,
+    rgba(232, 93, 4, 0.42) 42%,
+    rgba(232, 93, 4, 0) 76%
+  );
+}
+
+.specular-surface:hover::after,
+.specular-surface-dark:hover::after {
+  opacity: 1;
+}
+
+/* Full-section cursor-following warm molten-copper ambient spotlight */
+.stage-spotlight-dark {
+  --stage-x: 50%;
+  --stage-y: 26%;
+  background: radial-gradient(
+    620px circle at var(--stage-x) var(--stage-y),
+    rgba(232, 93, 4, 0.14) 0%,
+    rgba(217, 119, 54, 0.06) 36%,
+    rgba(20, 14, 11, 0) 72%
+  );
+}
+
 /* Typing indicator dots inside the AI Agent */
 @keyframes agentTypingBounce {
   0%,

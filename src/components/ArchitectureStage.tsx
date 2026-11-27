@@ -1,14 +1,9 @@
 "use client";
 
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import {
-  AnimatePresence,
-  motion,
-  useReducedMotion,
-  useScroll,
-  useTransform,
-} from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowDown } from "lucide-react";
+import { SectionRevealStage } from "@/components/SectionCurves";
 
 interface DomainSpec {
   id: string;
@@ -226,12 +221,7 @@ export default function ArchitectureStage({
 }: ArchitectureStageProps) {
   const prefersReducedMotion = useReducedMotion();
   const stageRef = useRef<HTMLElement | null>(null);
-  const { scrollYProgress } = useScroll({
-    target: stageRef,
-    offset: ["start end", "start 0.3"],
-  });
-  const stageScale = useTransform(scrollYProgress, [0, 1], [0.975, 1]);
-  const stageY = useTransform(scrollYProgress, [0, 1], [36, 0]);
+  const spotlightRef = useRef<HTMLDivElement | null>(null);
 
   const [activeDomainId, setActiveDomainId] = useState<string>(
     ARCHITECTURE_DOMAINS[0].id
@@ -242,6 +232,18 @@ export default function ArchitectureStage({
       ARCHITECTURE_DOMAINS.find((d) => d.id === activeDomainId) ??
       ARCHITECTURE_DOMAINS[0],
     [activeDomainId]
+  );
+
+  const handleStageMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLElement>) => {
+      const spot = spotlightRef.current;
+      const stage = stageRef.current;
+      if (!spot || !stage) return;
+      const rect = stage.getBoundingClientRect();
+      spot.style.setProperty("--stage-x", `${e.clientX - rect.left}px`);
+      spot.style.setProperty("--stage-y", `${e.clientY - rect.top}px`);
+    },
+    []
   );
 
   const handleSpecularMove = useCallback(
@@ -257,8 +259,16 @@ export default function ArchitectureStage({
     <section
       ref={stageRef}
       id="architecture"
-      className="relative bg-[#140E0B] text-[#FAF6F0] silk-grain-dark pt-12 sm:pt-16 lg:pt-20 pb-24 sm:pb-32 scroll-mt-24 overflow-x-clip"
+      onMouseMove={handleStageMouseMove}
+      className="relative bg-[#140E0B] text-[#FAF6F0] silk-grain-dark pt-10 sm:pt-14 lg:pt-16 pb-24 sm:pb-32 scroll-mt-24 overflow-x-clip"
     >
+      {/* Smooth Cursor-Following Warm Molten-Copper Radial Spotlight */}
+      <div
+        ref={spotlightRef}
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 z-0 stage-spotlight-dark transition-opacity duration-300"
+      />
+
       {/* Subtle edge-hugging warm copper vertical ambient washes with GPU silk drift */}
       <div
         aria-hidden="true"
@@ -277,22 +287,20 @@ export default function ArchitectureStage({
         }}
       />
 
-      <motion.div
-        style={
-          prefersReducedMotion
-            ? undefined
-            : { scale: stageScale, y: stageY, transformOrigin: "top center" }
-        }
-        className="max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10 will-change-transform"
+      {/* Cinema Video-Style Small-to-Large Zoom Expand Stage */}
+      <SectionRevealStage
+        maxRadius={48}
+        minRadius={0}
+        innerClassName="max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-8"
       >
-        {/* Left-Aligned Editorial Header with Staggered Entrance (Zero Straight Line) */}
+        {/* Left-Aligned Always-Visible Display Headline */}
         <div className="max-w-3xl">
           <motion.h2
-            initial={{ opacity: 0, y: 20 }}
+            initial={prefersReducedMotion ? false : { opacity: 0.25, y: 18 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-            className="font-display font-bold text-[#FAF6F0] text-3xl sm:text-4xl lg:text-[3rem] leading-[1.05] tracking-[-0.032em]"
+            viewport={{ once: true, amount: 0.05 }}
+            transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
+            className="font-display font-bold text-[#FAF6F0] text-3xl sm:text-4xl lg:text-[3rem] leading-[1.08] tracking-[-0.032em]"
             style={{ textWrap: "balance" }}
           >
             Built for Adversarial{" "}
@@ -301,11 +309,11 @@ export default function ArchitectureStage({
 
           <motion.p
             data-testid="section-subtitle-architecture"
-            initial={{ opacity: 0, y: 20 }}
+            initial={prefersReducedMotion ? false : { opacity: 0.3, y: 14 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
+            viewport={{ once: true, amount: 0.05 }}
             transition={{
-              duration: 0.55,
+              duration: 0.52,
               delay: 0.08,
               ease: [0.22, 1, 0.36, 1],
             }}
@@ -459,7 +467,7 @@ export default function ArchitectureStage({
             </div>
           </motion.div>
         </AnimatePresence>
-      </motion.div>
+      </SectionRevealStage>
     </section>
   );
 }

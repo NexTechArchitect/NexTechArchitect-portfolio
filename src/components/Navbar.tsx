@@ -76,14 +76,14 @@ export default function Navbar({
   };
 
   const pillSurfaceClass = scrolled
-    ? "bg-[#16100C]/94 border-[#F4A261]/24 shadow-[inset_0_1px_0_rgba(250,246,240,0.12),0_20px_50px_-18px_rgba(10,6,4,0.58)] hover:border-[#FF6B1A]/50 hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.24),0_22px_52px_-16px_rgba(232,93,4,0.3)]"
-    : "bg-[#16100C]/92 border-[#F4A261]/20 shadow-[inset_0_1px_0_rgba(250,246,240,0.12),0_18px_46px_-20px_rgba(20,14,11,0.42)] hover:border-[#FF6B1A]/48 hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.22),0_20px_48px_-16px_rgba(232,93,4,0.28)]";
+    ? "bg-[#140D09]/95 shadow-[inset_0_1px_0_rgba(255,168,107,0.16),0_20px_50px_-18px_rgba(10,6,4,0.68)] hover:shadow-[inset_0_1px_0_rgba(255,138,61,0.28),0_22px_52px_-16px_rgba(232,93,4,0.34)]"
+    : "bg-[#1C120D]/82 shadow-[inset_0_1px_0_rgba(255,168,107,0.18),0_18px_46px_-18px_rgba(0,0,0,0.62)] hover:shadow-[inset_0_1px_0_rgba(255,138,61,0.28),0_20px_48px_-16px_rgba(232,93,4,0.32)]";
 
   return (
     <header className="fixed top-4 sm:top-5 inset-x-0 z-40 pointer-events-none">
       <div
         data-testid="floating-navbar-pill"
-        className={`pointer-events-auto w-[calc(100%-1.5rem)] max-w-6xl mx-auto h-[62px] sm:h-[66px] lg:h-[68px] px-3.5 sm:px-5 lg:px-6 rounded-full border backdrop-blur-md text-[#FAF6F0] transition-[background-color,border-color,box-shadow] duration-300 flex items-center justify-between gap-2 sm:gap-4 lg:gap-6 ${pillSurfaceClass}`}
+        className={`relative pointer-events-auto w-[calc(100%-1.5rem)] max-w-6xl mx-auto h-[62px] sm:h-[66px] lg:h-[68px] px-3.5 sm:px-5 lg:px-6 rounded-full backdrop-blur-md text-[#FAF6F0] transition-[background-color,box-shadow] duration-300 flex items-center justify-between gap-2 sm:gap-4 lg:gap-6 ${pillSurfaceClass}`}
       >
         {/* Left: Refined Copper-Orange Geometric Mark + Wordmark */}
         <a
@@ -93,7 +93,7 @@ export default function Navbar({
         >
           <span
             aria-hidden="true"
-            className="relative w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-[1.05] border bg-[#241812] border-[#E85D04]/60 shadow-[0_6px_18px_-6px_rgba(232,93,4,0.85)]"
+            className="relative w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-[1.05] bg-[#281A12] shadow-[inset_0_1px_0_rgba(255,138,61,0.3),0_6px_18px_-6px_rgba(232,93,4,0.85)]"
           >
             <span className="w-3 h-3 rotate-45 group-hover:rotate-[135deg] transition-transform duration-500 ease-out border-[2px] border-[#FF6B1A] rounded-[2px]" />
           </span>
@@ -102,7 +102,7 @@ export default function Navbar({
           </span>
         </a>
 
-        {/* Center: Responsive Architectural Nav Links with Warm Copper Glow & Active Indicator */}
+        {/* Center: Responsive Architectural Nav Links (Zero Underlines, Clean Tonal Pill State) */}
         <nav
           aria-label="Primary Navigation"
           className="hidden lg:flex items-center gap-1.5 xl:gap-2"
@@ -115,19 +115,13 @@ export default function Navbar({
                 href={link.href}
                 onClick={(e) => handleAnchorClick(e, link.href)}
                 aria-current={isActive ? "page" : undefined}
-                className={`relative inline-flex items-center justify-center min-h-[44px] px-3.5 rounded-full text-[15px] font-medium transition-[color,background-color] duration-200 whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B1A] ${
+                className={`relative inline-flex items-center justify-center min-h-[44px] px-4 rounded-full text-[15px] font-medium transition-[color,background-color] duration-200 whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B1A] ${
                   isActive
-                    ? "text-[#FAF6F0] font-semibold bg-[#FAF6F0]/[0.08]"
-                    : "text-[#D8CEC4] hover:text-[#FAF6F0] hover:bg-[#E85D04]/18"
+                    ? "text-[#FAF6F0] font-semibold bg-[#E85D04]/24"
+                    : "text-[#D8CEC4] hover:text-[#FAF6F0] hover:bg-[#E85D04]/16"
                 }`}
               >
                 {link.label}
-                <span
-                  aria-hidden="true"
-                  className={`absolute left-3.5 right-3.5 bottom-1.5 h-[2px] rounded-full bg-[#FF6B1A] transition-transform duration-200 origin-left ${
-                    isActive ? "scale-x-100" : "scale-x-0"
-                  }`}
-                />
               </a>
             );
           })}
@@ -138,7 +132,7 @@ export default function Navbar({
           <button
             type="button"
             onClick={onOpenResume}
-            className="hidden sm:inline-flex items-center justify-center gap-1.5 min-h-[44px] px-4 lg:px-4.5 py-2 rounded-full text-[14.5px] font-semibold border border-[#FAF6F0]/18 bg-[#241812]/90 text-[#FAF6F0] hover:border-[#FF6B1A]/70 hover:bg-[#2E1E16] hover:-translate-y-0.5 active:scale-[0.98] transition-[background-color,border-color,color,transform] duration-150 whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B1A]"
+            className="hidden sm:inline-flex items-center justify-center gap-1.5 min-h-[44px] px-4 lg:px-4.5 py-2 rounded-full text-[14.5px] font-semibold bg-[#281A12]/95 text-[#FAF6F0] shadow-[inset_0_1px_0_rgba(250,246,240,0.14)] hover:bg-[#352217] hover:-translate-y-0.5 active:scale-[0.98] transition-[background-color,color,transform] duration-150 whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B1A]"
           >
             <FileText
               className="w-4 h-4 text-[#FF6B1A]"
@@ -151,7 +145,7 @@ export default function Navbar({
             type="button"
             data-testid="navbar-ask-agent"
             onClick={handleAskAgentClick}
-            className="hidden sm:inline-flex items-center justify-center gap-2 min-h-[44px] px-4.5 lg:px-5 py-2 rounded-full text-[14.5px] font-semibold text-[#FAF6F0] bg-[#E85D04] hover:bg-[#D14F00] shadow-[0_12px_28px_-12px_rgba(232,93,4,0.78)] hover:-translate-y-0.5 active:scale-[0.98] transition-[background-color,transform,box-shadow] duration-150 whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FAF6F0]"
+            className="hidden sm:inline-flex items-center justify-center gap-2 min-h-[44px] px-4.5 lg:px-5 py-2 rounded-full text-[14.5px] font-semibold text-[#FAF6F0] bg-[#E85D04] hover:bg-[#D14F00] shadow-[0_12px_28px_-12px_rgba(232,93,4,0.82)] hover:-translate-y-0.5 active:scale-[0.98] transition-[background-color,transform,box-shadow] duration-150 whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FAF6F0]"
           >
             <Terminal
               className="w-4 h-4 text-[#FAF6F0]"
@@ -180,7 +174,7 @@ export default function Navbar({
 
       {/* Mobile & Portrait Tablet Drawer */}
       {mobileMenuOpen && (
-        <div className="pointer-events-auto lg:hidden mt-2.5 w-[calc(100%-1.5rem)] max-w-6xl mx-auto rounded-[28px] border border-[#F4A261]/22 bg-[#16100C]/96 backdrop-blur-xl p-4 sm:p-5 shadow-[0_24px_56px_-18px_rgba(0,0,0,0.82)] text-[#FAF6F0]">
+        <div className="pointer-events-auto lg:hidden mt-2.5 w-[calc(100%-1.5rem)] max-w-6xl mx-auto rounded-[28px] bg-[#16100C]/96 backdrop-blur-xl p-4 sm:p-5 shadow-[inset_0_1px_0_rgba(255,168,107,0.16),0_24px_56px_-18px_rgba(0,0,0,0.82)] text-[#FAF6F0]">
           <nav
             aria-label="Mobile Navigation"
             className="flex flex-col gap-1"
@@ -203,7 +197,7 @@ export default function Navbar({
                 setMobileMenuOpen(false);
                 onOpenResume();
               }}
-              className="inline-flex items-center justify-center gap-2 min-h-[44px] flex-1 px-5 py-2.5 rounded-full text-[15px] font-semibold border border-[#FAF6F0]/18 bg-[#241812] text-[#FAF6F0] cursor-pointer whitespace-nowrap"
+              className="inline-flex items-center justify-center gap-2 min-h-[44px] flex-1 px-5 py-2.5 rounded-full text-[15px] font-semibold bg-[#281A12] shadow-[inset_0_1px_0_rgba(250,246,240,0.12)] text-[#FAF6F0] cursor-pointer whitespace-nowrap"
             >
               <FileText
                 className="w-4 h-4 text-[#FF6B1A]"

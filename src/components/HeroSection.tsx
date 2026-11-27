@@ -4,7 +4,11 @@ import React from "react";
 import { motion } from "framer-motion";
 import { ArrowDownRight, ArrowUpRight, Mail } from "lucide-react";
 import AmitAvatar3D from "@/components/AmitAvatar3D";
-import { HeroSilkWave, ScrollHorizonSweep } from "@/components/SectionCurves";
+import {
+  HeroHeaderCanopy,
+  HeroSilkWave,
+  ScrollHorizonSweep,
+} from "@/components/SectionCurves";
 import { useAgent } from "@/context/AgentContext";
 
 interface HeroSectionProps {
@@ -47,12 +51,15 @@ export default function HeroSection({
   return (
     <section
       id="top"
-      className="relative bg-[#FAF6F0] text-[#16100C] silk-grain pt-28 sm:pt-32 lg:pt-36 overflow-x-clip"
+      className="relative bg-[#FAF6F0] text-[#16100C] silk-grain overflow-x-clip"
     >
+      {/* Top Dark Espresso-Brown & Diffused Molten-Orange Curved Header Stage Behind Floating Navbar */}
+      <HeroHeaderCanopy />
+
       {/* Subtle Warm-Apricot Studio Ambient Light Washes (pointer-events-none, z-0) */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -top-16 right-[-6%] w-[560px] h-[520px] rounded-full opacity-60 ambient-silk-drift z-0"
+        className="pointer-events-none absolute top-24 right-[-6%] w-[560px] h-[520px] rounded-full opacity-60 ambient-silk-drift z-0"
         style={{
           background:
             "radial-gradient(circle, rgba(244, 140, 6, 0.14) 0%, rgba(232, 93, 4, 0.05) 42%, rgba(250, 246, 240, 0) 74%)",
@@ -60,19 +67,19 @@ export default function HeroSection({
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute top-[22%] left-[-10%] w-[460px] h-[520px] rounded-full opacity-45 ambient-silk-drift-reverse z-0"
+        className="pointer-events-none absolute top-[30%] left-[-10%] w-[460px] h-[520px] rounded-full opacity-45 ambient-silk-drift-reverse z-0"
         style={{
           background:
             "radial-gradient(ellipse at center, rgba(217, 119, 54, 0.11) 0%, rgba(250, 246, 240, 0) 72%)",
         }}
       />
 
-      {/* Signature Translucent Glowing Apricot & Burnt-Orange Silk Wave Behind Hero & 3D Avatar */}
+      {/* Signature Translucent Glowing Apricot & Burnt-Orange Filled Silk Wave Behind Hero & 3D Avatar */}
       <HeroSilkWave idPrefix="hero-signature-silk" />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 sm:pb-10">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 lg:pt-10 pb-6 sm:pb-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
-          {/* Left Column: High-Contrast Dark Editorial Ink on Warm Ivory */}
+          {/* Left Column: 100% High-Contrast Dark Editorial Ink on Warm Ivory */}
           <div className="lg:col-span-7 flex flex-col justify-center">
             <motion.div
               data-testid="hero-identity-lockup"
@@ -88,7 +95,7 @@ export default function HeroSection({
                 aria-hidden="true"
                 className="hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-[#E85D04] shrink-0"
               />
-              <span className="inline-flex items-center px-3.5 py-1 rounded-full bg-[#E85D04]/10 border border-[#E85D04]/25 text-[13.5px] sm:text-[15px] font-medium text-[#9A3D08]">
+              <span className="inline-flex items-center px-3.5 py-1 rounded-full bg-[#E85D04]/10 text-[13.5px] sm:text-[15px] font-medium text-[#9A3D08]">
                 Smart Contract Engineer &amp; DeFi Protocol Architect
               </span>
             </motion.div>
@@ -127,7 +134,7 @@ export default function HeroSection({
               </p>
             </motion.div>
 
-            {/* Primary Actions (Cleanly Above the Fold on 1280x720 & 1440x900) */}
+            {/* Primary Actions */}
             <motion.div
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
@@ -211,7 +218,7 @@ export default function HeroSection({
             </motion.div>
           </div>
 
-          {/* Right Column: Cleanly Aligned 3D Amit Avatar over the Glowing Silk Wave */}
+          {/* Right Column: Clean 3D Amit Avatar with Borderless Warm Studio Ambient Glow Only */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -219,13 +226,23 @@ export default function HeroSection({
             className="lg:col-span-5 relative z-20 flex flex-col items-center"
           >
             <div className="relative w-full flex flex-col items-center justify-center">
-              <AmitAvatar3D
-                onOpenGallery={onOpenGallery}
-                onInspectYulGas={onInspectYulGas}
-                onOpenResume={onOpenResume}
-                onAskAnything={openAgent}
-                onScrollToContact={handleScrollToContact}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute left-1/2 top-[48%] -translate-x-1/2 -translate-y-1/2 w-[320px] h-[320px] sm:w-[380px] sm:h-[380px] rounded-full opacity-90 z-0"
+                style={{
+                  background:
+                    "radial-gradient(circle at 50% 48%, rgba(244, 140, 6, 0.16) 0%, rgba(232, 93, 4, 0.08) 44%, rgba(250, 246, 240, 0) 74%)",
+                }}
               />
+              <div className="relative z-10 w-full flex flex-col items-center">
+                <AmitAvatar3D
+                  onOpenGallery={onOpenGallery}
+                  onInspectYulGas={onInspectYulGas}
+                  onOpenResume={onOpenResume}
+                  onAskAnything={openAgent}
+                  onScrollToContact={handleScrollToContact}
+                />
+              </div>
             </div>
           </motion.div>
         </div>
@@ -234,9 +251,9 @@ export default function HeroSection({
         <motion.div
           data-testid="hero-core-skills"
           aria-label="Core engineering skills"
-          initial={{ opacity: 0, y: 18 }}
+          initial={{ opacity: 0.25, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
+          viewport={{ once: true, amount: 0.05 }}
           transition={{ duration: 0.55, ease: HERO_EASE }}
           className="mt-10 lg:mt-12"
         >
@@ -257,7 +274,7 @@ export default function HeroSection({
         </motion.div>
       </div>
 
-      {/* Transition #1: Direct Scroll-Flattening Sculptural Horizon Sweep (#FAF6F0 -> #140E0B) */}
+      {/* Transition #1: Pure Filled Scroll-Flattening Sculptural Horizon Sweep (#FAF6F0 -> #140E0B) */}
       <ScrollHorizonSweep
         idPrefix="hero-to-arch"
         bottomFill="#140E0B"

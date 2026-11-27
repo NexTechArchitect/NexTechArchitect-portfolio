@@ -1,16 +1,14 @@
 "use client";
 
-import React, { useCallback, useMemo, useRef, useState } from "react";
-import {
-  AnimatePresence,
-  motion,
-  useReducedMotion,
-  useScroll,
-  useTransform,
-} from "framer-motion";
+import React, { useCallback, useMemo, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Check, Copy, FileCode2, MessageSquare } from "lucide-react";
 import { ARCHITECTURE_INSIGHTS } from "@/data/projects";
-import { SheetSilkCrest, SolarHorizonArch } from "@/components/SectionCurves";
+import {
+  SectionRevealStage,
+  SheetSilkCrest,
+  SolarHorizonArch,
+} from "@/components/SectionCurves";
 import { useAgent } from "@/context/AgentContext";
 
 const SOLIDITY_KEYWORDS = new Set([
@@ -107,17 +105,7 @@ export default function WorkbenchStage({
   const [internalId, setInternalId] = useState<string>(
     ARCHITECTURE_INSIGHTS[0].id
   );
-  const [direction, setDirection] = useState<number>(1);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  // Transition #4: Curved Studio Folio Reveal (#1B120D -> #F3EAE0) with rising architectural scale & y
-  const folioOuterRef = useRef<HTMLDivElement | null>(null);
-  const { scrollYProgress: folioScroll } = useScroll({
-    target: folioOuterRef,
-    offset: ["start end", "start 0.35"],
-  });
-  const folioY = useTransform(folioScroll, [0, 1], [36, 0]);
-  const folioScale = useTransform(folioScroll, [0, 1], [0.975, 1]);
 
   const handleStudioSpecular = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
@@ -140,10 +128,6 @@ export default function WorkbenchStage({
   const activeInsight = ARCHITECTURE_INSIGHTS[activeIndex];
 
   const handleSelectTab = (nextId: string) => {
-    const nextIdx = ARCHITECTURE_INSIGHTS.findIndex(
-      (item) => item.id === nextId
-    );
-    setDirection(nextIdx >= activeIndex ? 1 : -1);
     if (onSelectTabId) {
       onSelectTabId(nextId);
     } else {
@@ -176,23 +160,17 @@ export default function WorkbenchStage({
   };
 
   return (
-    /* Outer #1B120D backdrop guarantees exact hex parity behind the sculpted upper rounded corners */
-    <div
-      ref={folioOuterRef}
-      className="relative bg-[#1B120D] -mt-[2px] overflow-x-clip"
+    /* Section 5: Solidity Workbench with Cinema Video-Style Small-to-Large Zoom Expand */
+    <SectionRevealStage
+      id="workbench"
+      maxRadius={48}
+      minRadius={0}
+      outerClassName="bg-[#1B120D] -mt-[2px] scroll-mt-24"
+      backdropNode={<SheetSilkCrest idPrefix="archive-to-workbench" />}
+      innerClassName="bg-[#F3EAE0] text-[#16100C] silk-grain pt-14 sm:pt-20 overflow-hidden shadow-[0_-28px_72px_-26px_rgba(10,6,4,0.55)]"
     >
-      <SheetSilkCrest idPrefix="archive-to-workbench" />
-
-      <motion.section
-        id="workbench"
-        style={
-          prefersReducedMotion
-            ? undefined
-            : { y: folioY, scale: folioScale, transformOrigin: "top center" }
-        }
-        className="relative z-20 bg-[#F3EAE0] text-[#16100C] silk-grain rounded-t-[44px] md:rounded-t-[72px] pt-14 sm:pt-20 scroll-mt-24 overflow-x-clip shadow-[0_-28px_72px_-26px_rgba(10,6,4,0.55)] will-change-transform"
-      >
-        {/* Subtle warm-amber edge ambient light over Soft Champagne Sand canvas with GPU silk drift */}
+      <section aria-label="Solidity Workbench" className="relative">
+        {/* Subtle warm-amber edge ambient light over Soft Champagne Sand canvas */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute -top-20 right-[-6%] w-[560px] h-[560px] rounded-full opacity-65 ambient-silk-drift"
@@ -211,14 +189,14 @@ export default function WorkbenchStage({
         />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20">
-          {/* Left-Aligned Staggered Editorial Header (Zero Straight Line) */}
+          {/* Always-Visible Display Headline */}
           <div className="max-w-3xl">
             <motion.h2
-              initial={{ opacity: 0, y: 20 }}
+              initial={prefersReducedMotion ? false : { opacity: 0.25, y: 18 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-              className="font-display font-bold text-[#16100C] text-3xl sm:text-4xl lg:text-[3rem] leading-[1.05] tracking-[-0.032em]"
+              viewport={{ once: true, amount: 0.05 }}
+              transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
+              className="font-display font-bold text-[#16100C] text-3xl sm:text-4xl lg:text-[3rem] leading-[1.08] tracking-[-0.032em]"
               style={{ textWrap: "balance" }}
             >
               Production Contract{" "}
@@ -227,11 +205,11 @@ export default function WorkbenchStage({
 
             <motion.p
               data-testid="section-subtitle-workbench"
-              initial={{ opacity: 0, y: 20 }}
+              initial={prefersReducedMotion ? false : { opacity: 0.3, y: 14 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
+              viewport={{ once: true, amount: 0.05 }}
               transition={{
-                duration: 0.55,
+                duration: 0.52,
                 delay: 0.08,
                 ease: [0.22, 1, 0.36, 1],
               }}
@@ -244,10 +222,10 @@ export default function WorkbenchStage({
 
           {/* Architectural Horizontal File-Switcher Dock */}
           <motion.div
-            initial={{ opacity: 0, y: 14 }}
+            initial={prefersReducedMotion ? false : { opacity: 0.35, y: 14 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.48, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            viewport={{ once: true, amount: 0.05 }}
+            transition={{ duration: 0.48, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
             className="mt-9 relative z-30"
           >
             <div
@@ -301,9 +279,9 @@ export default function WorkbenchStage({
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={activeInsight.id}
-                initial={{ opacity: 0, x: direction * 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: direction * -16 }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
                 className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start"
               >
@@ -331,7 +309,7 @@ export default function WorkbenchStage({
                       {activeInsight.body}
                     </p>
 
-                    {/* Two Tonal Editorial Callout Cards (Zero Rigid Borders, Organic Curvature) */}
+                    {/* Two Tonal Editorial Callout Cards */}
                     <div className="mt-7 space-y-3.5">
                       <div className="rounded-[28px] bg-[#EAE0D3]/88 shadow-[inset_0_1px_0_rgba(255,255,255,0.72),0_14px_34px_-26px_rgba(20,14,11,0.22)] px-6 py-5">
                         <p className="font-mono-tabular text-[11px] uppercase tracking-[0.12em] font-semibold text-[#6E5F54]">
@@ -358,9 +336,19 @@ export default function WorkbenchStage({
                 <div
                   data-testid="workbench-code-panel"
                   onMouseMove={handleStudioSpecular}
-                  className="specular-surface-dark lg:col-span-7 rounded-[34px] bg-[#130D0A] text-[#FAF6F0] transition-[box-shadow] duration-250 flex flex-col overflow-hidden shadow-[inset_0_1px_0_rgba(250,246,240,0.1),0_34px_76px_-28px_rgba(20,14,11,0.62)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.22),0_38px_82px_-26px_rgba(232,93,4,0.28)]"
+                  className="specular-surface-dark relative lg:col-span-7 rounded-[34px] bg-[#130D0A] text-[#FAF6F0] transition-[box-shadow] duration-250 flex flex-col overflow-hidden shadow-[inset_0_1px_0_rgba(250,246,240,0.1),0_34px_76px_-28px_rgba(20,14,11,0.62)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.24),0_38px_82px_-26px_rgba(232,93,4,0.3)]"
                 >
-                  {/* Tonal Window Header (Zero Straight Hairline Border) */}
+                  {/* Soft Ambient Studio Top Radial Wash (Zero Straight Line) */}
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute -top-12 left-1/2 -translate-x-1/2 w-[78%] h-[110px] z-0 opacity-60"
+                    style={{
+                      background:
+                        "radial-gradient(ellipse at center, rgba(232, 93, 4, 0.24) 0%, rgba(244, 162, 97, 0.08) 48%, rgba(19, 13, 10, 0) 76%)",
+                    }}
+                  />
+
+                  {/* Tonal Window Header */}
                   <div className="relative z-10 px-5 sm:px-6 py-4 bg-[#1C130E] flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-3.5 min-w-0">
                       <div
@@ -388,7 +376,7 @@ export default function WorkbenchStage({
                       <button
                         type="button"
                         onClick={handleAskCode}
-                        className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-4 py-2 rounded-full bg-[#271C15] border border-[#FAF6F0]/14 hover:border-[#FF6B1A] active:scale-[0.98] text-xs font-semibold text-[#FAF6F0] transition-[border-color,transform] cursor-pointer whitespace-nowrap"
+                        className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-4 py-2 rounded-full bg-[#271C15] hover:bg-[#33241B] active:scale-[0.98] text-xs font-semibold text-[#FAF6F0] transition-[background-color,transform] cursor-pointer whitespace-nowrap"
                       >
                         <MessageSquare
                           className="w-3.5 h-3.5 text-[#FF6B1A]"
@@ -447,13 +435,13 @@ export default function WorkbenchStage({
           </div>
         </div>
 
-        {/* Transition #5: Signature Luminous Burnt-Orange Solar Horizon Arch (#F3EAE0 -> #0A0604 Midnight Obsidian) */}
+        {/* Transition #5: Pure Filled Luminous Burnt-Orange Solar Horizon Arch (#F3EAE0 -> #0A0604) */}
         <SolarHorizonArch
           idPrefix="workbench-to-footer"
           bottomFill="#0A0604"
-          className="mt-20 sm:mt-24"
+          className="mt-14 sm:mt-16"
         />
-      </motion.section>
-    </div>
+      </section>
+    </SectionRevealStage>
   );
 }

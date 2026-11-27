@@ -5,7 +5,6 @@ import {
   motion,
   useMotionValue,
   useReducedMotion,
-  useScroll,
   useSpring,
   useTransform,
 } from "framer-motion";
@@ -38,6 +37,7 @@ import {
   type ProjectItem,
 } from "@/data/projects";
 import {
+  SectionRevealStage,
   SheetSilkCrest,
   SweepingRibbonCurve,
 } from "@/components/SectionCurves";
@@ -120,16 +120,18 @@ function FlagshipCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.14 }}
+      initial={
+        prefersReducedMotion ? false : { opacity: 0, y: 28, scale: 0.92 }
+      }
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, amount: 0.08 }}
       transition={{
-        duration: 0.54,
-        delay: (index % 2) * 0.08,
+        duration: 0.56,
+        delay: (index % 2) * 0.09,
         ease: [0.22, 1, 0.36, 1],
       }}
       style={{ perspective: 1200 }}
-      className="h-full"
+      className="h-full will-change-transform"
     >
       <motion.article
         ref={cardRef}
@@ -140,10 +142,10 @@ function FlagshipCard({
             ? undefined
             : { rotateX, rotateY, transformStyle: "preserve-3d" }
         }
-        className={`h-full rounded-[34px] sm:rounded-[38px] p-6 sm:p-8 flex flex-col justify-between transition-[box-shadow,transform] duration-250 overflow-hidden ${
+        className={`group h-full rounded-[34px] sm:rounded-[38px] p-6 sm:p-8 flex flex-col justify-between hover:-translate-y-1.5 transition-[box-shadow,transform] duration-250 overflow-hidden ${
           darkVariant
-            ? "specular-surface-dark bg-[#140E0B] text-[#FAF6F0] shadow-[inset_0_1px_0_rgba(250,246,240,0.1),0_28px_72px_-32px_rgba(20,14,11,0.78)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.24),0_32px_80px_-28px_rgba(232,93,4,0.3)]"
-            : "specular-surface bg-[#FFFDF9] text-[#16100C] shadow-[inset_0_1px_0_rgba(255,255,255,0.96),0_24px_60px_-34px_rgba(20,14,11,0.2)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,1),0_30px_68px_-30px_rgba(232,93,4,0.24)]"
+            ? "specular-surface-dark bg-[#140E0B] text-[#FAF6F0] shadow-[inset_0_1px_0_rgba(250,246,240,0.1),0_28px_72px_-32px_rgba(20,14,11,0.78)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.28),0_36px_84px_-26px_rgba(232,93,4,0.34)]"
+            : "specular-surface bg-[#FFFDF9] text-[#16100C] shadow-[inset_0_1px_0_rgba(255,255,255,0.96),0_24px_60px_-34px_rgba(20,14,11,0.2)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,1),0_34px_74px_-28px_rgba(232,93,4,0.28)]"
         }`}
       >
         <div className="relative z-10">
@@ -178,13 +180,16 @@ function FlagshipCard({
           {/* Icon + Title + Security Highlight */}
           <div className="mt-5 flex items-start gap-4">
             <div
-              className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${
+              className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-transform duration-300 ease-out group-hover:scale-110 ${
                 darkVariant
                   ? "bg-[#221813] text-[#FF6B1A] shadow-[inset_0_1px_0_rgba(250,246,240,0.1)]"
                   : "bg-[#F3EAE0] text-[#E85D04] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]"
               }`}
             >
-              <Icon className="w-5 h-5" aria-hidden="true" />
+              <Icon
+                className="w-5 h-5 transition-transform duration-300 group-hover:scale-105"
+                aria-hidden="true"
+              />
             </div>
 
             <div className="min-w-0">
@@ -210,7 +215,7 @@ function FlagshipCard({
             {project.description}
           </p>
 
-          {/* Uniform Architectural Contract Rows (Zero Straight Divider Line) */}
+          {/* Uniform Architectural Contract Rows */}
           {project.contracts && project.contracts.length > 0 && (
             <div className="mt-6">
               <div className="grid grid-cols-1 gap-2">
@@ -253,7 +258,7 @@ function FlagshipCard({
           </p>
         </div>
 
-        {/* 4 Clean Protocol Actions (Tonal Separation, Zero Straight Divider Line) */}
+        {/* 4 Clean Protocol Actions */}
         <div className="relative z-10 mt-7 flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <button
@@ -272,10 +277,10 @@ function FlagshipCard({
             <button
               type="button"
               onClick={() => onAskAmit(project)}
-              className={`inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3.5 py-2.5 rounded-full text-xs font-semibold border active:scale-[0.98] transition-[border-color,color,transform] duration-150 whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] ${
+              className={`inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3.5 py-2.5 rounded-full text-xs font-semibold active:scale-[0.98] transition-[background-color,color,transform] duration-150 whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] ${
                 darkVariant
-                  ? "border-[#FAF6F0]/18 bg-[#221813] text-[#FAF6F0] hover:border-[#E85D04] hover:text-[#E85D04]"
-                  : "border-[#140E0B]/15 bg-[#FAF6F0] text-[#140E0B] hover:border-[#E85D04] hover:text-[#E85D04]"
+                  ? "bg-[#241913] text-[#FAF6F0] hover:bg-[#2F2018] hover:text-[#FF6B1A]"
+                  : "bg-[#F3EAE0] text-[#140E0B] hover:bg-[#EAE0D2] hover:text-[#C84B04]"
               }`}
             >
               <MessageSquare
@@ -332,24 +337,6 @@ export default function ProtocolShowcase({
   const { explainProtocol } = useAgent();
   const flagshipProjects = getFlagshipProjects();
 
-  // Transition #2: Curved Editorial Sheet Rise (#140E0B -> #FBF8F3) with rising architectural scale & y
-  const sheetOuterRef = useRef<HTMLDivElement | null>(null);
-  const { scrollYProgress: sheetScroll } = useScroll({
-    target: sheetOuterRef,
-    offset: ["start end", "start 0.35"],
-  });
-  const sheetY = useTransform(sheetScroll, [0, 1], [36, 0]);
-  const sheetScale = useTransform(sheetScroll, [0, 1], [0.975, 1]);
-
-  // Archive Stage (#1B120D) rising depth
-  const archiveStageRef = useRef<HTMLElement | null>(null);
-  const { scrollYProgress: archiveScroll } = useScroll({
-    target: archiveStageRef,
-    offset: ["start end", "start 0.32"],
-  });
-  const archiveY = useTransform(archiveScroll, [0, 1], [32, 0]);
-  const archiveScale = useTransform(archiveScroll, [0, 1], [0.975, 1]);
-
   const handlePortalSpecular = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       const rect = e.currentTarget.getBoundingClientRect();
@@ -361,24 +348,17 @@ export default function ProtocolShowcase({
 
   return (
     <>
-      {/* Outer #140E0B backdrop guarantees exact hex parity behind the sculpted upper rounded corners */}
-      <div
-        ref={sheetOuterRef}
-        className="relative bg-[#140E0B] -mt-[2px] overflow-x-clip"
+      {/* Section 3: Flagship Protocols with Cinema Video-Style Small-to-Large Zoom Expand */}
+      <SectionRevealStage
+        id="protocols"
+        maxRadius={48}
+        minRadius={0}
+        outerClassName="bg-[#140E0B] -mt-[2px] scroll-mt-24"
+        backdropNode={<SheetSilkCrest idPrefix="arch-to-protocols" />}
+        innerClassName="bg-[#FBF8F3] text-[#16100C] silk-grain pt-14 sm:pt-20 overflow-hidden shadow-[0_-28px_72px_-26px_rgba(10,6,4,0.52)]"
       >
-        <SheetSilkCrest idPrefix="arch-to-protocols" />
-
-        {/* Section 3: Curved Editorial Sheet Rise on Luminous Warm Porcelain (#FBF8F3) */}
-        <motion.section
-          id="protocols"
-          style={
-            prefersReducedMotion
-              ? undefined
-              : { y: sheetY, scale: sheetScale, transformOrigin: "top center" }
-          }
-          className="relative z-10 bg-[#FBF8F3] text-[#16100C] silk-grain rounded-t-[44px] md:rounded-t-[72px] pt-14 sm:pt-20 scroll-mt-24 overflow-x-clip shadow-[0_-28px_72px_-26px_rgba(10,6,4,0.52)] will-change-transform"
-        >
-          {/* Subtle edge-hugging warm apricot/bronze ambient light washes with GPU silk drift */}
+        <section aria-label="Flagship Protocols" className="relative">
+          {/* Subtle edge-hugging warm apricot/bronze ambient light washes */}
           <div
             aria-hidden="true"
             className="pointer-events-none absolute top-16 right-[-8%] w-[520px] h-[620px] rounded-full opacity-55 ambient-silk-drift"
@@ -397,14 +377,16 @@ export default function ProtocolShowcase({
           />
 
           <div className="max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            {/* Left-Aligned Staggered Editorial Header (Zero Straight Line) */}
+            {/* Always-Visible Display Headline */}
             <div className="max-w-3xl">
               <motion.h2
-                initial={{ opacity: 0, y: 20 }}
+                initial={
+                  prefersReducedMotion ? false : { opacity: 0.25, y: 18 }
+                }
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.2 }}
-                transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-                className="font-display font-bold text-[#16100C] text-3xl sm:text-4xl lg:text-[3rem] leading-[1.05] tracking-[-0.03em]"
+                viewport={{ once: true, amount: 0.05 }}
+                transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
+                className="font-display font-bold text-[#16100C] text-3xl sm:text-4xl lg:text-[3rem] leading-[1.08] tracking-[-0.03em]"
                 style={{ textWrap: "balance" }}
               >
                 Flagship <span className="text-[#E85D04]">Protocols.</span>
@@ -412,11 +394,13 @@ export default function ProtocolShowcase({
 
               <motion.p
                 data-testid="section-subtitle-flagship"
-                initial={{ opacity: 0, y: 20 }}
+                initial={
+                  prefersReducedMotion ? false : { opacity: 0.3, y: 14 }
+                }
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.2 }}
+                viewport={{ once: true, amount: 0.05 }}
                 transition={{
-                  duration: 0.55,
+                  duration: 0.52,
                   delay: 0.08,
                   ease: [0.22, 1, 0.36, 1],
                 }}
@@ -443,60 +427,53 @@ export default function ProtocolShowcase({
             </div>
           </div>
 
-          {/* Transition #3: Graceful Sweeping Asymmetric Ribbon Curve (#FBF8F3 -> #1B120D) */}
+          {/* Transition #3: Pure Filled Sweeping Asymmetric Ribbon Curve (#FBF8F3 -> #1B120D) */}
           <SweepingRibbonCurve
             idPrefix="flagship-to-archive"
             bottomFill="#1B120D"
             className="mt-16 sm:mt-24"
           />
-        </motion.section>
-      </div>
+        </section>
+      </SectionRevealStage>
 
       {/* Section 4: Archive Environment on Rich Smoked Espresso (#1B120D) */}
       <section
-        ref={archiveStageRef}
         id="archive"
         data-testid="protocol-archive-section"
         className="relative bg-[#1B120D] text-[#FAF6F0] silk-grain-dark pt-12 sm:pt-16 lg:pt-20 pb-24 sm:pb-32 scroll-mt-24 overflow-x-clip"
       >
-        {/* Soft Copper-Amber Edge & Studio Illumination with GPU silk drift */}
+        {/* Soft Copper-Amber Edge & Ember Depth Washes (Zero Drawn Lines) */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -top-10 left-[-6%] w-[540px] h-[540px] rounded-full opacity-40 ambient-silk-drift"
+          className="pointer-events-none absolute -top-10 left-[-6%] w-[560px] h-[540px] rounded-full opacity-45 ambient-silk-drift"
           style={{
             background:
-              "radial-gradient(ellipse at center, rgba(232, 93, 4, 0.24) 0%, rgba(217, 119, 54, 0.1) 46%, rgba(27, 18, 13, 0) 74%)",
+              "radial-gradient(ellipse at center, rgba(232, 93, 4, 0.28) 0%, rgba(217, 119, 54, 0.12) 46%, rgba(27, 18, 13, 0) 74%)",
           }}
         />
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute bottom-20 right-[-6%] w-[520px] h-[520px] rounded-full opacity-35 ambient-silk-drift-reverse"
+          className="pointer-events-none absolute bottom-16 right-[-6%] w-[560px] h-[540px] rounded-full opacity-40 ambient-silk-drift-reverse"
           style={{
             background:
-              "radial-gradient(ellipse at center, rgba(244, 140, 6, 0.2) 0%, rgba(200, 90, 23, 0.08) 46%, rgba(27, 18, 13, 0) 74%)",
+              "radial-gradient(ellipse at center, rgba(244, 140, 6, 0.24) 0%, rgba(200, 90, 23, 0.1) 46%, rgba(27, 18, 13, 0) 74%)",
           }}
         />
 
-        <motion.div
-          style={
-            prefersReducedMotion
-              ? undefined
-              : {
-                  y: archiveY,
-                  scale: archiveScale,
-                  transformOrigin: "top center",
-                }
-          }
-          className="max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10 will-change-transform"
+        {/* Cinema Video-Style Small-to-Large Zoom Expand Stage */}
+        <SectionRevealStage
+          maxRadius={48}
+          minRadius={0}
+          innerClassName="max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-8"
         >
-          {/* Left-Aligned Staggered Editorial Header (Zero Straight Line) */}
+          {/* Always-Visible Display Headline */}
           <div className="max-w-3xl">
             <motion.h2
-              initial={{ opacity: 0, y: 20 }}
+              initial={prefersReducedMotion ? false : { opacity: 0.25, y: 18 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-              className="font-display font-bold text-[#FAF6F0] text-3xl sm:text-4xl lg:text-[2.85rem] leading-[1.06] tracking-[-0.03em]"
+              viewport={{ once: true, amount: 0.05 }}
+              transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
+              className="font-display font-bold text-[#FAF6F0] text-3xl sm:text-4xl lg:text-[2.85rem] leading-[1.08] tracking-[-0.03em]"
               style={{ textWrap: "balance" }}
             >
               Explore Full-Stack &amp;{" "}
@@ -505,11 +482,11 @@ export default function ProtocolShowcase({
 
             <motion.p
               data-testid="section-subtitle-archive"
-              initial={{ opacity: 0, y: 20 }}
+              initial={prefersReducedMotion ? false : { opacity: 0.3, y: 14 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
+              viewport={{ once: true, amount: 0.05 }}
               transition={{
-                duration: 0.55,
+                duration: 0.52,
                 delay: 0.08,
                 ease: [0.22, 1, 0.36, 1],
               }}
@@ -524,16 +501,20 @@ export default function ProtocolShowcase({
           <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
             {/* Portal 1: Full-Stack Web3 Protocols */}
             <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.16 }}
-              transition={{ duration: 0.54, ease: [0.22, 1, 0.36, 1] }}
+              initial={
+                prefersReducedMotion
+                  ? false
+                  : { opacity: 0, y: 28, scale: 0.92 }
+              }
+              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+              viewport={{ once: true, amount: 0.08 }}
+              transition={{ duration: 0.56, ease: [0.22, 1, 0.36, 1] }}
               onMouseMove={handlePortalSpecular}
-              className="specular-surface overflow-hidden group rounded-[36px] sm:rounded-[40px] bg-[#FBF8F3] text-[#16100C] hover:-translate-y-1 p-7 sm:p-9 lg:p-10 flex flex-col justify-between transition-[box-shadow,transform] duration-250 shadow-[inset_0_1px_0_rgba(255,255,255,0.96),0_30px_72px_-30px_rgba(0,0,0,0.72)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,1),0_36px_80px_-28px_rgba(232,93,4,0.32)]"
+              className="specular-surface overflow-hidden group rounded-[36px] sm:rounded-[40px] bg-[#FBF8F3] text-[#16100C] hover:-translate-y-1 p-7 sm:p-9 lg:p-10 flex flex-col justify-between transition-[box-shadow,transform] duration-250 shadow-[inset_0_1px_0_rgba(255,255,255,0.96),0_30px_72px_-30px_rgba(0,0,0,0.72)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,1),0_36px_80px_-28px_rgba(232,93,4,0.32)] will-change-transform"
             >
               <div className="relative z-10">
                 <div className="flex items-center justify-between gap-3">
-                  <div className="w-12 h-12 rounded-full bg-[#EFE6DA] flex items-center justify-center text-[#E85D04] shadow-[inset_0_1px_0_rgba(255,255,255,0.85)]">
+                  <div className="w-12 h-12 rounded-full bg-[#EFE6DA] flex items-center justify-center text-[#E85D04] shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] transition-transform duration-300 group-hover:scale-110">
                     <FolderKanban className="w-5 h-5" aria-hidden="true" />
                   </div>
                   <span className="font-mono-tabular text-xs font-semibold text-[#6E5F54]">
@@ -569,20 +550,24 @@ export default function ProtocolShowcase({
 
             {/* Portal 2: Core EVM Contracts */}
             <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.16 }}
+              initial={
+                prefersReducedMotion
+                  ? false
+                  : { opacity: 0, y: 28, scale: 0.92 }
+              }
+              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+              viewport={{ once: true, amount: 0.08 }}
               transition={{
-                duration: 0.54,
-                delay: 0.08,
+                duration: 0.56,
+                delay: 0.09,
                 ease: [0.22, 1, 0.36, 1],
               }}
               onMouseMove={handlePortalSpecular}
-              className="specular-surface-dark overflow-hidden group rounded-[36px] sm:rounded-[40px] bg-[#110B08] text-[#FAF6F0] hover:-translate-y-1 p-7 sm:p-9 lg:p-10 flex flex-col justify-between transition-[box-shadow,transform] duration-250 shadow-[inset_0_1px_0_rgba(250,246,240,0.1),0_30px_72px_-30px_rgba(0,0,0,0.84)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.24),0_36px_80px_-28px_rgba(232,93,4,0.36)]"
+              className="specular-surface-dark overflow-hidden group rounded-[36px] sm:rounded-[40px] bg-[#110B08] text-[#FAF6F0] hover:-translate-y-1 p-7 sm:p-9 lg:p-10 flex flex-col justify-between transition-[box-shadow,transform] duration-250 shadow-[inset_0_1px_0_rgba(250,246,240,0.1),0_30px_72px_-30px_rgba(0,0,0,0.84)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.24),0_36px_80px_-28px_rgba(232,93,4,0.36)] will-change-transform"
             >
               <div className="relative z-10">
                 <div className="flex items-center justify-between gap-3">
-                  <div className="w-12 h-12 rounded-full bg-[#221610] flex items-center justify-center text-[#FF6B1A] shadow-[inset_0_1px_0_rgba(244,162,97,0.18)]">
+                  <div className="w-12 h-12 rounded-full bg-[#221610] flex items-center justify-center text-[#FF6B1A] shadow-[inset_0_1px_0_rgba(244,162,97,0.18)] transition-transform duration-300 group-hover:scale-110">
                     <Terminal className="w-5 h-5" aria-hidden="true" />
                   </div>
                   <span className="font-mono-tabular text-xs font-semibold text-[#FF6B1A]">
@@ -616,7 +601,7 @@ export default function ProtocolShowcase({
               </div>
             </motion.div>
           </div>
-        </motion.div>
+        </SectionRevealStage>
       </section>
     </>
   );
