@@ -71,9 +71,11 @@ export default function AmitAvatar3D({
   onScrollToContact,
   darkTopStage = false,
 }: AmitAvatar3DProps) {
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
   const mountRef = useRef<HTMLDivElement | null>(null);
   const waveProgressRef = useRef(0);
   const [webglReady, setWebglReady] = useState(true);
+  const [isAvatarVisible, setIsAvatarVisible] = useState(true);
   const [welcomeIndex, setWelcomeIndex] = useState(0);
   const [activeSpotlightIndex, setActiveSpotlightIndex] = useState(0);
   const [isSpotlightPaused, setIsSpotlightPaused] = useState(false);
@@ -130,8 +132,26 @@ export default function AmitAvatar3D({
     ]
   );
 
-  // Cycle refined welcome headline above the 3D avatar every 2.8 seconds
+  // Track avatar viewport visibility on outer wrapper to pause off-screen timers
   useEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper || typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (!entry) return;
+        setIsAvatarVisible(entry.isIntersecting);
+      },
+      { threshold: 0.01 }
+    );
+    observer.observe(wrapper);
+    return () => observer.disconnect();
+  }, []);
+
+  // Cycle refined welcome headline above the 3D avatar every 2.8 seconds (paused off-screen)
+  useEffect(() => {
+    if (!isAvatarVisible) return;
     const prefersReducedMotion =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -141,11 +161,11 @@ export default function AmitAvatar3D({
       setWelcomeIndex((prev) => (prev + 1) % WELCOME_HEADLINES.length);
     }, 2800);
     return () => window.clearInterval(interval);
-  }, []);
+  }, [isAvatarVisible]);
 
-  // Auto-rotate compact quick-action prompt below the 3D avatar every 1.8 seconds
+  // Auto-rotate compact quick-action prompt below the 3D avatar every 1.8 seconds (paused off-screen)
   useEffect(() => {
-    if (isSpotlightPaused) return;
+    if (!isAvatarVisible || isSpotlightPaused) return;
     const prefersReducedMotion =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -155,7 +175,7 @@ export default function AmitAvatar3D({
       setActiveSpotlightIndex((prev) => (prev + 1) % spotlightItems.length);
     }, 1800);
     return () => window.clearInterval(interval);
-  }, [isSpotlightPaused, spotlightItems.length]);
+  }, [isAvatarVisible, isSpotlightPaused, spotlightItems.length]);
 
   // Automatic smooth welcome wave & nod gesture on initial page landing
   useEffect(() => {
@@ -910,6 +930,7 @@ export default function AmitAvatar3D({
       window.clearTimeout(timerId);
     };
 
+    const observeTarget = wrapperRef.current ?? container;
     const intersectionObserver = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
@@ -923,7 +944,7 @@ export default function AmitAvatar3D({
       },
       { threshold: 0.01 }
     );
-    intersectionObserver.observe(container);
+    intersectionObserver.observe(observeTarget);
 
     const handleVisibilityChange = () => {
       isTabVisible = !document.hidden;
@@ -960,7 +981,7 @@ export default function AmitAvatar3D({
   }, []);
 
   return (
-    <div className="relative w-full flex flex-col items-center">
+    <div ref={wrapperRef} className="relative w-full flex flex-col items-center">
       {/* Refined Animated Welcome Headline Above 3D Avatar (Zero Box, Zero Border) */}
       <div
         data-testid="avatar-welcome-headline"

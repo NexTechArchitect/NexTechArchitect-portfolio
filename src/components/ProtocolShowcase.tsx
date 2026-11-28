@@ -1,13 +1,7 @@
 "use client";
 
-import React, { useCallback, useRef } from "react";
-import {
-  motion,
-  useReducedMotion,
-  useScroll,
-  useSpring,
-  useTransform,
-} from "framer-motion";
+import React, { useCallback, useMemo, useRef } from "react";
+import { motion, useReducedMotion, type Variants } from "framer-motion";
 import {
   Activity,
   ArrowUpRight,
@@ -37,12 +31,13 @@ import {
   type ProjectItem,
 } from "@/data/projects";
 import {
+  CARD_VIEWPORT,
+  CINEMA_EASE,
   REPLAY_VIEWPORT,
-  SLOMO_EASE,
-  SectionRevealStage,
   SheetSilkCrest,
   SweepingRibbonCurve,
-  getSloMoSpringConfig,
+  createCinemaVariants,
+  createOrchestratorVariants,
   useIsMobile,
 } from "@/components/SectionCurves";
 import { getFlagshipProjects } from "@/lib/portfolio";
@@ -87,27 +82,7 @@ function FlagshipCard({
   onAskAmit,
 }: FlagshipCardProps) {
   const prefersReducedMotion = useReducedMotion();
-  // Stationary untransformed outer ref prevents scroll feedback jitter
-  const wrapperRef = useRef<HTMLDivElement | null>(null);
   const cardRef = useRef<HTMLElement | null>(null);
-
-  const { scrollYProgress } = useScroll({
-    target: wrapperRef,
-    offset: ["start 0.96", "start 0.44"],
-  });
-  const smoothProgress = useSpring(
-    scrollYProgress,
-    getSloMoSpringConfig(isMobile)
-  );
-
-  // Signature Alternating Side-Glides (ZERO rotation):
-  // Cards 1 & 3 from Left (-108 -> 0), Cards 2 & 4 from Right (+108 -> 0)
-  const isFromLeft = index % 2 === 0;
-  const startX = isFromLeft ? (isMobile ? -38 : -108) : isMobile ? 38 : 108;
-  const cardX = useTransform(smoothProgress, [0, 1], [startX, 0]);
-  const cardY = useTransform(smoothProgress, [0, 1], [isMobile ? 12 : 26, 0]);
-  const cardScale = useTransform(smoothProgress, [0, 1], [0.93, 1]);
-  const cardOpacity = useTransform(smoothProgress, [0, 1], [0.45, 1]);
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLElement>) => {
@@ -121,31 +96,60 @@ function FlagshipCard({
   );
 
   const Icon = PROJECT_ICON_MAP[project.iconKey] || Cpu;
+  // Cards 1 & 3 glide in slo-mo from Left (-88 -> 0), Cards 2 & 4 glide from Right (+88 -> 0)
+  const isFromLeft = index % 2 === 0;
+
+  const outerOrchestrator = useMemo(() => createOrchestratorVariants(0, 0), []);
+
+  const cardVariants = useMemo(
+    () =>
+      createCinemaVariants({
+        x: isFromLeft ? -88 : 88,
+        y: 24,
+        scale: 0.96,
+        duration: 1.4,
+        delay: !isMobile && index % 2 === 1 ? 0.12 : 0,
+        staggerChildren: 0.1,
+        delayChildren: 0.14,
+        isMobile,
+        reducedMotion: prefersReducedMotion,
+      }),
+    [isFromLeft, index, isMobile, prefersReducedMotion]
+  );
+
+  const cardInnerVariants = useMemo(
+    () =>
+      createCinemaVariants({
+        y: 18,
+        duration: 1.0,
+        isMobile,
+        reducedMotion: prefersReducedMotion,
+      }),
+    [isMobile, prefersReducedMotion]
+  );
 
   return (
-    <div ref={wrapperRef} className="h-full">
+    /* Stationary outer motion.div triggers native Framer Motion whileInView with zero React re-renders or edge flicker */
+    <motion.div
+      initial={prefersReducedMotion ? false : "hidden"}
+      whileInView="visible"
+      viewport={CARD_VIEWPORT}
+      variants={outerOrchestrator}
+      className="h-full"
+    >
       <motion.article
         ref={cardRef}
         onMouseMove={handleMouseMove}
-        style={
-          prefersReducedMotion
-            ? undefined
-            : {
-                x: cardX,
-                y: cardY,
-                scale: cardScale,
-                opacity: cardOpacity,
-              }
-        }
+        variants={cardVariants}
         whileHover={
           prefersReducedMotion || isMobile
             ? undefined
             : {
-                y: -6,
-                transition: { type: "spring", stiffness: 260, damping: 22 },
+                y: -5,
+                transition: { type: "spring", stiffness: 280, damping: 22 },
               }
         }
-        className={`group card-sheen-sweep h-full rounded-[34px] sm:rounded-[38px] p-6 sm:p-8 flex flex-col justify-between transition-shadow duration-300 overflow-hidden gpu-layer ${
+        className={`group card-sheen-sweep h-full rounded-[34px] sm:rounded-[38px] p-6 sm:p-8 flex flex-col justify-between transition-shadow duration-300 overflow-hidden ${
           darkVariant
             ? "specular-surface-dark bg-[#140E0B] text-[#FAF6F0] shadow-[inset_0_1px_0_rgba(250,246,240,0.1),0_26px_64px_-32px_rgba(20,14,11,0.75)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.34),0_38px_84px_-24px_rgba(232,93,4,0.42)]"
             : "specular-surface bg-[#FFFDF9] text-[#16100C] shadow-[inset_0_1px_0_rgba(255,255,255,0.96),0_22px_54px_-34px_rgba(20,14,11,0.18)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,1),0_36px_76px_-24px_rgba(232,93,4,0.34)]"
@@ -155,13 +159,10 @@ function FlagshipCard({
         <span aria-hidden="true" className="card-sheen-beam" />
 
         <div className="relative z-10">
-          {/* Layer 1: Metadata Header */}
+          {/* Layer 1: Metadata Badge Bloom */}
           <motion.div
-            initial={prefersReducedMotion ? false : { opacity: 0, y: 18 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={REPLAY_VIEWPORT}
-            transition={{ duration: 0.85, delay: 0.05, ease: SLOMO_EASE }}
-            className="flex items-center justify-between gap-3 text-xs font-mono-tabular gpu-layer"
+            variants={cardInnerVariants}
+            className="flex items-center justify-between gap-3 text-xs font-mono-tabular"
           >
             <span
               className={
@@ -189,13 +190,10 @@ function FlagshipCard({
             </span>
           </motion.div>
 
-          {/* Layer 2: Icon + Title + Security Metric */}
+          {/* Layer 2: Icon + Title + Security Metric Bloom */}
           <motion.div
-            initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={REPLAY_VIEWPORT}
-            transition={{ duration: 0.85, delay: 0.11, ease: SLOMO_EASE }}
-            className="mt-5 flex items-start gap-4 gpu-layer"
+            variants={cardInnerVariants}
+            className="mt-5 flex items-start gap-4"
           >
             <div
               className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-transform duration-300 ease-out group-hover:scale-110 ${
@@ -224,14 +222,8 @@ function FlagshipCard({
             </div>
           </motion.div>
 
-          {/* Layer 3: Editorial Description, Contract Architecture Metrics & Tech Badges */}
-          <motion.div
-            initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={REPLAY_VIEWPORT}
-            transition={{ duration: 0.85, delay: 0.17, ease: SLOMO_EASE }}
-            className="gpu-layer"
-          >
+          {/* Layer 3: Editorial Description, Contract Architecture Metrics & Tech Badges Bloom */}
+          <motion.div variants={cardInnerVariants}>
             <p
               className={`mt-4 text-sm sm:text-[15px] leading-[1.68] ${
                 darkVariant ? "text-[#D8CEC4]" : "text-[#4A3F37]"
@@ -289,13 +281,10 @@ function FlagshipCard({
           </motion.div>
         </div>
 
-        {/* Layer 4: Protocol Actions with Tactile Springs & Sheen */}
+        {/* Layer 4: Protocol Actions Bloom with Tactile Springs & Sheen */}
         <motion.div
-          initial={prefersReducedMotion ? false : { opacity: 0, y: 18 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={REPLAY_VIEWPORT}
-          transition={{ duration: 0.85, delay: 0.23, ease: SLOMO_EASE }}
-          className="relative z-10 mt-7 flex flex-wrap items-center justify-between gap-3 gpu-layer"
+          variants={cardInnerVariants}
+          className="relative z-10 mt-7 flex flex-wrap items-center justify-between gap-3"
         >
           <div className="flex flex-wrap items-center gap-2">
             <button
@@ -366,7 +355,7 @@ function FlagshipCard({
           </div>
         </motion.div>
       </motion.article>
-    </div>
+    </motion.div>
   );
 }
 
@@ -384,6 +373,80 @@ export default function ProtocolShowcase({
   const { explainProtocol } = useAgent();
   const flagshipProjects = getFlagshipProjects();
 
+  // Flagship Header Sequential Slo-Mo Orchestrator (+0.16s stagger)
+  const flagshipHeaderOrchestrator = useMemo(
+    () => createOrchestratorVariants(0.16, 0),
+    []
+  );
+  const flagshipHeaderItemVariants = useMemo(
+    () =>
+      createCinemaVariants({
+        y: 38,
+        duration: 1.3,
+        isMobile,
+        reducedMotion: prefersReducedMotion,
+      }),
+    [isMobile, prefersReducedMotion]
+  );
+
+  // Archive Section Orchestrator (Header from Left, Subtitle from Right, Cards Rising Wave)
+  const archiveSectionOrchestrator = useMemo(
+    () => createOrchestratorVariants(0, 0),
+    []
+  );
+  const archiveTitleVariants = useMemo(
+    () =>
+      createCinemaVariants({
+        x: -56,
+        duration: 1.3,
+        delay: 0,
+        isMobile,
+        reducedMotion: prefersReducedMotion,
+      }),
+    [isMobile, prefersReducedMotion]
+  );
+  const archiveSubtitleVariants = useMemo(
+    () =>
+      createCinemaVariants({
+        x: 56,
+        duration: 1.3,
+        delay: 0.14,
+        isMobile,
+        reducedMotion: prefersReducedMotion,
+      }),
+    [isMobile, prefersReducedMotion]
+  );
+  const archiveGridOrchestrator = useMemo(
+    () => createOrchestratorVariants(0.11, 0.24),
+    []
+  );
+  const archiveCardVariants = useMemo<Variants>(() => {
+    if (prefersReducedMotion) {
+      return {
+        hidden: { opacity: 1, y: 0, scale: 1 },
+        visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0 } },
+      };
+    }
+    return {
+      hidden: {
+        opacity: 0,
+        y: isMobile ? 28 : 52,
+        scale: isMobile ? 0.97 : 0.94,
+        transition: { duration: 0.22, ease: "easeOut" },
+      },
+      visible: {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        transition: {
+          layout: { type: "spring", stiffness: 320, damping: 28 },
+          duration: 1.25,
+          ease: CINEMA_EASE,
+        },
+      },
+    };
+  }, [isMobile, prefersReducedMotion]);
+
   const handlePortalSpecular = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       const rect = e.currentTarget.getBoundingClientRect();
@@ -395,18 +458,15 @@ export default function ProtocolShowcase({
 
   return (
     <>
-      {/* Section 3: Flagship Protocols — Bidirectional Bottom-Zoom Stage + Signature Alternating Side-Glides */}
-      <SectionRevealStage
+      {/* Section 3: Flagship Protocols — Slo-Mo Alternating Showreel + Inner Content Bloom */}
+      <div
         id="protocols"
-        variant="bottom-zoom"
-        sculptedTop
-        outerClassName="bg-[#140E0B] -mt-[2px] scroll-mt-24"
-        backdropNode={<SheetSilkCrest idPrefix="arch-to-protocols" />}
-        innerClassName="bg-[#FBF8F3] text-[#16100C] silk-grain pt-14 sm:pt-20 overflow-hidden shadow-[0_-24px_60px_-26px_rgba(10,6,4,0.48)]"
+        className="relative bg-[#140E0B] -mt-[2px] scroll-mt-24 section-perf"
       >
+        <SheetSilkCrest idPrefix="arch-to-protocols" />
         <section
           aria-label="Flagship Protocols"
-          className="relative section-perf"
+          className="relative z-10 rounded-t-[36px] sm:rounded-t-[48px] bg-[#FBF8F3] text-[#16100C] silk-grain pt-14 sm:pt-20 overflow-hidden shadow-[0_-24px_60px_-26px_rgba(10,6,4,0.48)] section-perf"
         >
           {/* Lightweight static warm apricot/bronze ambient washes */}
           <div
@@ -427,37 +487,34 @@ export default function ProtocolShowcase({
           />
 
           <div className="max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div className="max-w-3xl">
+            {/* Sequential Upward Cinema Lift (y: 38 -> 0, duration: 1.3s, +0.16s stagger) */}
+            <motion.div
+              initial={prefersReducedMotion ? false : "hidden"}
+              whileInView="visible"
+              viewport={REPLAY_VIEWPORT}
+              variants={flagshipHeaderOrchestrator}
+              className="max-w-3xl"
+            >
               <motion.h2
-                initial={
-                  prefersReducedMotion
-                    ? false
-                    : { opacity: 0, x: isMobile ? -26 : -64 }
-                }
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={REPLAY_VIEWPORT}
-                transition={{ duration: 0.95, ease: SLOMO_EASE }}
-                className="font-display font-bold text-[#16100C] text-3xl sm:text-4xl lg:text-[3rem] leading-[1.08] tracking-[-0.03em] gpu-layer"
+                variants={flagshipHeaderItemVariants}
+                className="font-display font-bold text-[#16100C] text-3xl sm:text-4xl lg:text-[3rem] leading-[1.08] tracking-[-0.03em]"
                 style={{ textWrap: "balance" }}
               >
                 Flagship <span className="text-[#E85D04]">Protocols.</span>
               </motion.h2>
 
               <motion.p
+                variants={flagshipHeaderItemVariants}
                 data-testid="section-subtitle-flagship"
-                initial={prefersReducedMotion ? false : { opacity: 0, y: 22 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={REPLAY_VIEWPORT}
-                transition={{ duration: 0.9, delay: 0.08, ease: SLOMO_EASE }}
-                className="mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#4A3F37] gpu-layer"
+                className="mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#4A3F37]"
               >
                 Inspect deep architectural case studies, launch live
                 applications, or ask the protocol assistant to walk through any
                 contract system.
               </motion.p>
-            </div>
+            </motion.div>
 
-            {/* Weighted Slo-Mo Alternating Left (-108 -> 0) & Right (+108 -> 0) Flagship Grid */}
+            {/* Alternating Left (-88 -> 0) & Right (+88 -> 0) Slo-Mo Flagship Showreel Grid */}
             <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
               {flagshipProjects.map((project, index) => (
                 <FlagshipCard
@@ -480,225 +537,191 @@ export default function ProtocolShowcase({
             className="mt-16 sm:mt-24"
           />
         </section>
-      </SectionRevealStage>
+      </div>
 
-      {/* Section 4: Archive — Bidirectional Glide-Left Stage + Opposing Slo-Mo Portals */}
-      <SectionRevealStage
+      {/* Section 4: Archive — Opposing Split Header + Weighted Slo-Mo Rising Cinema Wave */}
+      <section
         id="archive"
-        dataTestId="protocol-archive-section"
-        variant="glide-left"
-        outerClassName="bg-[#1B120D] -mt-[2px] scroll-mt-24"
-        innerClassName="relative bg-[#1B120D] text-[#FAF6F0] silk-grain-dark pt-12 sm:pt-16 lg:pt-20 pb-24 sm:pb-32 overflow-hidden"
+        data-testid="protocol-archive-section"
+        aria-label="Full-Stack and Core EVM Archive"
+        className="relative -mt-[2px] bg-[#1B120D] text-[#FAF6F0] silk-grain-dark pt-12 sm:pt-16 lg:pt-20 pb-24 sm:pb-32 scroll-mt-24 overflow-hidden section-perf"
       >
-        <section
-          aria-label="Full-Stack and Core EVM Archive"
-          className="relative section-perf"
+        {/* Lightweight static copper-amber washes */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-10 left-[-6%] w-[480px] h-[480px] rounded-full opacity-40"
+          style={{
+            background:
+              "radial-gradient(ellipse at center, rgba(232, 93, 4, 0.24) 0%, rgba(217, 119, 54, 0.1) 46%, rgba(27, 18, 13, 0) 74%)",
+          }}
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute bottom-16 right-[-6%] w-[480px] h-[480px] rounded-full opacity-35"
+          style={{
+            background:
+              "radial-gradient(ellipse at center, rgba(244, 140, 6, 0.2) 0%, rgba(200, 90, 23, 0.08) 46%, rgba(27, 18, 13, 0) 74%)",
+          }}
+        />
+
+        <motion.div
+          initial={prefersReducedMotion ? false : "hidden"}
+          whileInView="visible"
+          viewport={REPLAY_VIEWPORT}
+          variants={archiveSectionOrchestrator}
+          className="relative z-10 max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-8"
         >
-          {/* Lightweight static copper-amber washes */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute -top-10 left-[-6%] w-[480px] h-[480px] rounded-full opacity-40"
-            style={{
-              background:
-                "radial-gradient(ellipse at center, rgba(232, 93, 4, 0.24) 0%, rgba(217, 119, 54, 0.1) 46%, rgba(27, 18, 13, 0) 74%)",
-            }}
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute bottom-16 right-[-6%] w-[480px] h-[480px] rounded-full opacity-35"
-            style={{
-              background:
-                "radial-gradient(ellipse at center, rgba(244, 140, 6, 0.2) 0%, rgba(200, 90, 23, 0.08) 46%, rgba(27, 18, 13, 0) 74%)",
-            }}
-          />
+          {/* Header glides slo-mo from Left (-56 -> 0), Subtitle glides slo-mo from Right (+56 -> 0, +0.14s) */}
+          <div className="max-w-3xl">
+            <motion.h2
+              variants={archiveTitleVariants}
+              className="font-display font-bold text-[#FAF6F0] text-3xl sm:text-4xl lg:text-[2.85rem] leading-[1.08] tracking-[-0.03em]"
+              style={{ textWrap: "balance" }}
+            >
+              Explore Full-Stack &amp;{" "}
+              <span className="text-[#FF6B1A]">Core EVM Systems.</span>
+            </motion.h2>
 
-          <div className="relative z-10 max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="max-w-3xl">
-              <motion.h2
-                initial={
-                  prefersReducedMotion
-                    ? false
-                    : { opacity: 0, x: isMobile ? -24 : -56 }
-                }
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={REPLAY_VIEWPORT}
-                transition={{ duration: 0.9, ease: SLOMO_EASE }}
-                className="font-display font-bold text-[#FAF6F0] text-3xl sm:text-4xl lg:text-[2.85rem] leading-[1.08] tracking-[-0.03em] gpu-layer"
-                style={{ textWrap: "balance" }}
-              >
-                Explore Full-Stack &amp;{" "}
-                <span className="text-[#FF6B1A]">Core EVM Systems.</span>
-              </motion.h2>
-
-              <motion.p
-                data-testid="section-subtitle-archive"
-                initial={
-                  prefersReducedMotion
-                    ? false
-                    : { opacity: 0, x: isMobile ? 24 : 56 }
-                }
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={REPLAY_VIEWPORT}
-                transition={{ duration: 0.9, delay: 0.06, ease: SLOMO_EASE }}
-                className="mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#D8CEC4] gpu-layer"
-              >
-                Browse every production dApp and standalone EVM contract
-                primitive with live search, case study breakdowns, and
-                interactive agent explanations.
-              </motion.p>
-            </div>
-
-            {/* Opposing Diagonal Slo-Mo Portals: Left from Bottom-Left, Right from Bottom-Right */}
-            <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-              {/* Portal 1: Full-Stack Web3 Protocols */}
-              <motion.div
-                initial={
-                  prefersReducedMotion
-                    ? false
-                    : {
-                        opacity: 0,
-                        x: isMobile ? -16 : -36,
-                        y: isMobile ? 22 : 48,
-                        scale: 0.93,
-                      }
-                }
-                whileInView={{ opacity: 1, x: 0, y: 0, scale: 1 }}
-                viewport={REPLAY_VIEWPORT}
-                whileHover={
-                  prefersReducedMotion || isMobile
-                    ? undefined
-                    : {
-                        y: -6,
-                        transition: {
-                          type: "spring",
-                          stiffness: 260,
-                          damping: 22,
-                        },
-                      }
-                }
-                transition={{ duration: 0.9, ease: SLOMO_EASE }}
-                onMouseMove={handlePortalSpecular}
-                className="specular-surface card-sheen-sweep overflow-hidden group rounded-[36px] sm:rounded-[40px] bg-[#FBF8F3] text-[#16100C] p-7 sm:p-9 lg:p-10 flex flex-col justify-between transition-shadow duration-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.96),0_26px_64px_-30px_rgba(0,0,0,0.7)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,1),0_34px_76px_-24px_rgba(232,93,4,0.34)] gpu-layer"
-              >
-                <span aria-hidden="true" className="card-sheen-beam" />
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="w-12 h-12 rounded-full bg-[#EFE6DA] flex items-center justify-center text-[#E85D04] shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] transition-transform duration-300 group-hover:scale-110">
-                      <FolderKanban className="w-5 h-5" aria-hidden="true" />
-                    </div>
-                    <span className="font-mono-tabular text-xs font-semibold text-[#6E5F54]">
-                      Warm Porcelain Atelier
-                    </span>
-                  </div>
-
-                  <h3 className="mt-5 font-display text-2xl sm:text-[1.65rem] font-bold text-[#16100C] tracking-[-0.025em]">
-                    Full-Stack Web3 Protocols
-                  </h3>
-                  <p className="mt-2.5 text-sm sm:text-[15px] leading-[1.68] text-[#4A3F37]">
-                    End-to-end DeFi, RWA, keeper automation, insurance,
-                    governance, and on-chain reputation protocols pairing
-                    audited Solidity cores with live Next.js and Wagmi
-                    interfaces.
-                  </p>
-
-                  <p className="mt-5 rounded-[24px] bg-[#EFE6DA]/82 px-4 py-3.5 text-xs font-mono-tabular text-[#4A3F37] leading-relaxed">
-                    {fullStackProjects.map((p) => p.shortTitle).join(" · ")}
-                  </p>
-                </div>
-
-                <div className="relative z-10 mt-8">
-                  <button
-                    type="button"
-                    onClick={() => onOpenArchive("fullstack")}
-                    className="group/btn btn-spring btn-cta-sheen inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-3 rounded-full bg-[#16100C] hover:bg-[#E85D04] text-[#FAF6F0] text-xs sm:text-sm font-semibold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04]"
-                  >
-                    <span className="relative z-10">
-                      Explore Full-Stack Web3 Protocols
-                    </span>
-                    <ArrowUpRight
-                      className="relative z-10 w-4 h-4 transition-transform duration-200 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5"
-                      aria-hidden="true"
-                    />
-                  </button>
-                </div>
-              </motion.div>
-
-              {/* Portal 2: Core EVM Contracts */}
-              <motion.div
-                initial={
-                  prefersReducedMotion
-                    ? false
-                    : {
-                        opacity: 0,
-                        x: isMobile ? 16 : 36,
-                        y: isMobile ? 22 : 48,
-                        scale: 0.93,
-                      }
-                }
-                whileInView={{ opacity: 1, x: 0, y: 0, scale: 1 }}
-                viewport={REPLAY_VIEWPORT}
-                whileHover={
-                  prefersReducedMotion || isMobile
-                    ? undefined
-                    : {
-                        y: -6,
-                        transition: {
-                          type: "spring",
-                          stiffness: 260,
-                          damping: 22,
-                        },
-                      }
-                }
-                transition={{ duration: 0.9, delay: 0.08, ease: SLOMO_EASE }}
-                onMouseMove={handlePortalSpecular}
-                className="specular-surface-dark card-sheen-sweep overflow-hidden group rounded-[36px] sm:rounded-[40px] bg-[#110B08] text-[#FAF6F0] p-7 sm:p-9 lg:p-10 flex flex-col justify-between transition-shadow duration-300 shadow-[inset_0_1px_0_rgba(250,246,240,0.1),0_26px_64px_-30px_rgba(0,0,0,0.82)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.28),0_34px_76px_-24px_rgba(232,93,4,0.38)] gpu-layer"
-              >
-                <span aria-hidden="true" className="card-sheen-beam" />
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="w-12 h-12 rounded-full bg-[#221610] flex items-center justify-center text-[#FF6B1A] shadow-[inset_0_1px_0_rgba(244,162,97,0.18)] transition-transform duration-300 group-hover:scale-110">
-                      <Terminal className="w-5 h-5" aria-hidden="true" />
-                    </div>
-                    <span className="font-mono-tabular text-xs font-semibold text-[#FF6B1A]">
-                      Obsidian Copper Lab
-                    </span>
-                  </div>
-
-                  <h3 className="mt-5 font-display text-2xl sm:text-[1.65rem] font-bold text-[#FAF6F0] tracking-[-0.025em]">
-                    Core EVM Contracts
-                  </h3>
-                  <p className="mt-2.5 text-sm sm:text-[15px] leading-[1.68] text-[#D8CEC4]">
-                    Focused Solidity and Foundry engineering covering CDP
-                    stablecoins, Chainlink VRF state machines, ERC-4337
-                    EntryPoint smart accounts, UUPS proxies, and Merkle-712
-                    claim vaults.
-                  </p>
-
-                  <p className="mt-5 rounded-[24px] bg-[#1D130E]/92 px-4 py-3.5 text-xs font-mono-tabular text-[#A69688] leading-relaxed shadow-[inset_0_1px_0_rgba(250,246,240,0.05)]">
-                    {coreProjects.map((p) => p.shortTitle).join(" · ")}
-                  </p>
-                </div>
-
-                <div className="relative z-10 mt-8">
-                  <button
-                    type="button"
-                    onClick={() => onOpenArchive("core")}
-                    className="group/btn btn-spring btn-cta-sheen inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-3 rounded-full bg-[#E85D04] hover:bg-[#D14F00] text-[#FAF6F0] text-xs sm:text-sm font-semibold cursor-pointer shadow-[0_14px_30px_-14px_rgba(232,93,4,0.72)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FAF6F0]"
-                  >
-                    <span className="relative z-10">
-                      Explore Core EVM Contracts
-                    </span>
-                    <ArrowUpRight
-                      className="relative z-10 w-4 h-4 transition-transform duration-200 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5"
-                      aria-hidden="true"
-                    />
-                  </button>
-                </div>
-              </motion.div>
-            </div>
+            <motion.p
+              variants={archiveSubtitleVariants}
+              data-testid="section-subtitle-archive"
+              className="mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#D8CEC4]"
+            >
+              Browse every production dApp and standalone EVM contract primitive
+              with live search, case study breakdowns, and interactive agent
+              explanations.
+            </motion.p>
           </div>
-        </section>
-      </SectionRevealStage>
+
+          {/* Weighted Slo-Mo Rising Cinema Wave (y: 52 -> 0, scale: 0.94 -> 1, staggerChildren: 0.11, duration: 1.25s) */}
+          <motion.div
+            variants={archiveGridOrchestrator}
+            className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch"
+          >
+            {/* Portal 1: Full-Stack Web3 Protocols */}
+            <motion.div
+              layout
+              variants={archiveCardVariants}
+              whileHover={
+                prefersReducedMotion || isMobile
+                  ? undefined
+                  : {
+                      y: -5,
+                      transition: {
+                        type: "spring",
+                        stiffness: 280,
+                        damping: 22,
+                      },
+                    }
+              }
+              onMouseMove={handlePortalSpecular}
+              className="specular-surface card-sheen-sweep overflow-hidden group rounded-[36px] sm:rounded-[40px] bg-[#FBF8F3] text-[#16100C] p-7 sm:p-9 lg:p-10 flex flex-col justify-between transition-shadow duration-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.96),0_26px_64px_-30px_rgba(0,0,0,0.7)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,1),0_34px_76px_-24px_rgba(232,93,4,0.34)]"
+            >
+              <span aria-hidden="true" className="card-sheen-beam" />
+              <div className="relative z-10">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="w-12 h-12 rounded-full bg-[#EFE6DA] flex items-center justify-center text-[#E85D04] shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] transition-transform duration-300 group-hover:scale-110">
+                    <FolderKanban className="w-5 h-5" aria-hidden="true" />
+                  </div>
+                  <span className="font-mono-tabular text-xs font-semibold text-[#6E5F54]">
+                    Warm Porcelain Atelier
+                  </span>
+                </div>
+
+                <h3 className="mt-5 font-display text-2xl sm:text-[1.65rem] font-bold text-[#16100C] tracking-[-0.025em]">
+                  Full-Stack Web3 Protocols
+                </h3>
+                <p className="mt-2.5 text-sm sm:text-[15px] leading-[1.68] text-[#4A3F37]">
+                  End-to-end DeFi, RWA, keeper automation, insurance,
+                  governance, and on-chain reputation protocols pairing audited
+                  Solidity cores with live Next.js and Wagmi interfaces.
+                </p>
+
+                <p className="mt-5 rounded-[24px] bg-[#EFE6DA]/82 px-4 py-3.5 text-xs font-mono-tabular text-[#4A3F37] leading-relaxed">
+                  {fullStackProjects.map((p) => p.shortTitle).join(" · ")}
+                </p>
+              </div>
+
+              <div className="relative z-10 mt-8">
+                <button
+                  type="button"
+                  onClick={() => onOpenArchive("fullstack")}
+                  className="group/btn btn-spring btn-cta-sheen inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-3 rounded-full bg-[#16100C] hover:bg-[#E85D04] text-[#FAF6F0] text-xs sm:text-sm font-semibold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04]"
+                >
+                  <span className="relative z-10">
+                    Explore Full-Stack Web3 Protocols
+                  </span>
+                  <ArrowUpRight
+                    className="relative z-10 w-4 h-4 transition-transform duration-200 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5"
+                    aria-hidden="true"
+                  />
+                </button>
+              </div>
+            </motion.div>
+
+            {/* Portal 2: Core EVM Contracts */}
+            <motion.div
+              layout
+              variants={archiveCardVariants}
+              whileHover={
+                prefersReducedMotion || isMobile
+                  ? undefined
+                  : {
+                      y: -5,
+                      transition: {
+                        type: "spring",
+                        stiffness: 280,
+                        damping: 22,
+                      },
+                    }
+              }
+              onMouseMove={handlePortalSpecular}
+              className="specular-surface-dark card-sheen-sweep overflow-hidden group rounded-[36px] sm:rounded-[40px] bg-[#110B08] text-[#FAF6F0] p-7 sm:p-9 lg:p-10 flex flex-col justify-between transition-shadow duration-300 shadow-[inset_0_1px_0_rgba(250,246,240,0.1),0_26px_64px_-30px_rgba(0,0,0,0.82)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.28),0_34px_76px_-24px_rgba(232,93,4,0.38)]"
+            >
+              <span aria-hidden="true" className="card-sheen-beam" />
+              <div className="relative z-10">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="w-12 h-12 rounded-full bg-[#221610] flex items-center justify-center text-[#FF6B1A] shadow-[inset_0_1px_0_rgba(244,162,97,0.18)] transition-transform duration-300 group-hover:scale-110">
+                    <Terminal className="w-5 h-5" aria-hidden="true" />
+                  </div>
+                  <span className="font-mono-tabular text-xs font-semibold text-[#FF6B1A]">
+                    Obsidian Copper Lab
+                  </span>
+                </div>
+
+                <h3 className="mt-5 font-display text-2xl sm:text-[1.65rem] font-bold text-[#FAF6F0] tracking-[-0.025em]">
+                  Core EVM Contracts
+                </h3>
+                <p className="mt-2.5 text-sm sm:text-[15px] leading-[1.68] text-[#D8CEC4]">
+                  Focused Solidity and Foundry engineering covering CDP
+                  stablecoins, Chainlink VRF state machines, ERC-4337 EntryPoint
+                  smart accounts, UUPS proxies, and Merkle-712 claim vaults.
+                </p>
+
+                <p className="mt-5 rounded-[24px] bg-[#1D130E]/92 px-4 py-3.5 text-xs font-mono-tabular text-[#A69688] leading-relaxed shadow-[inset_0_1px_0_rgba(250,246,240,0.05)]">
+                  {coreProjects.map((p) => p.shortTitle).join(" · ")}
+                </p>
+              </div>
+
+              <div className="relative z-10 mt-8">
+                <button
+                  type="button"
+                  onClick={() => onOpenArchive("core")}
+                  className="group/btn btn-spring btn-cta-sheen inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-3 rounded-full bg-[#E85D04] hover:bg-[#D14F00] text-[#FAF6F0] text-xs sm:text-sm font-semibold cursor-pointer shadow-[0_14px_30px_-14px_rgba(232,93,4,0.72)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FAF6F0]"
+                >
+                  <span className="relative z-10">
+                    Explore Core EVM Contracts
+                  </span>
+                  <ArrowUpRight
+                    className="relative z-10 w-4 h-4 transition-transform duration-200 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5"
+                    aria-hidden="true"
+                  />
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        </motion.div>
+      </section>
     </>
   );
 }

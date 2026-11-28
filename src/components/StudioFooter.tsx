@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   AnimatePresence,
   motion,
   useReducedMotion,
   useScroll,
-  useSpring,
   useTransform,
 } from "framer-motion";
 import {
@@ -19,9 +18,8 @@ import {
 } from "lucide-react";
 import {
   REPLAY_VIEWPORT,
-  SLOMO_EASE,
-  SectionRevealStage,
-  getSloMoSpringConfig,
+  createCinemaVariants,
+  createOrchestratorVariants,
   useIsMobile,
 } from "@/components/SectionCurves";
 import { useAgent } from "@/context/AgentContext";
@@ -39,18 +37,52 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
   const [copied, setCopied] = useState(false);
 
   const footerRef = useRef<HTMLElement | null>(null);
-  // Weighted slo-mo spring-smoothed Solar Horizon ember swell (strict GPU-only transforms)
+  // Lightweight direct scroll-linked Solar Horizon swell (MotionValue only — zero React re-renders)
   const { scrollYProgress } = useScroll({
     target: footerRef,
     offset: ["start end", "end end"],
   });
-  const smoothFooterProgress = useSpring(
-    scrollYProgress,
-    getSloMoSpringConfig(isMobile)
+  const emberRiseY = useTransform(scrollYProgress, [0, 1], [32, 0]);
+  const emberScale = useTransform(scrollYProgress, [0, 1], [0.92, 1.06]);
+
+  // Stationary outer orchestrator driving Cinema Expo-Out slo-mo convergence beats
+  const sectionOrchestrator = useMemo(
+    () => createOrchestratorVariants(0, 0),
+    []
   );
-  const emberRiseY = useTransform(smoothFooterProgress, [0, 1], [34, 0]);
-  const emberScale = useTransform(smoothFooterProgress, [0, 1], [0.92, 1.06]);
-  const emberOpacity = useTransform(smoothFooterProgress, [0, 1], [0.3, 0.76]);
+  const leftColVariants = useMemo(
+    () =>
+      createCinemaVariants({
+        x: -60,
+        duration: 1.35,
+        delay: 0,
+        isMobile,
+        reducedMotion: prefersReducedMotion,
+      }),
+    [isMobile, prefersReducedMotion]
+  );
+  const rightColVariants = useMemo(
+    () =>
+      createCinemaVariants({
+        x: 60,
+        duration: 1.35,
+        delay: 0.18,
+        isMobile,
+        reducedMotion: prefersReducedMotion,
+      }),
+    [isMobile, prefersReducedMotion]
+  );
+  const bottomBarVariants = useMemo(
+    () =>
+      createCinemaVariants({
+        y: 36,
+        duration: 1.25,
+        delay: 0.32,
+        isMobile,
+        reducedMotion: prefersReducedMotion,
+      }),
+    [isMobile, prefersReducedMotion]
+  );
 
   const handleCopyEmail = async () => {
     try {
@@ -77,15 +109,15 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
       id="contact"
       className="relative -mt-[2px] bg-[#0A0604] text-[#FAF6F0] silk-grain-dark pt-6 sm:pt-10 pb-16 sm:pb-20 overflow-y-hidden scroll-mt-24 section-perf"
     >
-      {/* Weighted Slo-Mo Spring-Smoothed Solar Horizon Ember Swell */}
+      {/* Rising Solar Horizon Ember Glow (GPU scale & y only) */}
       <motion.div
         aria-hidden="true"
         style={
           prefersReducedMotion
             ? undefined
-            : { y: emberRiseY, scale: emberScale, opacity: emberOpacity }
+            : { y: emberRiseY, scale: emberScale }
         }
-        className="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 w-[820px] h-[240px] rounded-full gpu-layer"
+        className="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 w-[820px] h-[240px] rounded-full opacity-80"
       >
         <div
           className="w-full h-full rounded-full"
@@ -104,24 +136,16 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
         }}
       />
 
-      <SectionRevealStage
-        variant="horizon-rise"
-        outerClassName="relative z-10"
-        innerClassName="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
+      <motion.div
+        initial={prefersReducedMotion ? false : "hidden"}
+        whileInView="visible"
+        viewport={REPLAY_VIEWPORT}
+        variants={sectionOrchestrator}
+        className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
       >
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-end pb-10">
-          {/* Headline & Bio Glide from Left (-64 -> 0) */}
-          <motion.div
-            initial={
-              prefersReducedMotion
-                ? false
-                : { opacity: 0, x: isMobile ? -26 : -64 }
-            }
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={REPLAY_VIEWPORT}
-            transition={{ duration: 0.95, ease: SLOMO_EASE }}
-            className="lg:col-span-7 gpu-layer"
-          >
+          {/* Beat 1 (0.00s): Headline & Availability Copy Glide Slo-Mo from Left (-60 -> 0) */}
+          <motion.div variants={leftColVariants} className="lg:col-span-7">
             <h2
               className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-[1.08] text-[#FAF6F0]"
               style={{ textWrap: "balance" }}
@@ -139,17 +163,10 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
             </p>
           </motion.div>
 
-          {/* Right Email Copy Pill & Primary CTA Buttons Glide from Right (+64 -> 0) */}
+          {/* Beat 2 (+0.18s): Email Copy Pill & Primary CTA Buttons Glide Slo-Mo from Right (+60 -> 0) */}
           <motion.div
-            initial={
-              prefersReducedMotion
-                ? false
-                : { opacity: 0, x: isMobile ? 26 : 64 }
-            }
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={REPLAY_VIEWPORT}
-            transition={{ duration: 0.95, delay: 0.07, ease: SLOMO_EASE }}
-            className="lg:col-span-5 flex flex-col items-start lg:items-end gap-4 gpu-layer"
+            variants={rightColVariants}
+            className="lg:col-span-5 flex flex-col items-start lg:items-end gap-4"
           >
             {/* One-Click Copyable Email Pill with Spring Pop Copied Micro-Feedback */}
             <button
@@ -237,72 +254,66 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
           </motion.div>
         </div>
 
-        {/* Bottom Brand Bar Rises Smoothly from Bottom (+34 -> 0) */}
-        <motion.div
-          initial={
-            prefersReducedMotion
-              ? false
-              : { opacity: 0, y: isMobile ? 16 : 34 }
-          }
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={REPLAY_VIEWPORT}
-          transition={{ duration: 0.95, delay: 0.12, ease: SLOMO_EASE }}
-          onMouseMove={handleBarSpecular}
-          className="specular-surface-dark overflow-hidden rounded-[32px] bg-[#140D09]/92 transition-shadow duration-250 shadow-[inset_0_1px_0_rgba(250,246,240,0.09),0_24px_56px_-28px_rgba(0,0,0,0.85)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.22),0_26px_62px_-26px_rgba(232,93,4,0.25)] px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 text-xs font-medium text-[#A69688] gpu-layer"
-        >
-          <div className="relative z-10 flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span className="font-display font-bold text-[#FAF6F0] text-sm tracking-[-0.02em]">
-              NexTechArchitect
-            </span>
-            <span aria-hidden="true" className="text-[#FAF6F0]/25">
-              ·
-            </span>
-            <span>
-              Amit Kumar · Smart Contract Engineer &amp; DeFi Protocol
-              Architect
-            </span>
-          </div>
+        {/* Beat 3 (+0.32s): Bottom Brand Bar Rises Smoothly from Bottom (y: 36 -> 0) */}
+        <motion.div variants={bottomBarVariants}>
+          <div
+            onMouseMove={handleBarSpecular}
+            className="specular-surface-dark overflow-hidden rounded-[32px] bg-[#140D09]/92 transition-shadow duration-250 shadow-[inset_0_1px_0_rgba(250,246,240,0.09),0_24px_56px_-28px_rgba(0,0,0,0.85)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.22),0_26px_62px_-26px_rgba(232,93,4,0.25)] px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 text-xs font-medium text-[#A69688]"
+          >
+            <div className="relative z-10 flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span className="font-display font-bold text-[#FAF6F0] text-sm tracking-[-0.02em]">
+                NexTechArchitect
+              </span>
+              <span aria-hidden="true" className="text-[#FAF6F0]/25">
+                ·
+              </span>
+              <span>
+                Amit Kumar · Smart Contract Engineer &amp; DeFi Protocol
+                Architect
+              </span>
+            </div>
 
-          <div className="relative z-10 flex flex-wrap items-center gap-5">
-            <a
-              href="https://github.com/NexTechArchitect"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group/link inline-flex items-center gap-1 hover:text-[#FF6B1A] transition-colors"
-            >
-              <span>GitHub</span>
-              <ArrowUpRight
-                className="w-3.5 h-3.5 transition-transform duration-200 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5"
-                aria-hidden="true"
-              />
-            </a>
-            <a
-              href="https://www.linkedin.com/in/amit-kumar-811a11277"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group/link inline-flex items-center gap-1 hover:text-[#FF6B1A] transition-colors"
-            >
-              <span>LinkedIn</span>
-              <ArrowUpRight
-                className="w-3.5 h-3.5 transition-transform duration-200 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5"
-                aria-hidden="true"
-              />
-            </a>
-            <a
-              href="https://x.com/itZ_AmiT0"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group/link inline-flex items-center gap-1 hover:text-[#FF6B1A] transition-colors"
-            >
-              <span>X (Twitter)</span>
-              <ArrowUpRight
-                className="w-3.5 h-3.5 transition-transform duration-200 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5"
-                aria-hidden="true"
-              />
-            </a>
+            <div className="relative z-10 flex flex-wrap items-center gap-5">
+              <a
+                href="https://github.com/NexTechArchitect"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group/link inline-flex items-center gap-1 hover:text-[#FF6B1A] transition-colors"
+              >
+                <span>GitHub</span>
+                <ArrowUpRight
+                  className="w-3.5 h-3.5 transition-transform duration-200 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5"
+                  aria-hidden="true"
+                />
+              </a>
+              <a
+                href="https://www.linkedin.com/in/amit-kumar-811a11277"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group/link inline-flex items-center gap-1 hover:text-[#FF6B1A] transition-colors"
+              >
+                <span>LinkedIn</span>
+                <ArrowUpRight
+                  className="w-3.5 h-3.5 transition-transform duration-200 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5"
+                  aria-hidden="true"
+                />
+              </a>
+              <a
+                href="https://x.com/itZ_AmiT0"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group/link inline-flex items-center gap-1 hover:text-[#FF6B1A] transition-colors"
+              >
+                <span>X (Twitter)</span>
+                <ArrowUpRight
+                  className="w-3.5 h-3.5 transition-transform duration-200 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5"
+                  aria-hidden="true"
+                />
+              </a>
+            </div>
           </div>
         </motion.div>
-      </SectionRevealStage>
+      </motion.div>
     </footer>
   );
 }

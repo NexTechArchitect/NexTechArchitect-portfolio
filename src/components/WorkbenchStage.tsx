@@ -5,12 +5,12 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Check, Copy, FileCode2, MessageSquare } from "lucide-react";
 import { ARCHITECTURE_INSIGHTS } from "@/data/projects";
 import {
-  LUXURY_EASE,
-  SLOMO_EASE,
-  SectionRevealStage,
+  CINEMA_EASE,
   SheetSilkCrest,
   SolarHorizonArch,
   WORKBENCH_VIEWPORT,
+  createCinemaVariants,
+  createOrchestratorVariants,
   useIsMobile,
 } from "@/components/SectionCurves";
 import { useAgent } from "@/context/AgentContext";
@@ -112,6 +112,71 @@ export default function WorkbenchStage({
   );
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  // Instant-trigger (amount: 0.08) stationary orchestrator + sequential Cinema Expo-Out slo-mo beats
+  const sectionOrchestrator = useMemo(
+    () => createOrchestratorVariants(0, 0),
+    []
+  );
+  const headlineVariants = useMemo(
+    () =>
+      createCinemaVariants({
+        x: -56,
+        duration: 1.25,
+        delay: 0,
+        isMobile,
+        reducedMotion: prefersReducedMotion,
+      }),
+    [isMobile, prefersReducedMotion]
+  );
+  const subtitleVariants = useMemo(
+    () =>
+      createCinemaVariants({
+        y: 26,
+        duration: 1.2,
+        delay: 0.14,
+        isMobile,
+        reducedMotion: prefersReducedMotion,
+      }),
+    [isMobile, prefersReducedMotion]
+  );
+  const tabsOrchestrator = useMemo(
+    () => createOrchestratorVariants(0.1, 0.18),
+    []
+  );
+  const tabItemVariants = useMemo(
+    () =>
+      createCinemaVariants({
+        x: -44,
+        duration: 1.15,
+        isMobile,
+        reducedMotion: prefersReducedMotion,
+      }),
+    [isMobile, prefersReducedMotion]
+  );
+  const leftShutterVariants = useMemo(
+    () =>
+      createCinemaVariants({
+        x: -52,
+        duration: 1.3,
+        delay: 0.2,
+        isMobile,
+        reducedMotion: prefersReducedMotion,
+      }),
+    [isMobile, prefersReducedMotion]
+  );
+  const rightStudioVariants = useMemo(
+    () =>
+      createCinemaVariants({
+        x: 68,
+        scale: 0.96,
+        duration: 1.35,
+        delay: 0.22,
+        isMobile,
+        reducedMotion: prefersReducedMotion,
+      }),
+    [isMobile, prefersReducedMotion]
+  );
+
   const handleStudioSpecular = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       const rect = e.currentTarget.getBoundingClientRect();
@@ -165,18 +230,15 @@ export default function WorkbenchStage({
   };
 
   return (
-    /* Section 5: Solidity Workbench — Early Bottom-Zoom Stage (Completes at 68% viewport, ZERO late arrival) */
-    <SectionRevealStage
+    /* Section 5: Solidity Workbench — Instant Trigger (amount: 0.08), Slo-Mo Cinema Finish */
+    <div
       id="workbench"
-      variant="early-zoom"
-      sculptedTop
-      outerClassName="bg-[#1B120D] -mt-[2px] scroll-mt-24"
-      backdropNode={<SheetSilkCrest idPrefix="archive-to-workbench" />}
-      innerClassName="bg-[#F3EAE0] text-[#16100C] silk-grain pt-14 sm:pt-20 overflow-hidden shadow-[0_-24px_60px_-26px_rgba(10,6,4,0.5)]"
+      className="relative bg-[#1B120D] -mt-[2px] scroll-mt-24 section-perf"
     >
+      <SheetSilkCrest idPrefix="archive-to-workbench" />
       <section
         aria-label="Solidity Workbench"
-        className="relative section-perf"
+        className="relative z-10 rounded-t-[36px] sm:rounded-t-[48px] bg-[#F3EAE0] text-[#16100C] silk-grain pt-14 sm:pt-20 overflow-hidden shadow-[0_-24px_60px_-26px_rgba(10,6,4,0.5)] section-perf"
       >
         {/* Lightweight static warm-amber washes over Soft Champagne Sand canvas */}
         <div
@@ -196,19 +258,18 @@ export default function WorkbenchStage({
           }}
         />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20">
-          {/* Immediate Early Entry: Headline from Top-Left, Subtitle from Left */}
+        <motion.div
+          initial={prefersReducedMotion ? false : "hidden"}
+          whileInView="visible"
+          viewport={WORKBENCH_VIEWPORT}
+          variants={sectionOrchestrator}
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20"
+        >
+          {/* Beat 1 (0.00s): Headline from Left (-56 -> 0), Beat 2 (+0.14s): Subtitle rises */}
           <div className="max-w-3xl">
             <motion.h2
-              initial={
-                prefersReducedMotion
-                  ? false
-                  : { opacity: 0, x: isMobile ? -22 : -52, y: -12 }
-              }
-              whileInView={{ opacity: 1, x: 0, y: 0 }}
-              viewport={WORKBENCH_VIEWPORT}
-              transition={{ duration: 0.85, ease: SLOMO_EASE }}
-              className="font-display font-bold text-[#16100C] text-3xl sm:text-4xl lg:text-[3rem] leading-[1.08] tracking-[-0.032em] gpu-layer"
+              variants={headlineVariants}
+              className="font-display font-bold text-[#16100C] text-3xl sm:text-4xl lg:text-[3rem] leading-[1.08] tracking-[-0.032em]"
               style={{ textWrap: "balance" }}
             >
               Production Contract{" "}
@@ -216,49 +277,34 @@ export default function WorkbenchStage({
             </motion.h2>
 
             <motion.p
+              variants={subtitleVariants}
               data-testid="section-subtitle-workbench"
-              initial={
-                prefersReducedMotion
-                  ? false
-                  : { opacity: 0, x: isMobile ? -16 : -32 }
-              }
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={WORKBENCH_VIEWPORT}
-              transition={{ duration: 0.85, delay: 0.05, ease: SLOMO_EASE }}
-              className="mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#4A3F37] gpu-layer"
+              className="mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#4A3F37]"
             >
               Inspect real Solidity and inline Yul guards extracted from
               deployed DeFi, RWA, keeper, and governance systems.
             </motion.p>
           </div>
 
-          {/* File-Switcher Dock Glides Smoothly from Left Immediately on Entry */}
-          <motion.div
-            initial={
-              prefersReducedMotion
-                ? false
-                : { opacity: 0, x: isMobile ? -24 : -60 }
-            }
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={WORKBENCH_VIEWPORT}
-            transition={{ duration: 0.85, delay: 0.06, ease: SLOMO_EASE }}
-            className="mt-9 relative z-30 gpu-layer"
-          >
-            <div
+          {/* Beat 3: Solidity/Yul File Tabs Cascade One-by-One from Left (-44 -> 0, stagger 0.1s) */}
+          <div className="mt-9 relative z-30">
+            <motion.div
               role="tablist"
               aria-label="Solidity and Yul contract primitives"
+              variants={tabsOrchestrator}
               className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar-hide p-1.5 rounded-full bg-[#E7DCCE]/92 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_12px_30px_-20px_rgba(20,14,11,0.2)] w-full lg:w-fit"
             >
               {ARCHITECTURE_INSIGHTS.map((insight) => {
                 const isSelected = insight.id === activeInsight.id;
                 return (
-                  <button
+                  <motion.button
                     key={insight.id}
                     type="button"
                     role="tab"
                     data-testid={`workbench-tab-${insight.id}`}
                     aria-selected={isSelected}
                     onClick={() => handleSelectTab(insight.id)}
+                    variants={tabItemVariants}
                     className={`relative z-30 inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-full font-mono-tabular text-xs font-semibold transition-colors duration-150 whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04] ${
                       isSelected
                         ? "text-[#FAF6F0]"
@@ -284,37 +330,30 @@ export default function WorkbenchStage({
                       aria-hidden="true"
                     />
                     <span className="relative z-10">{insight.filename}</span>
-                  </button>
+                  </motion.button>
                 );
               })}
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
 
-          {/* Simultaneous Opposing Split Glide: Left Breakdown (-52 -> 0), Dark Code Studio (+68 -> 0, scale 0.95 -> 1) */}
+          {/* Beat 4: Left Breakdown (-52 -> 0) & Right Dark Espresso Code Studio (+68 -> 0, scale 0.96 -> 1) */}
           <div className="mt-9 relative z-20 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
-            {/* Left (5 cols): Editorial Breakdown */}
+            {/* Left Shutter (5 cols): Editorial Breakdown Glides from Left */}
             <motion.div
-              initial={
-                prefersReducedMotion
-                  ? false
-                  : { opacity: 0, x: isMobile ? -22 : -52 }
-              }
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={WORKBENCH_VIEWPORT}
-              transition={{ duration: 0.85, delay: 0.08, ease: SLOMO_EASE }}
-              className="lg:col-span-5 flex flex-col justify-between pt-1 gpu-layer"
+              variants={leftShutterVariants}
+              className="lg:col-span-5 flex flex-col justify-between pt-1"
             >
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   key={`meta-${activeInsight.id}`}
                   initial={
-                    prefersReducedMotion ? false : { opacity: 0, y: 10 }
+                    prefersReducedMotion ? false : { opacity: 0, y: 16 }
                   }
                   animate={{ opacity: 1, y: 0 }}
                   exit={
-                    prefersReducedMotion ? undefined : { opacity: 0, y: -8 }
+                    prefersReducedMotion ? undefined : { opacity: 0, y: -10 }
                   }
-                  transition={{ duration: 0.22, ease: LUXURY_EASE }}
+                  transition={{ duration: 0.55, ease: CINEMA_EASE }}
                 >
                   <p className="font-mono-tabular text-xs font-semibold text-[#C84B04]">
                     {activeInsight.protocol}
@@ -361,19 +400,12 @@ export default function WorkbenchStage({
               </AnimatePresence>
             </motion.div>
 
-            {/* Right (7 cols): Elevated Deep Espresso Code Studio (+68 -> 0, scale 0.95 -> 1, Immediate Entry) */}
+            {/* Right Shutter (7 cols): Dark Espresso Code Studio Glides Slo-Mo from Right (+68 -> 0, scale 0.96 -> 1) */}
             <motion.div
-              initial={
-                prefersReducedMotion
-                  ? false
-                  : { opacity: 0, x: isMobile ? 26 : 68, scale: 0.95 }
-              }
-              whileInView={{ opacity: 1, x: 0, scale: 1 }}
-              viewport={WORKBENCH_VIEWPORT}
-              transition={{ duration: 0.85, delay: 0.08, ease: SLOMO_EASE }}
+              variants={rightStudioVariants}
               data-testid="workbench-code-panel"
               onMouseMove={handleStudioSpecular}
-              className="specular-surface-dark relative lg:col-span-7 rounded-[34px] bg-[#130D0A] text-[#FAF6F0] transition-shadow duration-250 flex flex-col overflow-hidden shadow-[inset_0_1px_0_rgba(250,246,240,0.1),0_30px_68px_-28px_rgba(20,14,11,0.6)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.24),0_34px_74px_-26px_rgba(232,93,4,0.28)] gpu-layer"
+              className="specular-surface-dark relative lg:col-span-7 rounded-[34px] bg-[#130D0A] text-[#FAF6F0] transition-shadow duration-250 flex flex-col overflow-hidden shadow-[inset_0_1px_0_rgba(250,246,240,0.1),0_30px_68px_-28px_rgba(20,14,11,0.6)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.24),0_34px_74px_-26px_rgba(232,93,4,0.28)]"
             >
               {/* Soft Ambient Studio Top Radial Wash */}
               <div
@@ -463,20 +495,20 @@ export default function WorkbenchStage({
                 </div>
               </div>
 
-              {/* Numbered Syntax-Highlighted Solidity / Yul Code with Instant Crisp Crossfade */}
+              {/* Numbered Syntax-Highlighted Solidity / Yul Code with Silky Upward Fade-Glide (y: 16 -> 0, 0.55s) */}
               <div className="px-4 sm:px-6 py-5 overflow-x-auto bg-[#130D0A]">
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.pre
                     key={`code-${activeInsight.id}`}
                     initial={
-                      prefersReducedMotion ? false : { opacity: 0, y: 10 }
+                      prefersReducedMotion ? false : { opacity: 0, y: 16 }
                     }
                     animate={{ opacity: 1, y: 0 }}
                     exit={
-                      prefersReducedMotion ? undefined : { opacity: 0, y: -8 }
+                      prefersReducedMotion ? undefined : { opacity: 0, y: -10 }
                     }
-                    transition={{ duration: 0.22, ease: LUXURY_EASE }}
-                    className="font-mono-tabular text-[12px] sm:text-[12.5px] leading-[1.74] text-[#EFE6DC] will-change-transform"
+                    transition={{ duration: 0.55, ease: CINEMA_EASE }}
+                    className="font-mono-tabular text-[12px] sm:text-[12.5px] leading-[1.74] text-[#EFE6DC]"
                   >
                     <code>
                       {codeLines.map((line, index) => (
@@ -501,7 +533,7 @@ export default function WorkbenchStage({
               </div>
             </motion.div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Transition #5: Pure Filled Luminous Burnt-Orange Solar Horizon Arch (#F3EAE0 -> #0A0604) */}
         <SolarHorizonArch
@@ -510,6 +542,6 @@ export default function WorkbenchStage({
           className="mt-14 sm:mt-16"
         />
       </section>
-    </SectionRevealStage>
+    </div>
   );
 }

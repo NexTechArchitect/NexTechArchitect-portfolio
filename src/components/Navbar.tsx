@@ -17,7 +17,7 @@ interface NavbarProps {
   onNavigate?: () => void;
 }
 
-const SLOMO_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
+const CINEMA_EASE: [number, number, number, number] = [0.19, 1, 0.22, 1];
 
 export default function Navbar({
   onOpenResume,
@@ -31,9 +31,13 @@ export default function Navbar({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => {
+    let rafId = 0;
+
+    const measure = () => {
+      rafId = 0;
       const y = window.scrollY;
-      setScrolled(y > 18);
+      const nextScrolled = y > 18;
+      setScrolled((prev) => (prev === nextScrolled ? prev : nextScrolled));
 
       const probeY = y + 180;
       let current = "";
@@ -46,12 +50,20 @@ export default function Navbar({
           }
         }
       }
-      setActiveSection(current);
+      setActiveSection((prev) => (prev === current ? prev : current));
     };
 
-    onScroll();
+    const onScroll = () => {
+      if (rafId !== 0) return;
+      rafId = window.requestAnimationFrame(measure);
+    };
+
+    measure();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      if (rafId !== 0) window.cancelAnimationFrame(rafId);
+      window.removeEventListener("scroll", onScroll);
+    };
   }, []);
 
   const handleAnchorClick = (
@@ -90,10 +102,10 @@ export default function Navbar({
     <header className="fixed top-4 sm:top-5 inset-x-0 z-40 pointer-events-none">
       <motion.div
         data-testid="floating-navbar-pill"
-        initial={prefersReducedMotion ? false : { opacity: 0, y: -28 }}
+        initial={prefersReducedMotion ? false : { opacity: 0, y: -24 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.85, ease: SLOMO_EASE }}
-        className={`relative pointer-events-auto w-[calc(100%-1.5rem)] max-w-6xl mx-auto h-[62px] sm:h-[66px] lg:h-[68px] px-3.5 sm:px-5 lg:px-6 rounded-full backdrop-blur-md text-[#FAF6F0] transition-[background-color,box-shadow] duration-300 flex items-center justify-between gap-2 sm:gap-4 lg:gap-6 will-change-transform ${pillSurfaceClass}`}
+        transition={{ duration: 1.2, delay: 0, ease: CINEMA_EASE }}
+        className={`relative pointer-events-auto w-[calc(100%-1.5rem)] max-w-6xl mx-auto h-[62px] sm:h-[66px] lg:h-[68px] px-3.5 sm:px-5 lg:px-6 rounded-full backdrop-blur-md text-[#FAF6F0] transition-[background-color,box-shadow] duration-300 flex items-center justify-between gap-2 sm:gap-4 lg:gap-6 ${pillSurfaceClass}`}
       >
         {/* Left: Refined Copper-Orange Geometric Mark + Wordmark */}
         <a
@@ -214,7 +226,7 @@ export default function Navbar({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.96 }}
             transition={{ type: "spring", stiffness: 320, damping: 26 }}
-            className="pointer-events-auto lg:hidden mt-2.5 w-[calc(100%-1.5rem)] max-w-6xl mx-auto rounded-[28px] bg-[#16100C]/96 backdrop-blur-xl p-4 sm:p-5 shadow-[inset_0_1px_0_rgba(255,168,107,0.16),0_24px_56px_-18px_rgba(0,0,0,0.82)] text-[#FAF6F0] will-change-transform"
+            className="pointer-events-auto lg:hidden mt-2.5 w-[calc(100%-1.5rem)] max-w-6xl mx-auto rounded-[28px] bg-[#16100C]/96 backdrop-blur-xl p-4 sm:p-5 shadow-[inset_0_1px_0_rgba(255,168,107,0.16),0_24px_56px_-18px_rgba(0,0,0,0.82)] text-[#FAF6F0]"
           >
             <nav
               aria-label="Mobile Navigation"
