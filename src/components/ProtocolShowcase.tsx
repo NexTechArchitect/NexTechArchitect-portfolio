@@ -31,13 +31,9 @@ import {
   type ProjectItem,
 } from "@/data/projects";
 import {
-  CARD_VIEWPORT,
   CINEMA_EASE,
-  REPLAY_VIEWPORT,
   SheetSilkCrest,
   SweepingRibbonCurve,
-  createCinemaVariants,
-  createOrchestratorVariants,
   useIsMobile,
 } from "@/components/SectionCurves";
 import { getFlagshipProjects } from "@/lib/portfolio";
@@ -62,6 +58,15 @@ const PROJECT_ICON_MAP: Record<
   image: ImageIcon,
   lock: Lock,
   globe: Globe,
+};
+
+// Stationary outer viewport triggers (replayable on every scroll down & up, zero edge flicker)
+const SECTION_OBSERVER_VIEWPORT = { once: false, amount: 0.08 as const };
+const FLAGSHIP_CARD_VIEWPORT = { once: false, amount: 0.1 as const };
+
+const STATIONARY_OUTER_VARIANTS: Variants = {
+  hidden: {},
+  visible: {},
 };
 
 interface FlagshipCardProps {
@@ -96,46 +101,88 @@ function FlagshipCard({
   );
 
   const Icon = PROJECT_ICON_MAP[project.iconKey] || Cpu;
-  // Alternating Diagonal Banking Arcs: Cards 1 & 3 bank from Left (-72, +46, -2deg), Cards 2 & 4 bank from Right (+72, +46, +2deg)
+  // Grand Widescreen Alternating Cinema Sweeps:
+  // Cards 1 & 3 sweep from Far Left (-140 desktop / -54 mobile), Cards 2 & 4 sweep from Far Right (+140 desktop / +54 mobile)
   const isFromLeft = index % 2 === 0;
 
-  const outerOrchestrator = useMemo(() => createOrchestratorVariants(0, 0), []);
+  const cardVariants = useMemo<Variants>(() => {
+    if (prefersReducedMotion) {
+      return {
+        hidden: { opacity: 1, x: 0, y: 0, scale: 1 },
+        visible: {
+          opacity: 1,
+          x: 0,
+          y: 0,
+          scale: 1,
+          transition: { duration: 0 },
+        },
+      };
+    }
 
-  const cardVariants = useMemo(
-    () =>
-      createCinemaVariants({
-        x: isFromLeft ? -72 : 72,
-        y: 46,
-        rotate: isFromLeft ? -2 : 2,
-        scale: 0.92,
-        duration: 1.35,
-        delay: !isMobile && index % 2 === 1 ? 0.1 : 0,
-        staggerChildren: 0.08,
-        delayChildren: 0.12,
-        isMobile,
-        reducedMotion: prefersReducedMotion,
-      }),
-    [isFromLeft, index, isMobile, prefersReducedMotion]
-  );
+    const sweepX = isFromLeft
+      ? isMobile
+        ? -54
+        : -140
+      : isMobile
+      ? 54
+      : 140;
 
-  const cardInnerVariants = useMemo(
-    () =>
-      createCinemaVariants({
-        y: 18,
-        duration: 0.95,
-        isMobile,
-        reducedMotion: prefersReducedMotion,
-      }),
-    [isMobile, prefersReducedMotion]
-  );
+    return {
+      hidden: {
+        opacity: 0,
+        x: sweepX,
+        y: isMobile ? 24 : 36,
+        scale: 0.91,
+        transition: { duration: 0.22, ease: "easeOut" },
+      },
+      visible: {
+        opacity: 1,
+        x: 0,
+        y: 0,
+        scale: 1,
+        transition: {
+          duration: 1.3,
+          delay: !isMobile && index % 2 === 1 ? 0.08 : 0,
+          ease: CINEMA_EASE,
+        },
+      },
+    };
+  }, [isFromLeft, index, isMobile, prefersReducedMotion]);
+
+  // Single clean inner beat: only the bottom actions/CTA bar settles slightly after the card glides in
+  const actionsBeatVariants = useMemo<Variants>(() => {
+    if (prefersReducedMotion) {
+      return {
+        hidden: { opacity: 1, y: 0 },
+        visible: { opacity: 1, y: 0, transition: { duration: 0 } },
+      };
+    }
+
+    return {
+      hidden: {
+        opacity: 0,
+        y: 22,
+        transition: { duration: 0.16, ease: "easeOut" },
+      },
+      visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+          duration: 0.85,
+          delay: 0.22,
+          ease: CINEMA_EASE,
+        },
+      },
+    };
+  }, [prefersReducedMotion]);
 
   return (
-    /* Stationary outer motion.div triggers native Framer Motion whileInView (amount: 0.12) with zero edge flicker */
+    /* Stationary outer observer: bounding box never moves so +/-140px sweeps never flicker or stutter */
     <motion.div
       initial={prefersReducedMotion ? false : "hidden"}
       whileInView="visible"
-      viewport={CARD_VIEWPORT}
-      variants={outerOrchestrator}
+      viewport={FLAGSHIP_CARD_VIEWPORT}
+      variants={STATIONARY_OUTER_VARIANTS}
       className="h-full"
     >
       <motion.article
@@ -146,11 +193,11 @@ function FlagshipCard({
           prefersReducedMotion || isMobile
             ? undefined
             : {
-                y: -5,
-                transition: { type: "spring", stiffness: 280, damping: 22 },
+                y: -6,
+                transition: { duration: 0.32, ease: CINEMA_EASE },
               }
         }
-        className={`group card-sheen-sweep h-full rounded-[34px] sm:rounded-[38px] p-6 sm:p-8 flex flex-col justify-between transition-shadow duration-300 overflow-hidden ${
+        className={`group gpu-card transform-gpu [backface-visibility:hidden] [contain:layout_style] card-sheen-sweep h-full rounded-[34px] sm:rounded-[38px] p-6 sm:p-8 flex flex-col justify-between transition-shadow duration-300 overflow-hidden ${
           darkVariant
             ? "specular-surface-dark bg-[#140E0B] text-[#FAF6F0] shadow-[inset_0_1px_0_rgba(250,246,240,0.1),0_26px_64px_-32px_rgba(20,14,11,0.75)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.34),0_38px_84px_-24px_rgba(232,93,4,0.42)]"
             : "specular-surface bg-[#FFFDF9] text-[#16100C] shadow-[inset_0_1px_0_rgba(255,255,255,0.96),0_22px_54px_-34px_rgba(20,14,11,0.18)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,1),0_36px_76px_-24px_rgba(232,93,4,0.34)]"
@@ -159,12 +206,9 @@ function FlagshipCard({
         {/* Soft diagonal light sheen sweeping cleanly across card surface on hover */}
         <span aria-hidden="true" className="card-sheen-beam" />
 
+        {/* Pre-composited static card body: moves as ONE single cached GPU bitmap */}
         <div className="relative z-10">
-          {/* Layer 1: Metadata Badge Bloom */}
-          <motion.div
-            variants={cardInnerVariants}
-            className="flex items-center justify-between gap-3 text-xs font-mono-tabular"
-          >
+          <div className="flex items-center justify-between gap-3 text-xs font-mono-tabular">
             <span
               className={
                 darkVariant
@@ -189,13 +233,9 @@ function FlagshipCard({
                 {project.standard}
               </span>
             </span>
-          </motion.div>
+          </div>
 
-          {/* Layer 2: Icon + Title + Security Metric Bloom */}
-          <motion.div
-            variants={cardInnerVariants}
-            className="mt-5 flex items-start gap-4"
-          >
+          <div className="mt-5 flex items-start gap-4">
             <div
               className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-transform duration-300 ease-out group-hover:scale-110 ${
                 darkVariant
@@ -221,10 +261,9 @@ function FlagshipCard({
                 {project.metric}
               </p>
             </div>
-          </motion.div>
+          </div>
 
-          {/* Layer 3: Editorial Description, Contract Architecture Metrics & Tech Badges Bloom */}
-          <motion.div variants={cardInnerVariants}>
+          <div>
             <p
               className={`mt-4 text-sm sm:text-[15px] leading-[1.68] ${
                 darkVariant ? "text-[#D8CEC4]" : "text-[#4A3F37]"
@@ -279,13 +318,13 @@ function FlagshipCard({
                 </span>
               ))}
             </div>
-          </motion.div>
+          </div>
         </div>
 
-        {/* Layer 4: Protocol Actions Bloom with Tactile Springs & Sheen */}
+        {/* One clean inner beat: bottom action bar settles cleanly behind the card sweep */}
         <motion.div
-          variants={cardInnerVariants}
-          className="relative z-10 mt-7 flex flex-wrap items-center justify-between gap-3"
+          variants={actionsBeatVariants}
+          className="relative z-10 mt-7 flex flex-wrap items-center justify-between gap-3 transform-gpu [backface-visibility:hidden]"
         >
           <div className="flex flex-wrap items-center gap-2">
             <button
@@ -374,73 +413,86 @@ export default function ProtocolShowcase({
   const { explainProtocol } = useAgent();
   const flagshipProjects = getFlagshipProjects();
 
-  // Flagship Header Masked Curtain Orchestrator
-  const flagshipHeaderOrchestrator = useMemo(
-    () => createOrchestratorVariants(0, 0),
-    []
-  );
-  const flagshipHeadlineVariants = useMemo(
-    () =>
-      createCinemaVariants({
-        y: "105%",
-        duration: 1.2,
-        delay: 0,
-        isMobile,
-        reducedMotion: prefersReducedMotion,
-      }),
-    [isMobile, prefersReducedMotion]
-  );
-  const flagshipSubtitleVariants = useMemo(
-    () =>
-      createCinemaVariants({
-        y: 26,
-        duration: 1.15,
-        delay: 0.14,
-        isMobile,
-        reducedMotion: prefersReducedMotion,
-      }),
-    [isMobile, prefersReducedMotion]
-  );
+  // Section A Header: Bold upward cinema lift (y: 64 -> 0, scale: 0.94 -> 1, opacity: 0 -> 1, 1.15s)
+  const flagshipHeaderVariants = useMemo<Variants>(() => {
+    if (prefersReducedMotion) {
+      return {
+        hidden: { opacity: 1, y: 0, scale: 1 },
+        visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0 } },
+      };
+    }
+    return {
+      hidden: {
+        opacity: 0,
+        y: isMobile ? 40 : 64,
+        scale: 0.94,
+        transition: { duration: 0.2, ease: "easeOut" },
+      },
+      visible: {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        transition: { duration: 1.15, ease: CINEMA_EASE },
+      },
+    };
+  }, [isMobile, prefersReducedMotion]);
 
-  // Archive Section: Opposing Corner Convergence (Top-Left vs Bottom-Right) + Fan-Out Spread
-  const archiveSectionOrchestrator = useMemo(
-    () => createOrchestratorVariants(0, 0),
-    []
-  );
-  const archiveTitleVariants = useMemo(
-    () =>
-      createCinemaVariants({
-        x: -40,
-        y: -22,
-        duration: 1.2,
-        delay: 0,
-        isMobile,
-        reducedMotion: prefersReducedMotion,
-      }),
-    [isMobile, prefersReducedMotion]
-  );
-  const archiveSubtitleVariants = useMemo(
-    () =>
-      createCinemaVariants({
-        x: 40,
-        y: 22,
-        duration: 1.2,
-        delay: 0.12,
-        isMobile,
-        reducedMotion: prefersReducedMotion,
-      }),
-    [isMobile, prefersReducedMotion]
-  );
+  // Section B Archive Header: Opposing Corner Header Convergence (Top-Left vs Top-Right, +/-96px desktop)
+  const archiveTitleVariants = useMemo<Variants>(() => {
+    if (prefersReducedMotion) {
+      return {
+        hidden: { opacity: 1, x: 0, y: 0 },
+        visible: { opacity: 1, x: 0, y: 0, transition: { duration: 0 } },
+      };
+    }
+    return {
+      hidden: {
+        opacity: 0,
+        x: isMobile ? -42 : -96,
+        y: isMobile ? -16 : -24,
+        transition: { duration: 0.2, ease: "easeOut" },
+      },
+      visible: {
+        opacity: 1,
+        x: 0,
+        y: 0,
+        transition: { duration: 1.2, ease: CINEMA_EASE },
+      },
+    };
+  }, [isMobile, prefersReducedMotion]);
 
+  const archiveSubtitleVariants = useMemo<Variants>(() => {
+    if (prefersReducedMotion) {
+      return {
+        hidden: { opacity: 1, x: 0, y: 0 },
+        visible: { opacity: 1, x: 0, y: 0, transition: { duration: 0 } },
+      };
+    }
+    return {
+      hidden: {
+        opacity: 0,
+        x: isMobile ? 42 : 96,
+        y: isMobile ? -16 : -24,
+        transition: { duration: 0.2, ease: "easeOut" },
+      },
+      visible: {
+        opacity: 1,
+        x: 0,
+        y: 0,
+        transition: { duration: 1.2, delay: 0.08, ease: CINEMA_EASE },
+      },
+    };
+  }, [isMobile, prefersReducedMotion]);
+
+  // Section B Archive Cards: Deep Bottom-Left & Deep Bottom-Right Depth-Zoom Sweeps (ZERO layout prop, ZERO rotate)
   const archiveLeftCardVariants = useMemo<Variants>(() => {
     if (prefersReducedMotion) {
       return {
-        hidden: { opacity: 1, x: 0, y: 0, rotate: 0, scale: 1 },
+        hidden: { opacity: 1, x: 0, y: 0, scale: 1 },
         visible: {
           opacity: 1,
           x: 0,
           y: 0,
-          rotate: 0,
           scale: 1,
           transition: { duration: 0 },
         },
@@ -449,22 +501,19 @@ export default function ProtocolShowcase({
     return {
       hidden: {
         opacity: 0,
-        x: isMobile ? -16 : -36,
-        y: isMobile ? 28 : 52,
-        rotate: isMobile ? -0.75 : -1.5,
-        scale: isMobile ? 0.94 : 0.89,
+        x: isMobile ? -40 : -88,
+        y: isMobile ? 54 : 84,
+        scale: 0.84,
         transition: { duration: 0.2, ease: "easeOut" },
       },
       visible: {
         opacity: 1,
         x: 0,
         y: 0,
-        rotate: 0,
         scale: 1,
         transition: {
-          layout: { type: "spring", stiffness: 320, damping: 28 },
-          duration: 1.2,
-          delay: 0.2,
+          duration: 1.25,
+          delay: 0,
           ease: CINEMA_EASE,
         },
       },
@@ -474,12 +523,11 @@ export default function ProtocolShowcase({
   const archiveRightCardVariants = useMemo<Variants>(() => {
     if (prefersReducedMotion) {
       return {
-        hidden: { opacity: 1, x: 0, y: 0, rotate: 0, scale: 1 },
+        hidden: { opacity: 1, x: 0, y: 0, scale: 1 },
         visible: {
           opacity: 1,
           x: 0,
           y: 0,
-          rotate: 0,
           scale: 1,
           transition: { duration: 0 },
         },
@@ -488,22 +536,19 @@ export default function ProtocolShowcase({
     return {
       hidden: {
         opacity: 0,
-        x: isMobile ? 16 : 36,
-        y: isMobile ? 28 : 52,
-        rotate: isMobile ? 0.75 : 1.5,
-        scale: isMobile ? 0.94 : 0.89,
+        x: isMobile ? 40 : 88,
+        y: isMobile ? 54 : 84,
+        scale: 0.84,
         transition: { duration: 0.2, ease: "easeOut" },
       },
       visible: {
         opacity: 1,
         x: 0,
         y: 0,
-        rotate: 0,
         scale: 1,
         transition: {
-          layout: { type: "spring", stiffness: 320, damping: 28 },
-          duration: 1.2,
-          delay: 0.3,
+          duration: 1.25,
+          delay: 0.14,
           ease: CINEMA_EASE,
         },
       },
@@ -521,65 +566,69 @@ export default function ProtocolShowcase({
 
   return (
     <>
-      {/* Section 3: Flagship Protocols — Masked Curtain + Alternating Diagonal Banking Arcs */}
+      {/* Section A: Flagship Protocols — Grand Widescreen Alternating Cinema Sweeps */}
       <div
         id="protocols"
-        className="relative bg-[#140E0B] -mt-[2px] scroll-mt-24 section-perf"
+        className="relative bg-[#140E0B] -mt-[2px] scroll-mt-24 section-perf overflow-x-clip"
       >
         <SheetSilkCrest idPrefix="arch-to-protocols" />
         <section
           aria-label="Flagship Protocols"
-          className="relative z-10 rounded-t-[36px] sm:rounded-t-[48px] bg-[#FBF8F3] text-[#16100C] silk-grain pt-14 sm:pt-20 overflow-hidden shadow-[0_-24px_60px_-26px_rgba(10,6,4,0.48)] section-perf"
+          className="relative z-10 rounded-t-[36px] sm:rounded-t-[48px] bg-[#FBF8F3] text-[#16100C] silk-grain pt-14 sm:pt-20 overflow-x-clip shadow-[0_-24px_60px_-26px_rgba(10,6,4,0.48)] section-perf"
         >
-          {/* Lightweight zero-blur pure CSS radial gradient ambient washes */}
+          {/* Ambient washes clipped inside isolated background layer */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute top-16 right-[-8%] w-[480px] h-[540px] rounded-full opacity-50"
-            style={{
-              background:
-                "radial-gradient(circle, rgba(217, 119, 54, 0.11) 0%, rgba(251, 248, 243, 0) 70%)",
-            }}
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute bottom-28 left-[-10%] w-[420px] h-[480px] rounded-full opacity-40"
-            style={{
-              background:
-                "radial-gradient(circle, rgba(244, 140, 6, 0.09) 0%, rgba(251, 248, 243, 0) 70%)",
-            }}
-          />
+            className="pointer-events-none absolute inset-0 overflow-hidden rounded-t-[36px] sm:rounded-t-[48px]"
+          >
+            <div
+              className="absolute top-16 right-[-8%] w-[480px] h-[540px] rounded-full opacity-50"
+              style={{
+                background:
+                  "radial-gradient(circle, rgba(217, 119, 54, 0.11) 0%, rgba(251, 248, 243, 0) 70%)",
+              }}
+            />
+            <div
+              className="absolute bottom-28 left-[-10%] w-[420px] h-[480px] rounded-full opacity-40"
+              style={{
+                background:
+                  "radial-gradient(circle, rgba(244, 140, 6, 0.09) 0%, rgba(251, 248, 243, 0) 70%)",
+              }}
+            />
+          </div>
 
           <div className="max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            {/* Masked Editorial Curtain Headline + Soft Subtitle Rise */}
+            {/* Stationary outer observer for Header Cinema Lift (y: 64 -> 0, scale: 0.94 -> 1) */}
             <motion.div
               initial={prefersReducedMotion ? false : "hidden"}
               whileInView="visible"
-              viewport={REPLAY_VIEWPORT}
-              variants={flagshipHeaderOrchestrator}
+              viewport={SECTION_OBSERVER_VIEWPORT}
+              variants={STATIONARY_OUTER_VARIANTS}
               className="max-w-3xl"
             >
-              <div className="overflow-hidden pb-1">
-                <motion.h2
-                  variants={flagshipHeadlineVariants}
+              <motion.div
+                variants={flagshipHeaderVariants}
+                className="transform-gpu [backface-visibility:hidden]"
+              >
+                <h2
                   className="font-display font-bold text-[#16100C] text-3xl sm:text-4xl lg:text-[3rem] leading-[1.08] tracking-[-0.03em]"
                   style={{ textWrap: "balance" }}
                 >
                   Flagship <span className="text-[#E85D04]">Protocols.</span>
-                </motion.h2>
-              </div>
+                </h2>
 
-              <motion.p
-                variants={flagshipSubtitleVariants}
-                data-testid="section-subtitle-flagship"
-                className="mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#4A3F37]"
-              >
-                Inspect deep architectural case studies, launch live
-                applications, or ask the protocol assistant to walk through any
-                contract system.
-              </motion.p>
+                <p
+                  data-testid="section-subtitle-flagship"
+                  className="mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#4A3F37]"
+                >
+                  Inspect deep architectural case studies, launch live
+                  applications, or ask the protocol assistant to walk through
+                  any contract system.
+                </p>
+              </motion.div>
             </motion.div>
 
-            {/* Alternating Diagonal Banking Arcs Grid (Cards 1 & 3 Left -2deg, Cards 2 & 4 Right +2deg) */}
+            {/* Grand Widescreen Alternating Cinema Sweeps Grid (Cards 1 & 3 Left -140px, Cards 2 & 4 Right +140px) */}
             <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
               {flagshipProjects.map((project, index) => (
                 <FlagshipCard
@@ -604,43 +653,46 @@ export default function ProtocolShowcase({
         </section>
       </div>
 
-      {/* Section 4: Archive — Opposing Corner Convergence + Diagonal Fan-Out Spread */}
+      {/* Section B: Archive — Opposing Split Header + Deep Bottom Depth-Zoom Waterfall */}
       <section
         id="archive"
         data-testid="protocol-archive-section"
         aria-label="Full-Stack and Core EVM Archive"
-        className="relative -mt-[2px] bg-[#1B120D] text-[#FAF6F0] silk-grain-dark pt-12 sm:pt-16 lg:pt-20 pb-24 sm:pb-32 scroll-mt-24 overflow-hidden section-perf"
+        className="relative -mt-[2px] bg-[#1B120D] text-[#FAF6F0] silk-grain-dark pt-12 sm:pt-16 lg:pt-20 pb-24 sm:pb-32 scroll-mt-24 overflow-x-clip section-perf"
       >
-        {/* Lightweight zero-blur pure CSS radial gradient copper-amber washes */}
+        {/* Ambient washes clipped inside isolated background layer */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -top-10 left-[-6%] w-[480px] h-[480px] rounded-full opacity-40"
-          style={{
-            background:
-              "radial-gradient(circle, rgba(232, 93, 4, 0.24) 0%, rgba(217, 119, 54, 0.1) 44%, rgba(27, 18, 13, 0) 70%)",
-          }}
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute bottom-16 right-[-6%] w-[480px] h-[480px] rounded-full opacity-35"
-          style={{
-            background:
-              "radial-gradient(circle, rgba(244, 140, 6, 0.2) 0%, rgba(200, 90, 23, 0.08) 44%, rgba(27, 18, 13, 0) 70%)",
-          }}
-        />
-
-        <motion.div
-          initial={prefersReducedMotion ? false : "hidden"}
-          whileInView="visible"
-          viewport={REPLAY_VIEWPORT}
-          variants={archiveSectionOrchestrator}
-          className="relative z-10 max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-8"
+          className="pointer-events-none absolute inset-0 overflow-hidden"
         >
-          {/* Opposing Corner Convergence: Header Top-Left (-40, -22 -> 0), Subtitle Bottom-Right (+40, +22 -> 0) */}
-          <div className="max-w-3xl">
+          <div
+            className="absolute -top-10 left-[-6%] w-[480px] h-[480px] rounded-full opacity-40"
+            style={{
+              background:
+                "radial-gradient(circle, rgba(232, 93, 4, 0.24) 0%, rgba(217, 119, 54, 0.1) 44%, rgba(27, 18, 13, 0) 70%)",
+            }}
+          />
+          <div
+            className="absolute bottom-16 right-[-6%] w-[480px] h-[480px] rounded-full opacity-35"
+            style={{
+              background:
+                "radial-gradient(circle, rgba(244, 140, 6, 0.2) 0%, rgba(200, 90, 23, 0.08) 44%, rgba(27, 18, 13, 0) 70%)",
+            }}
+          />
+        </div>
+
+        <div className="relative z-10 max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Stationary outer observer for Opposing Corner Header Convergence (Top-Left vs Top-Right) */}
+          <motion.div
+            initial={prefersReducedMotion ? false : "hidden"}
+            whileInView="visible"
+            viewport={SECTION_OBSERVER_VIEWPORT}
+            variants={STATIONARY_OUTER_VARIANTS}
+            className="max-w-3xl"
+          >
             <motion.h2
               variants={archiveTitleVariants}
-              className="font-display font-bold text-[#FAF6F0] text-3xl sm:text-4xl lg:text-[2.85rem] leading-[1.08] tracking-[-0.03em]"
+              className="transform-gpu [backface-visibility:hidden] font-display font-bold text-[#FAF6F0] text-3xl sm:text-4xl lg:text-[2.85rem] leading-[1.08] tracking-[-0.03em]"
               style={{ textWrap: "balance" }}
             >
               Explore Full-Stack &amp;{" "}
@@ -650,139 +702,147 @@ export default function ProtocolShowcase({
             <motion.p
               variants={archiveSubtitleVariants}
               data-testid="section-subtitle-archive"
-              className="mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#D8CEC4]"
+              className="transform-gpu [backface-visibility:hidden] mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#D8CEC4]"
             >
               Browse every production dApp and standalone EVM contract primitive
               with live search, case study breakdowns, and interactive agent
               explanations.
             </motion.p>
-          </div>
+          </motion.div>
 
-          {/* Opposing Diagonal Fan-Out Spread (x: ±36, y: 52, rotate: ±1.5, scale: 0.89 -> 0, 0, 0, 1) */}
+          {/* Archive Portals: Individual Stationary Outer Observers + Deep Bottom Depth-Zoom (ZERO layout prop) */}
           <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-            {/* Portal 1: Full-Stack Web3 Protocols (Bottom-Left Fan-Out) */}
+            {/* Portal 1: Full-Stack Web3 Protocols (Deep Bottom-Left: x -88, y 84, scale 0.84 -> 1) */}
             <motion.div
-              layout
-              variants={archiveLeftCardVariants}
-              whileHover={
-                prefersReducedMotion || isMobile
-                  ? undefined
-                  : {
-                      y: -5,
-                      transition: {
-                        type: "spring",
-                        stiffness: 280,
-                        damping: 22,
-                      },
-                    }
-              }
-              onMouseMove={handlePortalSpecular}
-              className="specular-surface card-sheen-sweep overflow-hidden group rounded-[36px] sm:rounded-[40px] bg-[#FBF8F3] text-[#16100C] p-7 sm:p-9 lg:p-10 flex flex-col justify-between transition-shadow duration-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.96),0_26px_64px_-30px_rgba(0,0,0,0.7)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,1),0_34px_76px_-24px_rgba(232,93,4,0.34)]"
+              initial={prefersReducedMotion ? false : "hidden"}
+              whileInView="visible"
+              viewport={SECTION_OBSERVER_VIEWPORT}
+              variants={STATIONARY_OUTER_VARIANTS}
+              className="h-full"
             >
-              <span aria-hidden="true" className="card-sheen-beam" />
-              <div className="relative z-10">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="w-12 h-12 rounded-full bg-[#EFE6DA] flex items-center justify-center text-[#E85D04] shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] transition-transform duration-300 group-hover:scale-110">
-                    <FolderKanban className="w-5 h-5" aria-hidden="true" />
+              <motion.div
+                variants={archiveLeftCardVariants}
+                whileHover={
+                  prefersReducedMotion || isMobile
+                    ? undefined
+                    : {
+                        y: -6,
+                        transition: { duration: 0.32, ease: CINEMA_EASE },
+                      }
+                }
+                onMouseMove={handlePortalSpecular}
+                className="gpu-card transform-gpu [backface-visibility:hidden] [contain:layout_style] specular-surface card-sheen-sweep overflow-hidden group h-full rounded-[36px] sm:rounded-[40px] bg-[#FBF8F3] text-[#16100C] p-7 sm:p-9 lg:p-10 flex flex-col justify-between transition-shadow duration-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.96),0_26px_64px_-30px_rgba(0,0,0,0.7)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,1),0_34px_76px_-24px_rgba(232,93,4,0.34)]"
+              >
+                <span aria-hidden="true" className="card-sheen-beam" />
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="w-12 h-12 rounded-full bg-[#EFE6DA] flex items-center justify-center text-[#E85D04] shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] transition-transform duration-300 group-hover:scale-110">
+                      <FolderKanban className="w-5 h-5" aria-hidden="true" />
+                    </div>
+                    <span className="font-mono-tabular text-xs font-semibold text-[#6E5F54]">
+                      Warm Porcelain Atelier
+                    </span>
                   </div>
-                  <span className="font-mono-tabular text-xs font-semibold text-[#6E5F54]">
-                    Warm Porcelain Atelier
-                  </span>
+
+                  <h3 className="mt-5 font-display text-2xl sm:text-[1.65rem] font-bold text-[#16100C] tracking-[-0.025em]">
+                    Full-Stack Web3 Protocols
+                  </h3>
+                  <p className="mt-2.5 text-sm sm:text-[15px] leading-[1.68] text-[#4A3F37]">
+                    End-to-end DeFi, RWA, keeper automation, insurance,
+                    governance, and on-chain reputation protocols pairing
+                    audited Solidity cores with live Next.js and Wagmi
+                    interfaces.
+                  </p>
+
+                  <p className="mt-5 rounded-[24px] bg-[#EFE6DA]/82 px-4 py-3.5 text-xs font-mono-tabular text-[#4A3F37] leading-relaxed">
+                    {fullStackProjects.map((p) => p.shortTitle).join(" · ")}
+                  </p>
                 </div>
 
-                <h3 className="mt-5 font-display text-2xl sm:text-[1.65rem] font-bold text-[#16100C] tracking-[-0.025em]">
-                  Full-Stack Web3 Protocols
-                </h3>
-                <p className="mt-2.5 text-sm sm:text-[15px] leading-[1.68] text-[#4A3F37]">
-                  End-to-end DeFi, RWA, keeper automation, insurance,
-                  governance, and on-chain reputation protocols pairing audited
-                  Solidity cores with live Next.js and Wagmi interfaces.
-                </p>
-
-                <p className="mt-5 rounded-[24px] bg-[#EFE6DA]/82 px-4 py-3.5 text-xs font-mono-tabular text-[#4A3F37] leading-relaxed">
-                  {fullStackProjects.map((p) => p.shortTitle).join(" · ")}
-                </p>
-              </div>
-
-              <div className="relative z-10 mt-8">
-                <button
-                  type="button"
-                  onClick={() => onOpenArchive("fullstack")}
-                  className="group/btn btn-spring btn-cta-sheen inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-3 rounded-full bg-[#16100C] hover:bg-[#E85D04] text-[#FAF6F0] text-xs sm:text-sm font-semibold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04]"
-                >
-                  <span className="relative z-10">
-                    Explore Full-Stack Web3 Protocols
-                  </span>
-                  <ArrowUpRight
-                    className="relative z-10 w-4 h-4 transition-transform duration-200 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5"
-                    aria-hidden="true"
-                  />
-                </button>
-              </div>
+                <div className="relative z-10 mt-8">
+                  <button
+                    type="button"
+                    onClick={() => onOpenArchive("fullstack")}
+                    className="group/btn btn-spring btn-cta-sheen inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-3 rounded-full bg-[#16100C] hover:bg-[#E85D04] text-[#FAF6F0] text-xs sm:text-sm font-semibold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E85D04]"
+                  >
+                    <span className="relative z-10">
+                      Explore Full-Stack Web3 Protocols
+                    </span>
+                    <ArrowUpRight
+                      className="relative z-10 w-4 h-4 transition-transform duration-200 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5"
+                      aria-hidden="true"
+                    />
+                  </button>
+                </div>
+              </motion.div>
             </motion.div>
 
-            {/* Portal 2: Core EVM Contracts (Bottom-Right Fan-Out) */}
+            {/* Portal 2: Core EVM Contracts (Deep Bottom-Right: x +88, y 84, scale 0.84 -> 1) */}
             <motion.div
-              layout
-              variants={archiveRightCardVariants}
-              whileHover={
-                prefersReducedMotion || isMobile
-                  ? undefined
-                  : {
-                      y: -5,
-                      transition: {
-                        type: "spring",
-                        stiffness: 280,
-                        damping: 22,
-                      },
-                    }
-              }
-              onMouseMove={handlePortalSpecular}
-              className="specular-surface-dark card-sheen-sweep overflow-hidden group rounded-[36px] sm:rounded-[40px] bg-[#110B08] text-[#FAF6F0] p-7 sm:p-9 lg:p-10 flex flex-col justify-between transition-shadow duration-300 shadow-[inset_0_1px_0_rgba(250,246,240,0.1),0_26px_64px_-30px_rgba(0,0,0,0.82)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.28),0_34px_76px_-24px_rgba(232,93,4,0.38)]"
+              initial={prefersReducedMotion ? false : "hidden"}
+              whileInView="visible"
+              viewport={SECTION_OBSERVER_VIEWPORT}
+              variants={STATIONARY_OUTER_VARIANTS}
+              className="h-full"
             >
-              <span aria-hidden="true" className="card-sheen-beam" />
-              <div className="relative z-10">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="w-12 h-12 rounded-full bg-[#221610] flex items-center justify-center text-[#FF6B1A] shadow-[inset_0_1px_0_rgba(244,162,97,0.18)] transition-transform duration-300 group-hover:scale-110">
-                    <Terminal className="w-5 h-5" aria-hidden="true" />
+              <motion.div
+                variants={archiveRightCardVariants}
+                whileHover={
+                  prefersReducedMotion || isMobile
+                    ? undefined
+                    : {
+                        y: -6,
+                        transition: { duration: 0.32, ease: CINEMA_EASE },
+                      }
+                }
+                onMouseMove={handlePortalSpecular}
+                className="gpu-card transform-gpu [backface-visibility:hidden] [contain:layout_style] specular-surface-dark card-sheen-sweep overflow-hidden group h-full rounded-[36px] sm:rounded-[40px] bg-[#110B08] text-[#FAF6F0] p-7 sm:p-9 lg:p-10 flex flex-col justify-between transition-shadow duration-300 shadow-[inset_0_1px_0_rgba(250,246,240,0.1),0_26px_64px_-30px_rgba(0,0,0,0.82)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.28),0_34px_76px_-24px_rgba(232,93,4,0.38)]"
+              >
+                <span aria-hidden="true" className="card-sheen-beam" />
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="w-12 h-12 rounded-full bg-[#221610] flex items-center justify-center text-[#FF6B1A] shadow-[inset_0_1px_0_rgba(244,162,97,0.18)] transition-transform duration-300 group-hover:scale-110">
+                      <Terminal className="w-5 h-5" aria-hidden="true" />
+                    </div>
+                    <span className="font-mono-tabular text-xs font-semibold text-[#FF6B1A]">
+                      Obsidian Copper Lab
+                    </span>
                   </div>
-                  <span className="font-mono-tabular text-xs font-semibold text-[#FF6B1A]">
-                    Obsidian Copper Lab
-                  </span>
+
+                  <h3 className="mt-5 font-display text-2xl sm:text-[1.65rem] font-bold text-[#FAF6F0] tracking-[-0.025em]">
+                    Core EVM Contracts
+                  </h3>
+                  <p className="mt-2.5 text-sm sm:text-[15px] leading-[1.68] text-[#D8CEC4]">
+                    Focused Solidity and Foundry engineering covering CDP
+                    stablecoins, Chainlink VRF state machines, ERC-4337
+                    EntryPoint smart accounts, UUPS proxies, and Merkle-712
+                    claim vaults.
+                  </p>
+
+                  <p className="mt-5 rounded-[24px] bg-[#1D130E]/92 px-4 py-3.5 text-xs font-mono-tabular text-[#A69688] leading-relaxed shadow-[inset_0_1px_0_rgba(250,246,240,0.05)]">
+                    {coreProjects.map((p) => p.shortTitle).join(" · ")}
+                  </p>
                 </div>
 
-                <h3 className="mt-5 font-display text-2xl sm:text-[1.65rem] font-bold text-[#FAF6F0] tracking-[-0.025em]">
-                  Core EVM Contracts
-                </h3>
-                <p className="mt-2.5 text-sm sm:text-[15px] leading-[1.68] text-[#D8CEC4]">
-                  Focused Solidity and Foundry engineering covering CDP
-                  stablecoins, Chainlink VRF state machines, ERC-4337 EntryPoint
-                  smart accounts, UUPS proxies, and Merkle-712 claim vaults.
-                </p>
-
-                <p className="mt-5 rounded-[24px] bg-[#1D130E]/92 px-4 py-3.5 text-xs font-mono-tabular text-[#A69688] leading-relaxed shadow-[inset_0_1px_0_rgba(250,246,240,0.05)]">
-                  {coreProjects.map((p) => p.shortTitle).join(" · ")}
-                </p>
-              </div>
-
-              <div className="relative z-10 mt-8">
-                <button
-                  type="button"
-                  onClick={() => onOpenArchive("core")}
-                  className="group/btn btn-spring btn-cta-sheen inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-3 rounded-full bg-[#E85D04] hover:bg-[#D14F00] text-[#FAF6F0] text-xs sm:text-sm font-semibold cursor-pointer shadow-[0_14px_30px_-14px_rgba(232,93,4,0.72)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FAF6F0]"
-                >
-                  <span className="relative z-10">
-                    Explore Core EVM Contracts
-                  </span>
-                  <ArrowUpRight
-                    className="relative z-10 w-4 h-4 transition-transform duration-200 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5"
-                    aria-hidden="true"
-                  />
-                </button>
-              </div>
+                <div className="relative z-10 mt-8">
+                  <button
+                    type="button"
+                    onClick={() => onOpenArchive("core")}
+                    className="group/btn btn-spring btn-cta-sheen inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-3 rounded-full bg-[#E85D04] hover:bg-[#D14F00] text-[#FAF6F0] text-xs sm:text-sm font-semibold cursor-pointer shadow-[0_14px_30px_-14px_rgba(232,93,4,0.72)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FAF6F0]"
+                  >
+                    <span className="relative z-10">
+                      Explore Core EVM Contracts
+                    </span>
+                    <ArrowUpRight
+                      className="relative z-10 w-4 h-4 transition-transform duration-200 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5"
+                      aria-hidden="true"
+                    />
+                  </button>
+                </div>
+              </motion.div>
             </motion.div>
           </div>
-        </motion.div>
+        </div>
       </section>
     </>
   );

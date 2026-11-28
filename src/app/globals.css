@@ -68,7 +68,21 @@ body {
 }
 
 .gpu-layer {
+  transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
+}
+
+/* Pre-composited single-layer GPU card & studio surfaces (zero layout thrash during sweeps) */
+.gpu-card {
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  contain: layout style;
+}
+
+.gpu-studio {
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  contain: layout paint;
 }
 
 /* Frosted Cream Glass for floating light surfaces */

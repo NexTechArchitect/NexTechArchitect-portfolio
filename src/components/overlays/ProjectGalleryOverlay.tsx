@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback, useMemo } from "react";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion, type Variants } from "framer-motion";
 import {
   ArrowUpRight,
   Building2,
@@ -26,12 +26,7 @@ import {
 } from "lucide-react";
 import type { ProjectItem } from "@/data/projects";
 import { filterProjectsByQuery } from "@/lib/portfolio";
-import {
-  CINEMA_EASE,
-  LUXURY_EASE,
-  REPLAY_VIEWPORT,
-  useIsMobile,
-} from "@/components/SectionCurves";
+import { CINEMA_EASE, useIsMobile } from "@/components/SectionCurves";
 
 const ICON_MAP: Record<
   ProjectItem["iconKey"],
@@ -54,11 +49,19 @@ const ICON_MAP: Record<
   globe: Globe,
 };
 
+const ARCHIVE_CARD_VIEWPORT = { once: false, amount: 0.08 as const };
+
+const STATIONARY_OUTER_VARIANTS: Variants = {
+  hidden: {},
+  visible: {},
+};
+
 function GalleryCard({
   project,
   index,
   isDarkLab,
   isMobile,
+  isFiltering,
   onSelect,
   onAskAmit,
 }: {
@@ -66,6 +69,7 @@ function GalleryCard({
   index: number;
   isDarkLab: boolean;
   isMobile: boolean;
+  isFiltering: boolean;
   onSelect: () => void;
   onAskAmit: () => void;
 }) {
@@ -86,220 +90,266 @@ function GalleryCard({
   }, []);
 
   const Icon = ICON_MAP[project.iconKey] || Cpu;
-  // 3-Column Fan-Out Spread: Left (-36, 52, -1.5deg), Center Lens Zoom (0, 58, 0.86), Right (+36, 52, +1.5deg)
-  const col = index % 3;
-  const fanX = col === 0 ? (isMobile ? -16 : -36) : col === 2 ? (isMobile ? 16 : 36) : 0;
-  const fanY = col === 1 ? (isMobile ? 30 : 58) : isMobile ? 28 : 52;
-  const fanRotate = col === 0 ? (isMobile ? -0.75 : -1.5) : col === 2 ? (isMobile ? 0.75 : 1.5) : 0;
-  const fanScale = col === 1 ? (isMobile ? 0.92 : 0.86) : isMobile ? 0.94 : 0.89;
 
-  return (
+  // 3-Column Dramatic Depth-Zoom Waterfall (NO layout prop, NO rotate, pure GPU x/y/scale/opacity):
+  // Left (idx%3===0): Deep Bottom-Left (-88, 84, scale 0.84, delay 0s)
+  // Center (idx%3===1): Pure Cinema Depth Zoom-In (0, 100, scale 0.80, delay 0.14s)
+  // Right (idx%3===2): Deep Bottom-Right (+88, 84, scale 0.84, delay 0.28s)
+  const cardVariants = useMemo<Variants>(() => {
+    if (prefersReducedMotion) {
+      return {
+        hidden: { opacity: 1, x: 0, y: 0, scale: 1 },
+        visible: {
+          opacity: 1,
+          x: 0,
+          y: 0,
+          scale: 1,
+          transition: { duration: 0 },
+        },
+      };
+    }
+
+    const col = index % 3;
+    const startX =
+      col === 0 ? (isMobile ? -40 : -88) : col === 2 ? (isMobile ? 40 : 88) : 0;
+    const startY =
+      col === 1 ? (isMobile ? 64 : 100) : isMobile ? 54 : 84;
+    const startScale = col === 1 ? 0.8 : 0.84;
+    const colDelay = col === 0 ? 0 : col === 1 ? 0.14 : 0.28;
+
+    return {
+      hidden: {
+        opacity: 0,
+        x: startX,
+        y: startY,
+        scale: startScale,
+        transition: { duration: 0.2, ease: "easeOut" },
+      },
+      visible: {
+        opacity: 1,
+        x: 0,
+        y: 0,
+        scale: 1,
+        transition: {
+          duration: 1.25,
+          delay: colDelay,
+          ease: CINEMA_EASE,
+        },
+      },
+    };
+  }, [index, isMobile, prefersReducedMotion]);
+
+  const cardBody = (
     <motion.div
-      layout
+      ref={ref}
+      variants={isFiltering ? undefined : cardVariants}
       initial={
-        prefersReducedMotion
-          ? false
+        isFiltering && !prefersReducedMotion
+          ? { opacity: 0, scale: 0.95 }
+          : undefined
+      }
+      animate={isFiltering ? { opacity: 1, scale: 1 } : undefined}
+      transition={
+        isFiltering
+          ? { duration: 0.35, ease: CINEMA_EASE }
+          : undefined
+      }
+      whileHover={
+        prefersReducedMotion || isMobile
+          ? undefined
           : {
-              opacity: 0,
-              x: fanX,
-              y: fanY,
-              rotate: fanRotate,
-              scale: fanScale,
+              y: -5,
+              transition: { duration: 0.3, ease: CINEMA_EASE },
             }
       }
-      whileInView={{ opacity: 1, x: 0, y: 0, rotate: 0, scale: 1 }}
-      viewport={REPLAY_VIEWPORT}
-      exit={{ opacity: 0, y: -12, scale: 0.96 }}
-      transition={{
-        layout: { type: "spring", stiffness: 320, damping: 28 },
-        delay: Math.min((index % 3) * 0.1, 0.25),
-        duration: 1.2,
-        ease: CINEMA_EASE,
-      }}
-      className="h-full"
+      onMouseMove={handleMove}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={handleLeave}
+      className={`gpu-card transform-gpu [backface-visibility:hidden] [contain:layout_style] card-sheen-sweep relative h-full rounded-[24px] transition-shadow duration-250 flex flex-col overflow-hidden ${
+        isDarkLab
+          ? "specular-surface-dark bg-[#1C120C] shadow-[inset_0_1px_0_rgba(250,246,240,0.08),0_22px_54px_-28px_rgba(0,0,0,0.85)] hover:shadow-[inset_0_1px_0_rgba(255,138,61,0.28),0_32px_68px_-24px_rgba(232,93,4,0.38)]"
+          : "specular-surface bg-[#FFFCF7] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_14px_38px_-24px_rgba(20,14,11,0.22)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,1),0_30px_64px_-24px_rgba(232,93,4,0.3)]"
+      }`}
     >
-      <motion.div
-        ref={ref}
-        whileHover={
-          prefersReducedMotion || isMobile
-            ? undefined
-            : {
-                y: -4,
-                transition: { type: "spring", stiffness: 320, damping: 24 },
-              }
-        }
-        onMouseMove={handleMove}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={handleLeave}
-        className={`card-sheen-sweep relative h-full rounded-[24px] transition-shadow duration-250 flex flex-col overflow-hidden ${
-          isDarkLab
-            ? "specular-surface-dark bg-[#1C120C] shadow-[inset_0_1px_0_rgba(250,246,240,0.08),0_22px_54px_-28px_rgba(0,0,0,0.85)] hover:shadow-[inset_0_1px_0_rgba(255,138,61,0.28),0_32px_68px_-24px_rgba(232,93,4,0.38)]"
-            : "specular-surface bg-[#FFFCF7] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_14px_38px_-24px_rgba(20,14,11,0.22)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,1),0_30px_64px_-24px_rgba(232,93,4,0.3)]"
-        }`}
-      >
-        <span aria-hidden="true" className="card-sheen-beam" />
+      <span aria-hidden="true" className="card-sheen-beam" />
 
-        <div className="relative z-10 p-6 flex flex-col flex-1">
-          {/* Monospace Protocol Metadata Header */}
+      <div className="relative z-10 p-6 flex flex-col flex-1">
+        {/* Monospace Protocol Metadata Header */}
+        <div
+          className={`flex items-center justify-between gap-3 text-xs font-mono-tabular mb-4 ${
+            isDarkLab ? "text-[#A69688]" : "text-[#6E5F54]"
+          }`}
+        >
+          <span className="truncate">
+            <span
+              className={
+                isDarkLab
+                  ? "text-[#FF6B1A] font-semibold"
+                  : "text-[#C84B04] font-semibold"
+              }
+            >
+              {project.network}
+            </span>
+            <span
+              aria-hidden="true"
+              className={
+                isDarkLab
+                  ? "mx-1.5 text-[#FAF6F0]/25"
+                  : "mx-1.5 text-[#16100C]/25"
+              }
+            >
+              ·
+            </span>
+            <span>{project.standard}</span>
+          </span>
+        </div>
+
+        {/* Icon + Title */}
+        <div className="flex items-start gap-3.5 mb-3">
           <div
-            className={`flex items-center justify-between gap-3 text-xs font-mono-tabular mb-4 ${
-              isDarkLab ? "text-[#A69688]" : "text-[#6E5F54]"
+            className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 ${
+              hovered ? "scale-110" : ""
+            } ${
+              isDarkLab
+                ? "bg-[#120B07] text-[#FF6B1A] shadow-[inset_0_1px_0_rgba(255,138,61,0.2)]"
+                : "bg-[#F3EAE0] text-[#E85D04] shadow-[inset_0_1px_0_rgba(255,255,255,0.85)]"
             }`}
           >
-            <span className="truncate">
-              <span
-                className={
-                  isDarkLab
-                    ? "text-[#FF6B1A] font-semibold"
-                    : "text-[#C84B04] font-semibold"
-                }
-              >
-                {project.network}
-              </span>
-              <span
-                aria-hidden="true"
-                className={
-                  isDarkLab
-                    ? "mx-1.5 text-[#FAF6F0]/25"
-                    : "mx-1.5 text-[#16100C]/25"
-                }
-              >
-                ·
-              </span>
-              <span>{project.standard}</span>
-            </span>
+            <Icon className="w-5 h-5" aria-hidden="true" />
           </div>
-
-          {/* Icon + Title */}
-          <div className="flex items-start gap-3.5 mb-3">
-            <div
-              className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 ${
-                hovered ? "scale-110" : ""
-              } ${
-                isDarkLab
-                  ? "bg-[#120B07] text-[#FF6B1A] shadow-[inset_0_1px_0_rgba(255,138,61,0.2)]"
-                  : "bg-[#F3EAE0] text-[#E85D04] shadow-[inset_0_1px_0_rgba(255,255,255,0.85)]"
+          <div className="min-w-0">
+            <h3
+              className={`font-display text-lg font-bold tracking-[-0.025em] leading-snug transition-colors ${
+                hovered
+                  ? isDarkLab
+                    ? "text-[#FF6B1A]"
+                    : "text-[#E85D04]"
+                  : isDarkLab
+                  ? "text-[#FAF6F0]"
+                  : "text-[#16100C]"
               }`}
             >
-              <Icon className="w-5 h-5" aria-hidden="true" />
-            </div>
-            <div className="min-w-0">
-              <h3
-                className={`font-display text-lg font-bold tracking-[-0.025em] leading-snug transition-colors ${
-                  hovered
-                    ? isDarkLab
-                      ? "text-[#FF6B1A]"
-                      : "text-[#E85D04]"
-                    : isDarkLab
-                    ? "text-[#FAF6F0]"
-                    : "text-[#16100C]"
-                }`}
-              >
-                {project.title}
-              </h3>
-              <p
-                className={`text-xs font-mono-tabular font-medium mt-0.5 ${
-                  isDarkLab ? "text-[#FF6B1A]" : "text-[#C84B04]"
-                }`}
-              >
-                {project.metric}
-              </p>
-            </div>
+              {project.title}
+            </h3>
+            <p
+              className={`text-xs font-mono-tabular font-medium mt-0.5 ${
+                isDarkLab ? "text-[#FF6B1A]" : "text-[#C84B04]"
+              }`}
+            >
+              {project.metric}
+            </p>
+          </div>
+        </div>
+
+        {/* Humanized 2-sentence description */}
+        <p
+          className={`text-sm leading-relaxed flex-1 mb-4 ${
+            isDarkLab ? "text-[#D8CEC4]" : "text-[#4A3F37]"
+          }`}
+        >
+          {project.description}
+        </p>
+
+        {/* Tactile Tech Stack Tags */}
+        <div className="flex flex-wrap items-center gap-1.5 mb-5">
+          {project.tech.map((techItem) => (
+            <span
+              key={techItem}
+              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-mono-tabular transition-transform duration-150 hover:-translate-y-0.5 ${
+                isDarkLab
+                  ? "bg-[#251811] text-[#B9ABA0] hover:text-[#FAF6F0]"
+                  : "bg-[#F3EAE0]/90 text-[#5D4F46] hover:text-[#16100C]"
+              }`}
+            >
+              {techItem}
+            </span>
+          ))}
+        </div>
+
+        {/* Action Bar */}
+        <div className="pt-2 flex flex-col gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={onSelect}
+              className={`group/btn btn-spring btn-cta-sheen inline-flex items-center justify-center gap-1.5 min-h-[44px] px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 cursor-pointer ${
+                isDarkLab
+                  ? "bg-[#E85D04] hover:bg-[#D14F00] text-[#FAF6F0]"
+                  : "bg-[#16100C] hover:bg-[#E85D04] text-[#FAF6F0]"
+              }`}
+            >
+              <span className="relative z-10">Case Study</span>
+              <ArrowUpRight
+                className="relative z-10 w-3.5 h-3.5 transition-transform duration-200 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5"
+                aria-hidden="true"
+              />
+            </button>
+
+            <button
+              type="button"
+              onClick={onAskAmit}
+              className={`btn-spring inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 cursor-pointer ${
+                isDarkLab
+                  ? "bg-[#120B07] hover:bg-[#261810] text-[#FAF6F0]"
+                  : "bg-[#F3EAE0] hover:bg-[#16100C] text-[#16100C] hover:text-[#FAF6F0]"
+              }`}
+            >
+              <MessageSquare
+                className="w-3.5 h-3.5 text-[#E85D04]"
+                aria-hidden="true"
+              />
+              <span>Ask Amit</span>
+            </button>
           </div>
 
-          {/* Humanized 2-sentence description */}
-          <p
-            className={`text-sm leading-relaxed flex-1 mb-4 ${
+          <div
+            className={`flex items-center gap-4 text-xs font-semibold ${
               isDarkLab ? "text-[#D8CEC4]" : "text-[#4A3F37]"
             }`}
           >
-            {project.description}
-          </p>
-
-          {/* Tactile Tech Stack Tags */}
-          <div className="flex flex-wrap items-center gap-1.5 mb-5">
-            {project.tech.map((techItem) => (
-              <span
-                key={techItem}
-                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-mono-tabular transition-transform duration-150 hover:-translate-y-0.5 ${
-                  isDarkLab
-                    ? "bg-[#251811] text-[#B9ABA0] hover:text-[#FAF6F0]"
-                    : "bg-[#F3EAE0]/90 text-[#5D4F46] hover:text-[#16100C]"
-                }`}
-              >
-                {techItem}
-              </span>
-            ))}
-          </div>
-
-          {/* Action Bar */}
-          <div className="pt-2 flex flex-col gap-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={onSelect}
-                className={`group/btn btn-spring btn-cta-sheen inline-flex items-center justify-center gap-1.5 min-h-[44px] px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 cursor-pointer ${
-                  isDarkLab
-                    ? "bg-[#E85D04] hover:bg-[#D14F00] text-[#FAF6F0]"
-                    : "bg-[#16100C] hover:bg-[#E85D04] text-[#FAF6F0]"
-                }`}
-              >
-                <span className="relative z-10">Case Study</span>
-                <ArrowUpRight
-                  className="relative z-10 w-3.5 h-3.5 transition-transform duration-200 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5"
-                  aria-hidden="true"
-                />
-              </button>
-
-              <button
-                type="button"
-                onClick={onAskAmit}
-                className={`btn-spring inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 cursor-pointer ${
-                  isDarkLab
-                    ? "bg-[#120B07] hover:bg-[#261810] text-[#FAF6F0]"
-                    : "bg-[#F3EAE0] hover:bg-[#16100C] text-[#16100C] hover:text-[#FAF6F0]"
-                }`}
-              >
-                <MessageSquare
-                  className="w-3.5 h-3.5 text-[#E85D04]"
-                  aria-hidden="true"
-                />
-                <span>Ask Amit</span>
-              </button>
-            </div>
-
-            <div
-              className={`flex items-center gap-4 text-xs font-semibold ${
-                isDarkLab ? "text-[#D8CEC4]" : "text-[#4A3F37]"
-              }`}
-            >
-              {project.liveUrl && (
-                <a
-                  href={project.liveUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group/link inline-flex items-center gap-1 hover:text-[#E85D04] transition-colors whitespace-nowrap shrink-0"
-                >
-                  <span>Live App</span>
-                  <ArrowUpRight
-                    className="w-3.5 h-3.5 transition-transform duration-200 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5"
-                    aria-hidden="true"
-                  />
-                </a>
-              )}
+            {project.liveUrl && (
               <a
-                href={project.link}
+                href={project.liveUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group/link inline-flex items-center gap-1 hover:text-[#E85D04] transition-colors whitespace-nowrap shrink-0"
               >
-                <Code2 className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>GitHub</span>
+                <span>Live App</span>
+                <ArrowUpRight
+                  className="w-3.5 h-3.5 transition-transform duration-200 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5"
+                  aria-hidden="true"
+                />
               </a>
-            </div>
+            )}
+            <a
+              href={project.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group/link inline-flex items-center gap-1 hover:text-[#E85D04] transition-colors whitespace-nowrap shrink-0"
+            >
+              <Code2 className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>GitHub</span>
+            </a>
           </div>
         </div>
-      </motion.div>
+      </div>
+    </motion.div>
+  );
+
+  if (isFiltering) {
+    return <div className="h-full">{cardBody}</div>;
+  }
+
+  return (
+    /* Stationary outer observer: never moves so 3-way depth-zoom sweeps replay cleanly without flicker */
+    <motion.div
+      initial={prefersReducedMotion ? false : "hidden"}
+      whileInView="visible"
+      viewport={ARCHIVE_CARD_VIEWPORT}
+      variants={STATIONARY_OUTER_VARIANTS}
+      className="h-full"
+    >
+      {cardBody}
     </motion.div>
   );
 }
@@ -323,6 +373,7 @@ export default function ProjectGalleryOverlay({
   const isMobile = useIsMobile();
   const [query, setQuery] = useState("");
   const isDarkLab = variant === "core";
+  const isFiltering = query.trim().length > 0;
 
   const filteredProjects = useMemo(
     () => filterProjectsByQuery(projects, query),
@@ -339,17 +390,19 @@ export default function ProjectGalleryOverlay({
       initial={prefersReducedMotion ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.24 }}
-      className="fixed inset-0 z-[150] overflow-hidden backdrop-blur-md bg-[#140E0B]/45"
+      transition={{ duration: 0.24, ease: CINEMA_EASE }}
+      className="fixed inset-0 z-[150] overflow-hidden bg-[#140E0B]/70"
     >
       <motion.div
         initial={
-          prefersReducedMotion ? false : { opacity: 0, y: 28, scale: 0.93 }
+          prefersReducedMotion ? false : { opacity: 0, y: 28, scale: 0.94 }
         }
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={prefersReducedMotion ? undefined : { opacity: 0, y: 22, scale: 0.95 }}
-        transition={{ type: "spring", stiffness: 260, damping: 24 }}
-        className={`relative h-full w-full overflow-hidden ${
+        exit={
+          prefersReducedMotion ? undefined : { opacity: 0, y: 20, scale: 0.96 }
+        }
+        transition={{ duration: 0.45, ease: CINEMA_EASE }}
+        className={`relative h-full w-full overflow-hidden transform-gpu [backface-visibility:hidden] ${
           isDarkLab
             ? "bg-[#120B07] text-[#FAF6F0] silk-grain-dark"
             : "bg-[#FAF5EE] text-[#140E0B] silk-grain"
@@ -402,12 +455,12 @@ export default function ProjectGalleryOverlay({
           className="relative z-10 h-full w-full overflow-y-auto overflow-x-clip overscroll-contain"
           style={{ WebkitOverflowScrolling: "touch" }}
         >
-          {/* Sticky Header: Title from Left, Search & Close Controls from Right */}
+          {/* Sticky Header (ZERO backdrop-blur for 120fps scroll): Opposing Corner Convergence (Top-Left vs Top-Right) */}
           <div
-            className={`sticky top-0 z-20 backdrop-blur-md ${
+            className={`sticky top-0 z-20 overflow-x-clip ${
               isDarkLab
-                ? "bg-[#120B07]/94 shadow-[0_14px_32px_-20px_rgba(0,0,0,0.85)]"
-                : "bg-[#FAF5EE]/94 shadow-[0_14px_32px_-22px_rgba(20,14,11,0.16)]"
+                ? "bg-[#120B07]/98 shadow-[0_14px_32px_-20px_rgba(0,0,0,0.85)]"
+                : "bg-[#FAF5EE]/98 shadow-[0_14px_32px_-22px_rgba(20,14,11,0.16)]"
             }`}
           >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4">
@@ -417,12 +470,13 @@ export default function ProjectGalleryOverlay({
                     ? false
                     : {
                         opacity: 0,
-                        x: isMobile ? -18 : -40,
-                        y: isMobile ? -12 : -22,
+                        x: isMobile ? -42 : -96,
+                        y: isMobile ? -16 : -24,
                       }
                 }
                 animate={{ opacity: 1, x: 0, y: 0 }}
                 transition={{ duration: 1.2, ease: CINEMA_EASE }}
+                className="transform-gpu [backface-visibility:hidden]"
               >
                 <h2
                   className={`font-display text-2xl sm:text-3xl font-bold tracking-[-0.03em] ${
@@ -439,13 +493,13 @@ export default function ProjectGalleryOverlay({
                     ? false
                     : {
                         opacity: 0,
-                        x: isMobile ? 18 : 40,
-                        y: isMobile ? 12 : 22,
+                        x: isMobile ? 42 : 96,
+                        y: isMobile ? -16 : -24,
                       }
                 }
                 animate={{ opacity: 1, x: 0, y: 0 }}
-                transition={{ duration: 1.2, delay: 0.08, ease: CINEMA_EASE }}
-                className="flex items-center gap-2.5 sm:gap-3"
+                transition={{ duration: 1.2, delay: 0.06, ease: CINEMA_EASE }}
+                className="transform-gpu [backface-visibility:hidden] flex items-center gap-2.5 sm:gap-3"
               >
                 <div className="relative flex-1 sm:w-72">
                   <Search
@@ -484,13 +538,15 @@ export default function ProjectGalleryOverlay({
             </div>
           </div>
 
-          {/* 3D Tilt Cards Grid with Directional Wave & Layout Spring Reflow */}
+          {/* 3-Column Dramatic Depth-Zoom Waterfall (NO layout prop, ZERO layout thrash) */}
           <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-10 pb-24">
             {filteredProjects.length === 0 ? (
               <motion.div
-                initial={{ opacity: 0, scale: 0.97 }}
+                initial={
+                  prefersReducedMotion ? false : { opacity: 0, scale: 0.95 }
+                }
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3, ease: LUXURY_EASE }}
+                transition={{ duration: 0.35, ease: CINEMA_EASE }}
                 className={`p-10 sm:p-12 rounded-2xl text-center ${
                   isDarkLab
                     ? "bg-[#1C120C] shadow-[inset_0_1px_0_rgba(250,246,240,0.08)]"
@@ -520,24 +576,20 @@ export default function ProjectGalleryOverlay({
                 </button>
               </motion.div>
             ) : (
-              <motion.div
-                layout
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-              >
-                <AnimatePresence mode="popLayout">
-                  {filteredProjects.map((project, index) => (
-                    <GalleryCard
-                      key={project.id}
-                      project={project}
-                      index={index}
-                      isDarkLab={isDarkLab}
-                      isMobile={isMobile}
-                      onSelect={() => onProjectClick(project)}
-                      onAskAmit={() => onAskAmit(project)}
-                    />
-                  ))}
-                </AnimatePresence>
-              </motion.div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredProjects.map((project, index) => (
+                  <GalleryCard
+                    key={project.id}
+                    project={project}
+                    index={index}
+                    isDarkLab={isDarkLab}
+                    isMobile={isMobile}
+                    isFiltering={isFiltering}
+                    onSelect={() => onProjectClick(project)}
+                    onAskAmit={() => onAskAmit(project)}
+                  />
+                ))}
+              </div>
             )}
           </div>
         </div>
