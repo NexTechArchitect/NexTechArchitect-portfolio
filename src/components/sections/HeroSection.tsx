@@ -49,7 +49,7 @@ const METRICS = [
   {
     value: "6",
     label: "Production DeFi Protocols",
-    sub: "Deployed on Base Mainnet",
+    sub: "Deployed on EVM Mainnet",
   },
   {
     value: "5,000+",
@@ -142,7 +142,7 @@ export default function HeroSection({ openModal }: HeroSectionProps) {
               className="text-base sm:text-lg text-slate-600 leading-relaxed max-w-2xl mb-8"
             >
               I design, fuzz, and ship production EVM protocols. Across six live
-              deployments on Base Mainnet, my work spans ERC-3643 real-world asset
+              deployments on EVM Mainnet, my work spans ERC-3643 real-world asset
               compliance, ERC-4626 Aave V3 yield vaults, O(1) keeper automation,
               and 50x non-custodial perpetuals. Every system is hardened with
               Foundry stateful invariant fuzzing, Slither static analysis, and
@@ -202,7 +202,7 @@ export default function HeroSection({ openModal }: HeroSectionProps) {
             </motion.div>
           </div>
 
-          {/* Right Column: Interactive Base Mainnet Deployment Inspector */}
+          {/* Right Column: Interactive EVM Mainnet Deployment Inspector */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -215,7 +215,7 @@ export default function HeroSection({ openModal }: HeroSectionProps) {
                 <div className="flex items-center justify-between gap-3 pb-4 border-b border-slate-200/80">
                   <div className="flex items-center gap-2 text-xs font-mono-tabular font-semibold text-[#0B1220]">
                     <Terminal className="w-4 h-4 text-[#0052FF]" aria-hidden="true" />
-                    <span>Base Mainnet Deployments</span>
+                    <span>EVM Mainnet Deployments</span>
                   </div>
                   <span className="text-xs font-mono-tabular text-slate-500">
                     Verified Contracts
@@ -225,7 +225,7 @@ export default function HeroSection({ openModal }: HeroSectionProps) {
                 {/* Segmented Protocol Selector */}
                 <div
                   role="tablist"
-                  aria-label="Select deployed Base Mainnet protocol"
+                  aria-label="Select deployed EVM Mainnet protocol"
                   className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-slate-100/90 mt-4 mb-5"
                 >
                   {BASE_DEPLOYMENTS.map((protocol, idx) => {
@@ -323,7 +323,7 @@ export default function HeroSection({ openModal }: HeroSectionProps) {
           </motion.div>
         </div>
 
-        {/* Full-Width Verified Base Mainnet Metrics Bar */}
+        {/* Full-Width Verified EVM Mainnet Metrics Bar */}
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}

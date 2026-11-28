@@ -176,7 +176,7 @@ export default function SentinelCaseStudy() {
     { id: "architecture", label: "Architecture" },
     { id: "contracts",    label: "Contracts"    },
     { id: "security",     label: "Security Audit" },
-    { id: "deployment",   label: "Base Mainnet" },
+    { id: "deployment",   label: "EVM Mainnet" },
   ] as const;
 
   return (
@@ -191,7 +191,7 @@ export default function SentinelCaseStudy() {
             🛡️ DeFi Insurance
           </span>
           <span className="px-3 py-1.5 text-[9px] sm:text-[10px] font-bold tracking-widest uppercase border border-emerald-200/60 bg-emerald-50/50 text-emerald-700 rounded-lg backdrop-blur-md">
-            🔵 Base Mainnet
+            🔵 EVM Mainnet
           </span>
           <span className="px-3 py-1.5 text-[9px] sm:text-[10px] font-bold tracking-widest uppercase border border-indigo-200/60 bg-indigo-50/50 text-indigo-700 rounded-lg backdrop-blur-md">
             ERC-4626 Vault
@@ -204,7 +204,7 @@ export default function SentinelCaseStudy() {
         </motion.h1>
         
         <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="text-[13px] sm:text-base text-slate-600 leading-relaxed max-w-2xl mx-auto font-medium mb-8 px-2">
-          A modular, security-first DeFi insurance protocol built on Base L2. Token-weighted DAO adjudication, automated yield via Aave V3, and soulbound policy NFTs.
+          A modular, security-first DeFi insurance protocol built on EVM Mainnet. Token-weighted DAO adjudication, automated yield via Aave V3, and soulbound policy NFTs.
         </motion.p>
         
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="flex flex-col sm:flex-row gap-3 justify-center w-full px-4 sm:px-0">
@@ -343,7 +343,7 @@ export default function SentinelCaseStudy() {
             <motion.div key="dep" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 
                 <div className="p-6 sm:p-8 bg-white/40 backdrop-blur-3xl border border-white/80 rounded-[28px] shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-                  <h3 className="text-blue-600 text-[10px] font-black uppercase tracking-widest ml-1 mb-4">Core Engines (Base)</h3>
+                  <h3 className="text-blue-600 text-[10px] font-black uppercase tracking-widest ml-1 mb-4">Core Engines (EVM Mainnet)</h3>
                   <div className="space-y-3">
                     <AddressChip label="PolicyEngine" address="0xEF80cd6370D4619D2f71BD4000a4757357Be5564" />
                     <AddressChip label="CoveragePool" address="0x374d949c7A575212d423Ecc0e765a59664d7C3eD" />
@@ -353,7 +353,7 @@ export default function SentinelCaseStudy() {
                 </div>
                 
                 <div className="p-6 sm:p-8 bg-white/40 backdrop-blur-3xl border border-white/80 rounded-[28px] shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-                  <h3 className="text-emerald-600 text-[10px] font-black uppercase tracking-widest ml-1 mb-4">Governance (Base)</h3>
+                  <h3 className="text-emerald-600 text-[10px] font-black uppercase tracking-widest ml-1 mb-4">Governance (EVM Mainnet)</h3>
                   <div className="space-y-3">
                     <AddressChip label="ClaimsGovernor" address="0xB7939f8b41C932595cf358842BC63AFE221D2Ba3" />
                     <AddressChip label="ShieldToken"    address="0xafE2B560ad1743DA67BdA1850aF47CdB2280a2d1" />

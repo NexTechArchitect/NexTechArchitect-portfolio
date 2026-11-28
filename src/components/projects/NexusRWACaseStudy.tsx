@@ -171,7 +171,7 @@ export default function NexusRWACaseStudy() {
             className="flex flex-wrap justify-center gap-3 mb-6"
           >
             <span className={`px-4 py-1.5 bg-blue-50 border-2 border-blue-100 text-[#0052FF] text-[10px] md:text-xs font-bold uppercase tracking-widest rounded-full flex items-center gap-2 shadow-sm ${monoFont.className}`}>
-              <span className="w-2 h-2 rounded-full bg-[#0052FF] animate-pulse" /> Base Mainnet
+              <span className="w-2 h-2 rounded-full bg-[#0052FF] animate-pulse" /> EVM Mainnet
             </span>
             <span className={`px-4 py-1.5 bg-slate-50 border-2 border-slate-200 text-slate-600 text-[10px] md:text-xs font-bold uppercase tracking-widest rounded-full shadow-sm ${monoFont.className}`}>
               RWA Tokenization
@@ -298,7 +298,7 @@ export default function NexusRWACaseStudy() {
             <motion.div key="con" variants={containerVariants} initial="hidden" animate="show" exit={{ opacity: 0, y: -20 }} className="space-y-8">
               
               <motion.div variants={itemVariants} className="bg-white border-2 border-slate-100 p-8 md:p-10 rounded-[32px] shadow-sm">
-                <h3 className={`text-sm font-black uppercase tracking-widest text-[#0052FF] mb-8 ${monoFont.className}`}>Base Mainnet Infrastructure</h3>
+                <h3 className={`text-sm font-black uppercase tracking-widest text-[#0052FF] mb-8 ${monoFont.className}`}>EVM Mainnet Infrastructure</h3>
                 <div className="flex flex-col gap-4">
                   <AddressChip label="IdentityRegistry" address="0x18026c0BF58c978caDc8Df7f31b1cbC2f6A94c5A" tag="KYC & Sanctions" />
                   <AddressChip label="AssetRegistry" address="0x88bb8025dc10Cc642d2F0D10F4335EcDBdC9A594" tag="Asset Ledger" />

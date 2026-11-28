@@ -369,7 +369,7 @@ export const WEB3_KNOWLEDGE_PROTOCOLS: readonly KnowledgeEntry[] = [
         "**Base** is an Ethereum Layer-2 optimistic rollup built on the open-source **OP Stack**, sharing security standards, governance, and native interoperability with the broader **Superchain** (Optimism, Unichain, World Chain):",
         "",
         "- **EVM Equivalence & Sub-Cent Fees:** Runs a minimally modified `op-geth` execution client posting compressed batches to Ethereum L1 via **EIP-4844 blobs**, with Stage-1 permissionless **Cannon fault proofs**.",
-        "- **In Amit's Portfolio:** Amit deployed **Nexus RWA Protocol** (`ERC-3643` compliant tokenization + Chainlink NAV circuit breaker) live on **Base** using Foundry + Wagmi v2/Viem.",
+        "- **In Amit's Portfolio:** Amit deployed **Nexus RWA Protocol** (`ERC-3643` compliant tokenization + Chainlink NAV circuit breaker) live on **EVM Mainnet** using Foundry + Wagmi v2/Viem.",
       ].join("\n"),
   },
   {

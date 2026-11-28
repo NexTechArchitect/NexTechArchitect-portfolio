@@ -76,7 +76,7 @@ export default function Navbar({ onOpenResume }: NavbarProps) {
         }
       })
       .catch(() => {
-        // Silently keep static Base Mainnet indicator when offline or sandboxed
+        // Silently keep static EVM Mainnet indicator when offline or sandboxed
       })
       .finally(() => {
         window.clearTimeout(timeout);
@@ -152,13 +152,13 @@ export default function Navbar({ onOpenResume }: NavbarProps) {
             })}
           </nav>
 
-          {/* Zone 3: Live Base Mainnet Status & Resume Action */}
+          {/* Zone 3: Live EVM Mainnet Status & Resume Action */}
           <div className="flex items-center gap-3 sm:gap-4 shrink-0">
             <div
               className="hidden lg:flex items-center gap-2 text-xs font-mono-tabular text-slate-600 whitespace-nowrap shrink-0"
-              title="Live Base Mainnet RPC telemetry"
+              title="Live EVM Mainnet RPC telemetry"
             >
-              <span className="text-[#0052FF] font-semibold">Base Mainnet</span>
+              <span className="text-[#0052FF] font-semibold">EVM Mainnet</span>
               {baseBlock && (
                 <>
                   <span aria-hidden="true" className="text-slate-300">
@@ -225,7 +225,7 @@ export default function Navbar({ onOpenResume }: NavbarProps) {
                 ))}
               </div>
               <div className="mt-2 pt-2.5 px-3 border-t border-slate-200/80 flex items-center justify-between text-xs font-mono-tabular text-slate-500">
-                <span className="text-[#0052FF] font-semibold">Base Mainnet</span>
+                <span className="text-[#0052FF] font-semibold">EVM Mainnet</span>
                 <span>{baseBlock ? `#${baseBlock}` : "Live Network"}</span>
               </div>
             </motion.nav>

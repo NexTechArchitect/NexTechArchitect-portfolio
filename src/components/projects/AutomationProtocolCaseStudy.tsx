@@ -185,7 +185,7 @@ export default function OnChainAutomationCaseStudy() {
           
           <div className="flex flex-wrap justify-center gap-2 mb-6">
             <span className={`px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-600 text-[10px] font-bold uppercase tracking-widest rounded-lg flex items-center gap-2 ${monoFont.className}`}>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Base Mainnet
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> EVM Mainnet
             </span>
             <span className={`px-3 py-1 bg-blue-50 border border-blue-200 text-blue-600 text-[10px] font-bold uppercase tracking-widest rounded-lg ${monoFont.className}`}>
               Keeper Network
@@ -303,7 +303,7 @@ export default function OnChainAutomationCaseStudy() {
             <motion.div key="con" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
               
               <div className="bg-white border border-slate-200 p-6 md:p-8 rounded-2xl shadow-sm">
-                <h3 className={`text-sm font-black uppercase tracking-widest text-slate-800 mb-6 ${monoFont.className}`}>Base Mainnet Deployments</h3>
+                <h3 className={`text-sm font-black uppercase tracking-widest text-slate-800 mb-6 ${monoFont.className}`}>EVM Mainnet Deployments</h3>
                 <div className="flex flex-col gap-3">
                   <AddressChip label="KeeperRegistry.sol" address="0xcEa37b9CCA6170d43BF133CCfdeaD9CB2A4D61D3" tag="Operator Bonds & Slashing" />
                   <AddressChip label="JobManager.sol" address="0xBAa2B4c250DD6da358e23244C2fa85dA1927718C" tag="O(1) Queue & Escrow" />
