@@ -17,7 +17,7 @@ interface NavbarProps {
   onNavigate?: () => void;
 }
 
-const CINEMA_EASE: [number, number, number, number] = [0.19, 1, 0.22, 1];
+const CINEMA_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
 export default function Navbar({
   onOpenResume,

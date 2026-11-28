@@ -96,7 +96,7 @@ function FlagshipCard({
   );
 
   const Icon = PROJECT_ICON_MAP[project.iconKey] || Cpu;
-  // Cards 1 & 3 glide in slo-mo from Left (-88 -> 0), Cards 2 & 4 glide from Right (+88 -> 0)
+  // Alternating Diagonal Banking Arcs: Cards 1 & 3 bank from Left (-72, +46, -2deg), Cards 2 & 4 bank from Right (+72, +46, +2deg)
   const isFromLeft = index % 2 === 0;
 
   const outerOrchestrator = useMemo(() => createOrchestratorVariants(0, 0), []);
@@ -104,13 +104,14 @@ function FlagshipCard({
   const cardVariants = useMemo(
     () =>
       createCinemaVariants({
-        x: isFromLeft ? -88 : 88,
-        y: 24,
-        scale: 0.96,
-        duration: 1.4,
-        delay: !isMobile && index % 2 === 1 ? 0.12 : 0,
-        staggerChildren: 0.1,
-        delayChildren: 0.14,
+        x: isFromLeft ? -72 : 72,
+        y: 46,
+        rotate: isFromLeft ? -2 : 2,
+        scale: 0.92,
+        duration: 1.35,
+        delay: !isMobile && index % 2 === 1 ? 0.1 : 0,
+        staggerChildren: 0.08,
+        delayChildren: 0.12,
         isMobile,
         reducedMotion: prefersReducedMotion,
       }),
@@ -121,7 +122,7 @@ function FlagshipCard({
     () =>
       createCinemaVariants({
         y: 18,
-        duration: 1.0,
+        duration: 0.95,
         isMobile,
         reducedMotion: prefersReducedMotion,
       }),
@@ -129,7 +130,7 @@ function FlagshipCard({
   );
 
   return (
-    /* Stationary outer motion.div triggers native Framer Motion whileInView with zero React re-renders or edge flicker */
+    /* Stationary outer motion.div triggers native Framer Motion whileInView (amount: 0.12) with zero edge flicker */
     <motion.div
       initial={prefersReducedMotion ? false : "hidden"}
       whileInView="visible"
@@ -373,23 +374,35 @@ export default function ProtocolShowcase({
   const { explainProtocol } = useAgent();
   const flagshipProjects = getFlagshipProjects();
 
-  // Flagship Header Sequential Slo-Mo Orchestrator (+0.16s stagger)
+  // Flagship Header Masked Curtain Orchestrator
   const flagshipHeaderOrchestrator = useMemo(
-    () => createOrchestratorVariants(0.16, 0),
+    () => createOrchestratorVariants(0, 0),
     []
   );
-  const flagshipHeaderItemVariants = useMemo(
+  const flagshipHeadlineVariants = useMemo(
     () =>
       createCinemaVariants({
-        y: 38,
-        duration: 1.3,
+        y: "105%",
+        duration: 1.2,
+        delay: 0,
+        isMobile,
+        reducedMotion: prefersReducedMotion,
+      }),
+    [isMobile, prefersReducedMotion]
+  );
+  const flagshipSubtitleVariants = useMemo(
+    () =>
+      createCinemaVariants({
+        y: 26,
+        duration: 1.15,
+        delay: 0.14,
         isMobile,
         reducedMotion: prefersReducedMotion,
       }),
     [isMobile, prefersReducedMotion]
   );
 
-  // Archive Section Orchestrator (Header from Left, Subtitle from Right, Cards Rising Wave)
+  // Archive Section: Opposing Corner Convergence (Top-Left vs Bottom-Right) + Fan-Out Spread
   const archiveSectionOrchestrator = useMemo(
     () => createOrchestratorVariants(0, 0),
     []
@@ -397,8 +410,9 @@ export default function ProtocolShowcase({
   const archiveTitleVariants = useMemo(
     () =>
       createCinemaVariants({
-        x: -56,
-        duration: 1.3,
+        x: -40,
+        y: -22,
+        duration: 1.2,
         delay: 0,
         isMobile,
         reducedMotion: prefersReducedMotion,
@@ -408,39 +422,88 @@ export default function ProtocolShowcase({
   const archiveSubtitleVariants = useMemo(
     () =>
       createCinemaVariants({
-        x: 56,
-        duration: 1.3,
-        delay: 0.14,
+        x: 40,
+        y: 22,
+        duration: 1.2,
+        delay: 0.12,
         isMobile,
         reducedMotion: prefersReducedMotion,
       }),
     [isMobile, prefersReducedMotion]
   );
-  const archiveGridOrchestrator = useMemo(
-    () => createOrchestratorVariants(0.11, 0.24),
-    []
-  );
-  const archiveCardVariants = useMemo<Variants>(() => {
+
+  const archiveLeftCardVariants = useMemo<Variants>(() => {
     if (prefersReducedMotion) {
       return {
-        hidden: { opacity: 1, y: 0, scale: 1 },
-        visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0 } },
+        hidden: { opacity: 1, x: 0, y: 0, rotate: 0, scale: 1 },
+        visible: {
+          opacity: 1,
+          x: 0,
+          y: 0,
+          rotate: 0,
+          scale: 1,
+          transition: { duration: 0 },
+        },
       };
     }
     return {
       hidden: {
         opacity: 0,
+        x: isMobile ? -16 : -36,
         y: isMobile ? 28 : 52,
-        scale: isMobile ? 0.97 : 0.94,
-        transition: { duration: 0.22, ease: "easeOut" },
+        rotate: isMobile ? -0.75 : -1.5,
+        scale: isMobile ? 0.94 : 0.89,
+        transition: { duration: 0.2, ease: "easeOut" },
       },
       visible: {
         opacity: 1,
+        x: 0,
         y: 0,
+        rotate: 0,
         scale: 1,
         transition: {
           layout: { type: "spring", stiffness: 320, damping: 28 },
-          duration: 1.25,
+          duration: 1.2,
+          delay: 0.2,
+          ease: CINEMA_EASE,
+        },
+      },
+    };
+  }, [isMobile, prefersReducedMotion]);
+
+  const archiveRightCardVariants = useMemo<Variants>(() => {
+    if (prefersReducedMotion) {
+      return {
+        hidden: { opacity: 1, x: 0, y: 0, rotate: 0, scale: 1 },
+        visible: {
+          opacity: 1,
+          x: 0,
+          y: 0,
+          rotate: 0,
+          scale: 1,
+          transition: { duration: 0 },
+        },
+      };
+    }
+    return {
+      hidden: {
+        opacity: 0,
+        x: isMobile ? 16 : 36,
+        y: isMobile ? 28 : 52,
+        rotate: isMobile ? 0.75 : 1.5,
+        scale: isMobile ? 0.94 : 0.89,
+        transition: { duration: 0.2, ease: "easeOut" },
+      },
+      visible: {
+        opacity: 1,
+        x: 0,
+        y: 0,
+        rotate: 0,
+        scale: 1,
+        transition: {
+          layout: { type: "spring", stiffness: 320, damping: 28 },
+          duration: 1.2,
+          delay: 0.3,
           ease: CINEMA_EASE,
         },
       },
@@ -458,7 +521,7 @@ export default function ProtocolShowcase({
 
   return (
     <>
-      {/* Section 3: Flagship Protocols — Slo-Mo Alternating Showreel + Inner Content Bloom */}
+      {/* Section 3: Flagship Protocols — Masked Curtain + Alternating Diagonal Banking Arcs */}
       <div
         id="protocols"
         className="relative bg-[#140E0B] -mt-[2px] scroll-mt-24 section-perf"
@@ -468,13 +531,13 @@ export default function ProtocolShowcase({
           aria-label="Flagship Protocols"
           className="relative z-10 rounded-t-[36px] sm:rounded-t-[48px] bg-[#FBF8F3] text-[#16100C] silk-grain pt-14 sm:pt-20 overflow-hidden shadow-[0_-24px_60px_-26px_rgba(10,6,4,0.48)] section-perf"
         >
-          {/* Lightweight static warm apricot/bronze ambient washes */}
+          {/* Lightweight zero-blur pure CSS radial gradient ambient washes */}
           <div
             aria-hidden="true"
             className="pointer-events-none absolute top-16 right-[-8%] w-[480px] h-[540px] rounded-full opacity-50"
             style={{
               background:
-                "radial-gradient(ellipse at center, rgba(217, 119, 54, 0.11) 0%, rgba(251, 248, 243, 0) 72%)",
+                "radial-gradient(circle, rgba(217, 119, 54, 0.11) 0%, rgba(251, 248, 243, 0) 70%)",
             }}
           />
           <div
@@ -482,12 +545,12 @@ export default function ProtocolShowcase({
             className="pointer-events-none absolute bottom-28 left-[-10%] w-[420px] h-[480px] rounded-full opacity-40"
             style={{
               background:
-                "radial-gradient(ellipse at center, rgba(244, 140, 6, 0.09) 0%, rgba(251, 248, 243, 0) 72%)",
+                "radial-gradient(circle, rgba(244, 140, 6, 0.09) 0%, rgba(251, 248, 243, 0) 70%)",
             }}
           />
 
           <div className="max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            {/* Sequential Upward Cinema Lift (y: 38 -> 0, duration: 1.3s, +0.16s stagger) */}
+            {/* Masked Editorial Curtain Headline + Soft Subtitle Rise */}
             <motion.div
               initial={prefersReducedMotion ? false : "hidden"}
               whileInView="visible"
@@ -495,16 +558,18 @@ export default function ProtocolShowcase({
               variants={flagshipHeaderOrchestrator}
               className="max-w-3xl"
             >
-              <motion.h2
-                variants={flagshipHeaderItemVariants}
-                className="font-display font-bold text-[#16100C] text-3xl sm:text-4xl lg:text-[3rem] leading-[1.08] tracking-[-0.03em]"
-                style={{ textWrap: "balance" }}
-              >
-                Flagship <span className="text-[#E85D04]">Protocols.</span>
-              </motion.h2>
+              <div className="overflow-hidden pb-1">
+                <motion.h2
+                  variants={flagshipHeadlineVariants}
+                  className="font-display font-bold text-[#16100C] text-3xl sm:text-4xl lg:text-[3rem] leading-[1.08] tracking-[-0.03em]"
+                  style={{ textWrap: "balance" }}
+                >
+                  Flagship <span className="text-[#E85D04]">Protocols.</span>
+                </motion.h2>
+              </div>
 
               <motion.p
-                variants={flagshipHeaderItemVariants}
+                variants={flagshipSubtitleVariants}
                 data-testid="section-subtitle-flagship"
                 className="mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#4A3F37]"
               >
@@ -514,7 +579,7 @@ export default function ProtocolShowcase({
               </motion.p>
             </motion.div>
 
-            {/* Alternating Left (-88 -> 0) & Right (+88 -> 0) Slo-Mo Flagship Showreel Grid */}
+            {/* Alternating Diagonal Banking Arcs Grid (Cards 1 & 3 Left -2deg, Cards 2 & 4 Right +2deg) */}
             <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
               {flagshipProjects.map((project, index) => (
                 <FlagshipCard
@@ -539,20 +604,20 @@ export default function ProtocolShowcase({
         </section>
       </div>
 
-      {/* Section 4: Archive — Opposing Split Header + Weighted Slo-Mo Rising Cinema Wave */}
+      {/* Section 4: Archive — Opposing Corner Convergence + Diagonal Fan-Out Spread */}
       <section
         id="archive"
         data-testid="protocol-archive-section"
         aria-label="Full-Stack and Core EVM Archive"
         className="relative -mt-[2px] bg-[#1B120D] text-[#FAF6F0] silk-grain-dark pt-12 sm:pt-16 lg:pt-20 pb-24 sm:pb-32 scroll-mt-24 overflow-hidden section-perf"
       >
-        {/* Lightweight static copper-amber washes */}
+        {/* Lightweight zero-blur pure CSS radial gradient copper-amber washes */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute -top-10 left-[-6%] w-[480px] h-[480px] rounded-full opacity-40"
           style={{
             background:
-              "radial-gradient(ellipse at center, rgba(232, 93, 4, 0.24) 0%, rgba(217, 119, 54, 0.1) 46%, rgba(27, 18, 13, 0) 74%)",
+              "radial-gradient(circle, rgba(232, 93, 4, 0.24) 0%, rgba(217, 119, 54, 0.1) 44%, rgba(27, 18, 13, 0) 70%)",
           }}
         />
         <div
@@ -560,7 +625,7 @@ export default function ProtocolShowcase({
           className="pointer-events-none absolute bottom-16 right-[-6%] w-[480px] h-[480px] rounded-full opacity-35"
           style={{
             background:
-              "radial-gradient(ellipse at center, rgba(244, 140, 6, 0.2) 0%, rgba(200, 90, 23, 0.08) 46%, rgba(27, 18, 13, 0) 74%)",
+              "radial-gradient(circle, rgba(244, 140, 6, 0.2) 0%, rgba(200, 90, 23, 0.08) 44%, rgba(27, 18, 13, 0) 70%)",
           }}
         />
 
@@ -571,7 +636,7 @@ export default function ProtocolShowcase({
           variants={archiveSectionOrchestrator}
           className="relative z-10 max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-8"
         >
-          {/* Header glides slo-mo from Left (-56 -> 0), Subtitle glides slo-mo from Right (+56 -> 0, +0.14s) */}
+          {/* Opposing Corner Convergence: Header Top-Left (-40, -22 -> 0), Subtitle Bottom-Right (+40, +22 -> 0) */}
           <div className="max-w-3xl">
             <motion.h2
               variants={archiveTitleVariants}
@@ -593,15 +658,12 @@ export default function ProtocolShowcase({
             </motion.p>
           </div>
 
-          {/* Weighted Slo-Mo Rising Cinema Wave (y: 52 -> 0, scale: 0.94 -> 1, staggerChildren: 0.11, duration: 1.25s) */}
-          <motion.div
-            variants={archiveGridOrchestrator}
-            className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch"
-          >
-            {/* Portal 1: Full-Stack Web3 Protocols */}
+          {/* Opposing Diagonal Fan-Out Spread (x: ±36, y: 52, rotate: ±1.5, scale: 0.89 -> 0, 0, 0, 1) */}
+          <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+            {/* Portal 1: Full-Stack Web3 Protocols (Bottom-Left Fan-Out) */}
             <motion.div
               layout
-              variants={archiveCardVariants}
+              variants={archiveLeftCardVariants}
               whileHover={
                 prefersReducedMotion || isMobile
                   ? undefined
@@ -659,10 +721,10 @@ export default function ProtocolShowcase({
               </div>
             </motion.div>
 
-            {/* Portal 2: Core EVM Contracts */}
+            {/* Portal 2: Core EVM Contracts (Bottom-Right Fan-Out) */}
             <motion.div
               layout
-              variants={archiveCardVariants}
+              variants={archiveRightCardVariants}
               whileHover={
                 prefersReducedMotion || isMobile
                   ? undefined
@@ -719,7 +781,7 @@ export default function ProtocolShowcase({
                 </button>
               </div>
             </motion.div>
-          </motion.div>
+          </div>
         </motion.div>
       </section>
     </>

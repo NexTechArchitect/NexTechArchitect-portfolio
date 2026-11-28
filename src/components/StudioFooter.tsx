@@ -1,13 +1,7 @@
 "use client";
 
-import React, { useCallback, useMemo, useRef, useState } from "react";
-import {
-  AnimatePresence,
-  motion,
-  useReducedMotion,
-  useScroll,
-  useTransform,
-} from "framer-motion";
+import React, { useCallback, useMemo, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   ArrowUpRight,
   Check,
@@ -36,24 +30,16 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
   const { openAgent } = useAgent();
   const [copied, setCopied] = useState(false);
 
-  const footerRef = useRef<HTMLElement | null>(null);
-  // Lightweight direct scroll-linked Solar Horizon swell (MotionValue only — zero React re-renders)
-  const { scrollYProgress } = useScroll({
-    target: footerRef,
-    offset: ["start end", "end end"],
-  });
-  const emberRiseY = useTransform(scrollYProgress, [0, 1], [32, 0]);
-  const emberScale = useTransform(scrollYProgress, [0, 1], [0.92, 1.06]);
-
-  // Stationary outer orchestrator driving Cinema Expo-Out slo-mo convergence beats
+  // Section 6: Movie-Title Pull-Back (scale 1.08 -> 1) + Gravity Convergence (Zero useScroll Scrubber)
   const sectionOrchestrator = useMemo(
     () => createOrchestratorVariants(0, 0),
     []
   );
-  const leftColVariants = useMemo(
+  const titlePullBackVariants = useMemo(
     () =>
       createCinemaVariants({
-        x: -60,
+        scale: 1.08,
+        y: 30,
         duration: 1.35,
         delay: 0,
         isMobile,
@@ -61,11 +47,24 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
       }),
     [isMobile, prefersReducedMotion]
   );
-  const rightColVariants = useMemo(
+  const copyBottomLeftVariants = useMemo(
     () =>
       createCinemaVariants({
-        x: 60,
-        duration: 1.35,
+        x: -44,
+        y: 28,
+        duration: 1.25,
+        delay: 0.14,
+        isMobile,
+        reducedMotion: prefersReducedMotion,
+      }),
+    [isMobile, prefersReducedMotion]
+  );
+  const ctaBottomRightVariants = useMemo(
+    () =>
+      createCinemaVariants({
+        x: 44,
+        y: 28,
+        duration: 1.25,
         delay: 0.18,
         isMobile,
         reducedMotion: prefersReducedMotion,
@@ -75,9 +74,9 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
   const bottomBarVariants = useMemo(
     () =>
       createCinemaVariants({
-        y: 36,
-        duration: 1.25,
-        delay: 0.32,
+        y: 34,
+        duration: 1.2,
+        delay: 0.3,
         isMobile,
         reducedMotion: prefersReducedMotion,
       }),
@@ -105,34 +104,24 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
 
   return (
     <footer
-      ref={footerRef}
       id="contact"
       className="relative -mt-[2px] bg-[#0A0604] text-[#FAF6F0] silk-grain-dark pt-6 sm:pt-10 pb-16 sm:pb-20 overflow-y-hidden scroll-mt-24 section-perf"
     >
-      {/* Rising Solar Horizon Ember Glow (GPU scale & y only) */}
-      <motion.div
+      {/* Pure CSS Zero-Blur Solar Horizon Radial Gradient Glows (0ms scroll overhead) */}
+      <div
         aria-hidden="true"
-        style={
-          prefersReducedMotion
-            ? undefined
-            : { y: emberRiseY, scale: emberScale }
-        }
         className="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 w-[820px] h-[240px] rounded-full opacity-80"
-      >
-        <div
-          className="w-full h-full rounded-full"
-          style={{
-            background:
-              "radial-gradient(ellipse at center, rgba(255, 107, 26, 0.34) 0%, rgba(217, 119, 54, 0.14) 45%, rgba(10, 6, 4, 0) 74%)",
-          }}
-        />
-      </motion.div>
+        style={{
+          background:
+            "radial-gradient(ellipse at center, rgba(255, 107, 26, 0.34) 0%, rgba(217, 119, 54, 0.14) 44%, rgba(10, 6, 4, 0) 70%)",
+        }}
+      />
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -bottom-32 left-1/2 -translate-x-1/2 w-[720px] h-[300px] rounded-full opacity-35"
         style={{
           background:
-            "radial-gradient(ellipse at center, rgba(232, 93, 4, 0.24) 0%, rgba(200, 90, 23, 0.09) 42%, rgba(10, 6, 4, 0) 74%)",
+            "radial-gradient(ellipse at center, rgba(232, 93, 4, 0.24) 0%, rgba(200, 90, 23, 0.09) 42%, rgba(10, 6, 4, 0) 70%)",
         }}
       />
 
@@ -144,28 +133,30 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
         className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
       >
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-end pb-10">
-          {/* Beat 1 (0.00s): Headline & Availability Copy Glide Slo-Mo from Left (-60 -> 0) */}
-          <motion.div variants={leftColVariants} className="lg:col-span-7">
-            <h2
-              className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-[1.08] text-[#FAF6F0]"
+          {/* Left Column: Movie-Title Pull-Back Headline (scale 1.08 -> 1) + Bottom-Left Availability Copy */}
+          <div className="lg:col-span-7">
+            <motion.h2
+              variants={titlePullBackVariants}
+              className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-[1.08] text-[#FAF6F0] origin-left"
               style={{ textWrap: "balance" }}
             >
               Let&apos;s Architect Your{" "}
               <span className="text-[#FF5E0E]">Next Protocol.</span>
-            </h2>
-            <p
+            </motion.h2>
+            <motion.p
+              variants={copyBottomLeftVariants}
               data-testid="section-subtitle-footer"
               className="mt-4 text-[17px] sm:text-[19px] leading-relaxed text-[#DDD2C7] max-w-2xl"
             >
               Available for remote Smart Contract Engineer roles, DeFi protocol
               architecture, Foundry invariant hardening, and full-stack EVM
               system engineering.
-            </p>
-          </motion.div>
+            </motion.p>
+          </div>
 
-          {/* Beat 2 (+0.18s): Email Copy Pill & Primary CTA Buttons Glide Slo-Mo from Right (+60 -> 0) */}
+          {/* Right Column: Email Copy Pill + CTA Buttons Converge Diagonally from Bottom-Right (+44, +28 -> 0) */}
           <motion.div
-            variants={rightColVariants}
+            variants={ctaBottomRightVariants}
             className="lg:col-span-5 flex flex-col items-start lg:items-end gap-4"
           >
             {/* One-Click Copyable Email Pill with Spring Pop Copied Micro-Feedback */}
@@ -254,7 +245,7 @@ export default function StudioFooter({ onOpenResume }: StudioFooterProps) {
           </motion.div>
         </div>
 
-        {/* Beat 3 (+0.32s): Bottom Brand Bar Rises Smoothly from Bottom (y: 36 -> 0) */}
+        {/* Bottom Brand Bar Rises Smoothly from Bottom (y: 34 -> 0) */}
         <motion.div variants={bottomBarVariants}>
           <div
             onMouseMove={handleBarSpecular}

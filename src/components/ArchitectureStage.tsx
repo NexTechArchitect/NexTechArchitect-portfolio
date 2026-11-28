@@ -241,7 +241,7 @@ export default function ArchitectureStage({
     [activeDomainId]
   );
 
-  // Stationary outer section orchestrator + sequential cinema slo-mo beats (zero useInView React state)
+  // Section 2: Masked Curtain + Bottom-Left Diagonal Sweep + Cinema Lens Pull-Back (scale 1.07 -> 1)
   const sectionOrchestrator = useMemo(
     () => createOrchestratorVariants(0, 0),
     []
@@ -250,8 +250,8 @@ export default function ArchitectureStage({
   const headlineVariants = useMemo(
     () =>
       createCinemaVariants({
-        x: -64,
-        duration: 1.3,
+        y: "105%",
+        duration: 1.2,
         delay: 0,
         isMobile,
         reducedMotion: prefersReducedMotion,
@@ -262,9 +262,9 @@ export default function ArchitectureStage({
   const subtitleVariants = useMemo(
     () =>
       createCinemaVariants({
-        y: 30,
-        duration: 1.25,
-        delay: 0.16,
+        y: 26,
+        duration: 1.15,
+        delay: 0.14,
         isMobile,
         reducedMotion: prefersReducedMotion,
       }),
@@ -272,14 +272,16 @@ export default function ArchitectureStage({
   );
 
   const tabsOrchestrator = useMemo(
-    () => createOrchestratorVariants(0.13, 0.22),
+    () => createOrchestratorVariants(0.12, 0.2),
     []
   );
 
   const tabItemVariants = useMemo(
     () =>
       createCinemaVariants({
-        x: -52,
+        x: -44,
+        y: 34,
+        scale: 0.94,
         duration: 1.15,
         isMobile,
         reducedMotion: prefersReducedMotion,
@@ -287,13 +289,14 @@ export default function ArchitectureStage({
     [isMobile, prefersReducedMotion]
   );
 
+  // High-end Cinema Lens Pull-Back (scale: 1.07 -> 1, x: 48 -> 0, opacity: 0 -> 1, 1.35s)
   const specPanelVariants = useMemo(
     () =>
       createCinemaVariants({
-        x: 72,
-        scale: 0.96,
-        duration: 1.4,
-        delay: 0.28,
+        x: 48,
+        scale: 1.07,
+        duration: 1.35,
+        delay: 0.26,
         isMobile,
         reducedMotion: prefersReducedMotion,
       }),
@@ -322,7 +325,7 @@ export default function ArchitectureStage({
   );
 
   return (
-    /* Section 2: Architecture — Stationary Outer Orchestrator with Sequential Cinema Slo-Mo Beats */
+    /* Section 2: Architecture — Masked Curtain + Diagonal Sweep + Cinema Lens Pull-Back */
     <section
       ref={stageRef}
       id="architecture"
@@ -337,13 +340,13 @@ export default function ArchitectureStage({
         className="pointer-events-none absolute inset-0 z-0 stage-spotlight-dark transition-opacity duration-300"
       />
 
-      {/* Lightweight static warm copper ambient washes */}
+      {/* Lightweight zero-blur pure CSS radial gradient ambient washes */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute top-12 left-[-8%] w-[440px] h-[560px] rounded-full opacity-30"
         style={{
           background:
-            "radial-gradient(ellipse at center, rgba(232, 93, 4, 0.2) 0%, rgba(217, 119, 54, 0.07) 46%, rgba(20, 14, 11, 0) 74%)",
+            "radial-gradient(circle, rgba(232, 93, 4, 0.2) 0%, rgba(217, 119, 54, 0.07) 44%, rgba(20, 14, 11, 0) 70%)",
         }}
       />
       <div
@@ -351,7 +354,7 @@ export default function ArchitectureStage({
         className="pointer-events-none absolute bottom-20 right-[-8%] w-[420px] h-[520px] rounded-full opacity-25"
         style={{
           background:
-            "radial-gradient(ellipse at center, rgba(244, 140, 6, 0.14) 0%, rgba(20, 14, 11, 0) 72%)",
+            "radial-gradient(circle, rgba(244, 140, 6, 0.14) 0%, rgba(20, 14, 11, 0) 70%)",
         }}
       />
 
@@ -362,16 +365,18 @@ export default function ArchitectureStage({
         variants={sectionOrchestrator}
         className="relative z-10 max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-8"
       >
-        {/* Beat 1 (0.00s): Headline Sweeps from Left (-64 -> 0), Beat 2 (+0.16s): Subtitle Glides from Bottom (y: 30 -> 0) */}
+        {/* Beat 1: Masked Editorial Curtain Rise (y: 105% -> 0%), Beat 2 (+0.14s): Subtitle Rises */}
         <div className="max-w-3xl">
-          <motion.h2
-            variants={headlineVariants}
-            className="font-display font-bold text-[#FAF6F0] text-3xl sm:text-4xl lg:text-[3rem] leading-[1.08] tracking-[-0.032em]"
-            style={{ textWrap: "balance" }}
-          >
-            Built for Adversarial{" "}
-            <span className="text-[#FF6B1A]">Mainnet Execution.</span>
-          </motion.h2>
+          <div className="overflow-hidden pb-1">
+            <motion.h2
+              variants={headlineVariants}
+              className="font-display font-bold text-[#FAF6F0] text-3xl sm:text-4xl lg:text-[3rem] leading-[1.08] tracking-[-0.032em]"
+              style={{ textWrap: "balance" }}
+            >
+              Built for Adversarial{" "}
+              <span className="text-[#FF6B1A]">Mainnet Execution.</span>
+            </motion.h2>
+          </div>
 
           <motion.p
             variants={subtitleVariants}
@@ -384,7 +389,7 @@ export default function ArchitectureStage({
           </motion.p>
         </div>
 
-        {/* Beat 3: Pillar Navigation Tabs Cascade One-by-One from Left (-52 -> 0, stagger 0.13s) */}
+        {/* Beat 3: Pillar Navigation Tabs Sweep Diagonally from Bottom-Left (-44, +34, 0.94 -> 0, 0, 1) */}
         <div className="mt-10 flex justify-start">
           <motion.div
             role="tablist"
@@ -428,17 +433,23 @@ export default function ArchitectureStage({
           </motion.div>
         </div>
 
-        {/* Beat 4 (+0.28s): Active Engineering Specification Panel Glides Slo-Mo from Right (+72 -> 0, scale 0.96 -> 1) */}
-        <motion.div variants={specPanelVariants} className="mt-10">
+        {/* Beat 4: Active Spec Panel — Cinema Lens Pull-Back (scale: 1.07 -> 1, x: 48 -> 0, 1.35s) */}
+        <motion.div variants={specPanelVariants} className="mt-10 origin-center">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={activeDomain.id}
-              initial={prefersReducedMotion ? false : { opacity: 0, x: 24 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={
-                prefersReducedMotion ? undefined : { opacity: 0, x: -16 }
+              initial={
+                prefersReducedMotion
+                  ? false
+                  : { opacity: 0, scale: 0.97, x: 20 }
               }
-              transition={{ duration: 0.65, ease: CINEMA_EASE }}
+              animate={{ opacity: 1, scale: 1, x: 0 }}
+              exit={
+                prefersReducedMotion
+                  ? undefined
+                  : { opacity: 0, scale: 0.985, x: -14 }
+              }
+              transition={{ duration: 0.55, ease: CINEMA_EASE }}
               className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start"
             >
               {/* Left: Domain Statement + 4 Tonal Capability Rows */}
@@ -458,12 +469,12 @@ export default function ArchitectureStage({
                     <motion.li
                       key={item.name}
                       initial={
-                        prefersReducedMotion ? false : { opacity: 0, y: 16 }
+                        prefersReducedMotion ? false : { opacity: 0, y: 14 }
                       }
                       animate={{ opacity: 1, y: 0 }}
                       transition={{
-                        duration: 0.72,
-                        delay: idx * 0.06,
+                        duration: 0.65,
+                        delay: idx * 0.055,
                         ease: CINEMA_EASE,
                       }}
                       className="rounded-[28px] bg-[#1E1510]/90 hover:bg-[#241913] hover:-translate-y-0.5 px-5 py-4 flex items-start gap-3.5 shadow-[inset_0_1px_0_rgba(250,246,240,0.07),0_14px_32px_-22px_rgba(0,0,0,0.75)] hover:shadow-[inset_0_1px_0_rgba(244,162,97,0.18),0_18px_38px_-20px_rgba(232,93,4,0.22)] transition-[background-color,transform,box-shadow] duration-200"
@@ -492,12 +503,12 @@ export default function ArchitectureStage({
                     <motion.li
                       key={principle.num}
                       initial={
-                        prefersReducedMotion ? false : { opacity: 0, y: 18 }
+                        prefersReducedMotion ? false : { opacity: 0, y: 16 }
                       }
                       animate={{ opacity: 1, y: 0 }}
                       transition={{
-                        duration: 0.78,
-                        delay: idx * 0.08,
+                        duration: 0.7,
+                        delay: idx * 0.07,
                         ease: CINEMA_EASE,
                       }}
                       onMouseMove={handleSpecularMove}

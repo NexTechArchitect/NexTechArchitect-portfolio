@@ -1,14 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import {
-  motion,
-  useMotionValue,
-  useReducedMotion,
-  useTransform,
-  type MotionValue,
-  type Variants,
-} from "framer-motion";
+import type { Variants } from "framer-motion";
 
 interface CurveProps {
   idPrefix: string;
@@ -17,12 +10,11 @@ interface CurveProps {
 }
 
 /**
- * Signature Cinema Expo-Out Motion Tokens (Strict 60-120FPS GPU-Only Compositing)
- * Begins moving immediately on frame 1 (zero blank waiting) and spends the final
- * second gliding into a buttery, weighted movie-camera slow-motion settle.
+ * Signature Weighted Slo-Mo Cinema Curve (Strict 60-120FPS GPU-Only Compositing)
+ * Starts moving on frame 1 (zero blank wait) and glides effortlessly into rest.
  */
 export const CINEMA_EASE: [number, number, number, number] = [
-  0.19, 1, 0.22, 1,
+  0.16, 1, 0.3, 1,
 ];
 export const SLOMO_EASE: [number, number, number, number] = CINEMA_EASE;
 export const LUXURY_EASE: [number, number, number, number] = [
@@ -31,17 +23,17 @@ export const LUXURY_EASE: [number, number, number, number] = [
 
 export const REPLAY_VIEWPORT = {
   once: false,
-  amount: 0.12 as const,
+  amount: 0.08 as const,
 };
 
 export const CARD_VIEWPORT = {
   once: false,
-  amount: 0.15 as const,
+  amount: 0.12 as const,
 };
 
 export const WORKBENCH_VIEWPORT = {
   once: false,
-  amount: 0.08 as const,
+  amount: 0.04 as const,
 };
 
 /**
@@ -65,11 +57,11 @@ export function useIsMobile(maxWidth = 767): boolean {
 
 /**
  * Stationary orchestrator variants for Framer Motion native `whileInView` propagation.
- * The outer container itself never translates, eliminating boundary flicker and
- * mid-scroll React re-renders while cleanly replaying on every up/down scroll.
+ * Outer observer container never translates — zero boundary flicker, zero mid-scroll
+ * React re-renders, and crisp replay every time you scroll down or back up.
  */
 export function createOrchestratorVariants(
-  staggerChildren = 0.16,
+  staggerChildren = 0.14,
   delayChildren = 0
 ): Variants {
   return {
@@ -90,8 +82,10 @@ export function createOrchestratorVariants(
 
 export interface CinemaItemVariantOptions {
   x?: number;
-  y?: number;
+  y?: number | string;
   scale?: number;
+  rotate?: number;
+  skewY?: number;
   duration?: number;
   delay?: number;
   staggerChildren?: number;
@@ -101,14 +95,16 @@ export interface CinemaItemVariantOptions {
 }
 
 /**
- * Creates GPU-only (`x`, `y`, `scale`, `opacity`) cinema slo-mo variants for
- * inner children driven by a stationary outer `motion.div` orchestrator.
+ * Creates GPU-only (`transform` & `opacity`) slo-mo cinema variants supporting
+ * masked curtain slides, lens pull-backs, diagonal banking arcs, and skew settles.
  */
 export function createCinemaVariants({
   x = 0,
   y = 0,
   scale = 1,
-  duration = 1.3,
+  rotate = 0,
+  skewY = 0,
+  duration = 1.25,
   delay,
   staggerChildren,
   delayChildren,
@@ -117,30 +113,39 @@ export function createCinemaVariants({
 }: CinemaItemVariantOptions): Variants {
   if (reducedMotion) {
     return {
-      hidden: { opacity: 1, x: 0, y: 0, scale: 1 },
+      hidden: { opacity: 1, x: 0, y: 0, scale: 1, rotate: 0, skewY: 0 },
       visible: {
         opacity: 1,
         x: 0,
         y: 0,
         scale: 1,
+        rotate: 0,
+        skewY: 0,
         transition: { duration: 0 },
       },
     };
   }
 
   const resolvedX = isMobile ? Math.round(x * 0.45) : x;
-  const resolvedY = isMobile ? Math.round(y * 0.55) : y;
+  const resolvedY =
+    typeof y === "number" ? (isMobile ? Math.round(y * 0.55) : y) : y;
   const resolvedScale =
-    isMobile && scale < 1 ? Number((1 - (1 - scale) * 0.5).toFixed(3)) : scale;
+    isMobile && scale !== 1
+      ? Number((1 + (scale - 1) * 0.55).toFixed(3))
+      : scale;
+  const resolvedRotate = isMobile ? Number((rotate * 0.5).toFixed(2)) : rotate;
+  const resolvedSkewY = isMobile ? Number((skewY * 0.5).toFixed(2)) : skewY;
 
   return {
     hidden: {
-      opacity: 0,
+      opacity: typeof y === "string" ? 0.001 : 0,
       x: resolvedX,
       y: resolvedY,
       scale: resolvedScale,
+      rotate: resolvedRotate,
+      skewY: resolvedSkewY,
       transition: {
-        duration: 0.22,
+        duration: 0.2,
         ease: "easeOut",
         ...(staggerChildren !== undefined
           ? { staggerChildren: 0, delayChildren: 0 }
@@ -150,8 +155,10 @@ export function createCinemaVariants({
     visible: {
       opacity: 1,
       x: 0,
-      y: 0,
+      y: typeof y === "string" ? "0%" : 0,
       scale: 1,
+      rotate: 0,
+      skewY: 0,
       transition: {
         duration,
         ...(delay !== undefined ? { delay } : {}),
@@ -220,26 +227,15 @@ export function HeroHeaderCanopy() {
 
 /**
  * Signature Hero Translucent Apricot & Burnt-Orange Silk Wave
- * Pure filled sculptural shapes (zero stroke hairlines, zero expensive SVG blur)
- * flowing behind the Hero & 3D avatar with lightweight scroll-linked sideways drift.
+ * Zero-JS-overhead pure filled sculptural shapes & radial gradient glow (zero scroll scrubbers).
  */
 export function HeroSilkWave({
   idPrefix = "hero-silk-wave",
   className = "",
-  scrollProgress,
 }: {
   idPrefix?: string;
   className?: string;
-  scrollProgress?: MotionValue<number>;
 }) {
-  const prefersReducedMotion = useReducedMotion();
-  const isMobile = useIsMobile();
-  const fallbackProgress = useMotionValue(0);
-
-  const source = scrollProgress ?? fallbackProgress;
-  const x = useTransform(source, [0, 1], [0, isMobile ? 22 : 48]);
-  const y = useTransform(source, [0, 1], [0, isMobile ? 6 : 14]);
-
   const ribbonPrimaryId = `${idPrefix}-primary`;
   const ribbonSecondaryId = `${idPrefix}-secondary`;
   const ribbonCrestId = `${idPrefix}-crest`;
@@ -259,87 +255,80 @@ export function HeroSilkWave({
         }}
       />
 
-      <motion.div
-        style={
-          prefersReducedMotion || !scrollProgress ? undefined : { x, y }
-        }
-        className="w-full"
-      >
-        <div className="silk-wave-shimmer w-full">
-          <svg
-            viewBox="0 0 1440 280"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            preserveAspectRatio="none"
-            shapeRendering="geometricPrecision"
-            className="pointer-events-none block w-full h-[180px] sm:h-[225px] lg:h-[268px]"
-          >
-            <defs>
-              <linearGradient
-                id={ribbonPrimaryId}
-                x1="0"
-                y1="140"
-                x2="1440"
-                y2="140"
-                gradientUnits="userSpaceOnUse"
-              >
-                <stop offset="0%" stopColor="#F4A261" stopOpacity="0.02" />
-                <stop offset="26%" stopColor="#F4A261" stopOpacity="0.18" />
-                <stop offset="56%" stopColor="#FF7A26" stopOpacity="0.28" />
-                <stop offset="82%" stopColor="#E85D04" stopOpacity="0.22" />
-                <stop offset="100%" stopColor="#F4A261" stopOpacity="0.04" />
-              </linearGradient>
+      <div className="silk-wave-shimmer w-full">
+        <svg
+          viewBox="0 0 1440 280"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          preserveAspectRatio="none"
+          shapeRendering="geometricPrecision"
+          className="pointer-events-none block w-full h-[180px] sm:h-[225px] lg:h-[268px]"
+        >
+          <defs>
+            <linearGradient
+              id={ribbonPrimaryId}
+              x1="0"
+              y1="140"
+              x2="1440"
+              y2="140"
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop offset="0%" stopColor="#F4A261" stopOpacity="0.02" />
+              <stop offset="26%" stopColor="#F4A261" stopOpacity="0.18" />
+              <stop offset="56%" stopColor="#FF7A26" stopOpacity="0.28" />
+              <stop offset="82%" stopColor="#E85D04" stopOpacity="0.22" />
+              <stop offset="100%" stopColor="#F4A261" stopOpacity="0.04" />
+            </linearGradient>
 
-              <linearGradient
-                id={ribbonSecondaryId}
-                x1="0"
-                y1="95"
-                x2="1440"
-                y2="195"
-                gradientUnits="userSpaceOnUse"
-              >
-                <stop offset="0%" stopColor="#E85D04" stopOpacity="0" />
-                <stop offset="30%" stopColor="#FF964F" stopOpacity="0.11" />
-                <stop offset="68%" stopColor="#E85D04" stopOpacity="0.14" />
-                <stop offset="100%" stopColor="#D97736" stopOpacity="0.02" />
-              </linearGradient>
+            <linearGradient
+              id={ribbonSecondaryId}
+              x1="0"
+              y1="95"
+              x2="1440"
+              y2="195"
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop offset="0%" stopColor="#E85D04" stopOpacity="0" />
+              <stop offset="30%" stopColor="#FF964F" stopOpacity="0.11" />
+              <stop offset="68%" stopColor="#E85D04" stopOpacity="0.14" />
+              <stop offset="100%" stopColor="#D97736" stopOpacity="0.02" />
+            </linearGradient>
 
-              <linearGradient
-                id={ribbonCrestId}
-                x1="0"
-                y1="0"
-                x2="1440"
-                y2="0"
-                gradientUnits="userSpaceOnUse"
-              >
-                <stop offset="0%" stopColor="#F4A261" stopOpacity="0" />
-                <stop offset="24%" stopColor="#FF7E2D" stopOpacity="0.18" />
-                <stop offset="58%" stopColor="#E85D04" stopOpacity="0.24" />
-                <stop offset="84%" stopColor="#F4A261" stopOpacity="0.16" />
-                <stop offset="100%" stopColor="#F4A261" stopOpacity="0" />
-              </linearGradient>
-            </defs>
+            <linearGradient
+              id={ribbonCrestId}
+              x1="0"
+              y1="0"
+              x2="1440"
+              y2="0"
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop offset="0%" stopColor="#F4A261" stopOpacity="0" />
+              <stop offset="24%" stopColor="#FF7E2D" stopOpacity="0.18" />
+              <stop offset="58%" stopColor="#E85D04" stopOpacity="0.24" />
+              <stop offset="84%" stopColor="#F4A261" stopOpacity="0.16" />
+              <stop offset="100%" stopColor="#F4A261" stopOpacity="0" />
+            </linearGradient>
+          </defs>
 
-            {/* Back translucent apricot silk veil (pure filled shape, zero SVG filter) */}
-            <path
-              d="M0 156C250 74 560 72 885 138C1130 188 1310 154 1440 94L1440 202C1270 250 1065 246 820 198C525 140 245 160 0 224V156Z"
-              fill={`url(#${ribbonSecondaryId})`}
-            />
+          {/* Back translucent apricot silk veil (pure filled shape, zero SVG filter) */}
+          <path
+            d="M0 156C250 74 560 72 885 138C1130 188 1310 154 1440 94L1440 202C1270 250 1065 246 820 198C525 140 245 160 0 224V156Z"
+            fill={`url(#${ribbonSecondaryId})`}
+          />
 
-            {/* Primary glowing apricot-to-burnt-orange translucent silk ribbon (pure filled shape) */}
-            <path
-              d="M0 176C290 96 620 90 945 150C1165 190 1320 162 1440 112L1440 196C1285 234 1095 238 870 194C575 136 270 154 0 218V176Z"
-              fill={`url(#${ribbonPrimaryId})`}
-            />
+          {/* Primary glowing apricot-to-burnt-orange translucent silk ribbon (pure filled shape) */}
+          <path
+            d="M0 176C290 96 620 90 945 150C1165 190 1320 162 1440 112L1440 196C1285 234 1095 238 870 194C575 136 270 154 0 218V176Z"
+            fill={`url(#${ribbonPrimaryId})`}
+          />
 
-            {/* Soft luminous upper silk band (pure filled shape, zero stroke) */}
-            <path
-              d="M0 170C290 88 620 82 945 142C1165 182 1320 154 1440 104L1440 124C1320 174 1165 202 945 162C620 102 290 108 0 188V170Z"
-              fill={`url(#${ribbonCrestId})`}
-            />
-          </svg>
-        </div>
-      </motion.div>
+          {/* Soft luminous upper silk band (pure filled shape, zero stroke) */}
+          <path
+            d="M0 170C290 88 620 82 945 142C1165 182 1320 154 1440 104L1440 124C1320 174 1165 202 945 162C620 102 290 108 0 188V170Z"
+            fill={`url(#${ribbonCrestId})`}
+          />
+        </svg>
+      </div>
     </div>
   );
 }

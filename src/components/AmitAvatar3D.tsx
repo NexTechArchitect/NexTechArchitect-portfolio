@@ -788,7 +788,19 @@ export default function AmitAvatar3D({
       targetY = 0;
     };
 
-    window.addEventListener("pointermove", handlePointerMove, { passive: true });
+    let pointerBound = false;
+    const attachPointer = () => {
+      if (pointerBound || disposed) return;
+      pointerBound = true;
+      window.addEventListener("pointermove", handlePointerMove, {
+        passive: true,
+      });
+    };
+    const detachPointer = () => {
+      if (!pointerBound) return;
+      pointerBound = false;
+      window.removeEventListener("pointermove", handlePointerMove);
+    };
     container.addEventListener("pointerleave", handlePointerLeave);
 
     const updatePose = (elapsed: number, delta: number) => {
@@ -919,6 +931,7 @@ export default function AmitAvatar3D({
 
     const startLoop = () => {
       if (disposed || !isVisible || !isTabVisible) return;
+      attachPointer();
       window.cancelAnimationFrame(frameId);
       window.clearTimeout(timerId);
       lastTime = performance.now();
@@ -926,6 +939,7 @@ export default function AmitAvatar3D({
     };
 
     const stopLoop = () => {
+      detachPointer();
       window.cancelAnimationFrame(frameId);
       window.clearTimeout(timerId);
     };
@@ -965,7 +979,7 @@ export default function AmitAvatar3D({
       resizeObserver.disconnect();
       intersectionObserver.disconnect();
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("pointermove", handlePointerMove);
+      detachPointer();
       container.removeEventListener("pointerleave", handlePointerLeave);
 
       disposablesGeo.forEach((g) => g.dispose());

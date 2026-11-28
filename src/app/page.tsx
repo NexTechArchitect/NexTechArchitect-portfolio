@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
+import { MotionConfig } from "framer-motion";
 import { AgentProvider, useAgent } from "@/context/AgentContext";
 import { useModal } from "@/hooks/useModal";
 import Navbar from "@/components/Navbar";
@@ -82,10 +83,6 @@ function PortfolioShell() {
 
   return (
     <div className="min-h-screen bg-[#FAF6F0] text-[#140E0B] relative overflow-x-clip">
-      <div
-        aria-hidden="true"
-        className="editorial-grain-overlay pointer-events-none fixed inset-0 z-30"
-      />
       <Navbar
         onOpenResume={() => setResumeOpen(true)}
         onOpenAgent={openAgent}
@@ -134,8 +131,10 @@ function PortfolioShell() {
 
 export default function Portfolio() {
   return (
-    <AgentProvider>
-      <PortfolioShell />
-    </AgentProvider>
+    <MotionConfig reducedMotion="user">
+      <AgentProvider>
+        <PortfolioShell />
+      </AgentProvider>
+    </MotionConfig>
   );
 }

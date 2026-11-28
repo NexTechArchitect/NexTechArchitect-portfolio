@@ -27,6 +27,7 @@ import {
 import type { ProjectItem } from "@/data/projects";
 import { filterProjectsByQuery } from "@/lib/portfolio";
 import {
+  CINEMA_EASE,
   LUXURY_EASE,
   REPLAY_VIEWPORT,
   useIsMobile,
@@ -85,23 +86,37 @@ function GalleryCard({
   }, []);
 
   const Icon = ICON_MAP[project.iconKey] || Cpu;
+  // 3-Column Fan-Out Spread: Left (-36, 52, -1.5deg), Center Lens Zoom (0, 58, 0.86), Right (+36, 52, +1.5deg)
+  const col = index % 3;
+  const fanX = col === 0 ? (isMobile ? -16 : -36) : col === 2 ? (isMobile ? 16 : 36) : 0;
+  const fanY = col === 1 ? (isMobile ? 30 : 58) : isMobile ? 28 : 52;
+  const fanRotate = col === 0 ? (isMobile ? -0.75 : -1.5) : col === 2 ? (isMobile ? 0.75 : 1.5) : 0;
+  const fanScale = col === 1 ? (isMobile ? 0.92 : 0.86) : isMobile ? 0.94 : 0.89;
 
   return (
     <motion.div
       layout
       initial={
-        prefersReducedMotion ? false : { opacity: 0, y: 24, scale: 0.97 }
+        prefersReducedMotion
+          ? false
+          : {
+              opacity: 0,
+              x: fanX,
+              y: fanY,
+              rotate: fanRotate,
+              scale: fanScale,
+            }
       }
-      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      whileInView={{ opacity: 1, x: 0, y: 0, rotate: 0, scale: 1 }}
       viewport={REPLAY_VIEWPORT}
-      exit={{ opacity: 0, y: -12, scale: 0.97 }}
+      exit={{ opacity: 0, y: -12, scale: 0.96 }}
       transition={{
         layout: { type: "spring", stiffness: 320, damping: 28 },
-        delay: Math.min(index * 0.04, 0.2),
-        duration: 0.58,
-        ease: LUXURY_EASE,
+        delay: Math.min((index % 3) * 0.1, 0.25),
+        duration: 1.2,
+        ease: CINEMA_EASE,
       }}
-      className="h-full will-change-transform"
+      className="h-full"
     >
       <motion.div
         ref={ref}
@@ -116,7 +131,7 @@ function GalleryCard({
         onMouseMove={handleMove}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={handleLeave}
-        className={`card-sheen-sweep relative h-full rounded-[24px] transition-shadow duration-250 flex flex-col overflow-hidden will-change-transform ${
+        className={`card-sheen-sweep relative h-full rounded-[24px] transition-shadow duration-250 flex flex-col overflow-hidden ${
           isDarkLab
             ? "specular-surface-dark bg-[#1C120C] shadow-[inset_0_1px_0_rgba(250,246,240,0.08),0_22px_54px_-28px_rgba(0,0,0,0.85)] hover:shadow-[inset_0_1px_0_rgba(255,138,61,0.28),0_32px_68px_-24px_rgba(232,93,4,0.38)]"
             : "specular-surface bg-[#FFFCF7] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_14px_38px_-24px_rgba(20,14,11,0.22)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,1),0_30px_64px_-24px_rgba(232,93,4,0.3)]"
@@ -334,7 +349,7 @@ export default function ProjectGalleryOverlay({
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={prefersReducedMotion ? undefined : { opacity: 0, y: 22, scale: 0.95 }}
         transition={{ type: "spring", stiffness: 260, damping: 24 }}
-        className={`relative h-full w-full overflow-hidden will-change-transform ${
+        className={`relative h-full w-full overflow-hidden ${
           isDarkLab
             ? "bg-[#120B07] text-[#FAF6F0] silk-grain-dark"
             : "bg-[#FAF5EE] text-[#140E0B] silk-grain"
@@ -400,10 +415,14 @@ export default function ProjectGalleryOverlay({
                 initial={
                   prefersReducedMotion
                     ? false
-                    : { opacity: 0, x: isMobile ? -14 : -24 }
+                    : {
+                        opacity: 0,
+                        x: isMobile ? -18 : -40,
+                        y: isMobile ? -12 : -22,
+                      }
                 }
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, ease: LUXURY_EASE }}
+                animate={{ opacity: 1, x: 0, y: 0 }}
+                transition={{ duration: 1.2, ease: CINEMA_EASE }}
               >
                 <h2
                   className={`font-display text-2xl sm:text-3xl font-bold tracking-[-0.03em] ${
@@ -418,10 +437,14 @@ export default function ProjectGalleryOverlay({
                 initial={
                   prefersReducedMotion
                     ? false
-                    : { opacity: 0, x: isMobile ? 14 : 24 }
+                    : {
+                        opacity: 0,
+                        x: isMobile ? 18 : 40,
+                        y: isMobile ? 12 : 22,
+                      }
                 }
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.05, ease: LUXURY_EASE }}
+                animate={{ opacity: 1, x: 0, y: 0 }}
+                transition={{ duration: 1.2, delay: 0.08, ease: CINEMA_EASE }}
                 className="flex items-center gap-2.5 sm:gap-3"
               >
                 <div className="relative flex-1 sm:w-72">

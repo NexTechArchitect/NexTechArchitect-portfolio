@@ -112,7 +112,7 @@ export default function WorkbenchStage({
   );
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // Instant-trigger (amount: 0.08) stationary orchestrator + sequential Cinema Expo-Out slo-mo beats
+  // Section 5: Instant Dual-Gate Diagonal Unfold (amount: 0.04, ZERO Delay!)
   const sectionOrchestrator = useMemo(
     () => createOrchestratorVariants(0, 0),
     []
@@ -120,8 +120,8 @@ export default function WorkbenchStage({
   const headlineVariants = useMemo(
     () =>
       createCinemaVariants({
-        x: -56,
-        duration: 1.25,
+        y: "105%",
+        duration: 1.15,
         delay: 0,
         isMobile,
         reducedMotion: prefersReducedMotion,
@@ -131,46 +131,52 @@ export default function WorkbenchStage({
   const subtitleVariants = useMemo(
     () =>
       createCinemaVariants({
-        y: 26,
-        duration: 1.2,
-        delay: 0.14,
+        y: "105%",
+        duration: 1.15,
+        delay: 0.12,
         isMobile,
         reducedMotion: prefersReducedMotion,
       }),
     [isMobile, prefersReducedMotion]
   );
+  // Left Solidity/Yul file tabs glide from Top-Left Diagonal (-44, -24 -> 0, stagger 0.09s)
   const tabsOrchestrator = useMemo(
-    () => createOrchestratorVariants(0.1, 0.18),
+    () => createOrchestratorVariants(0.09, 0.16),
     []
   );
   const tabItemVariants = useMemo(
     () =>
       createCinemaVariants({
         x: -44,
-        duration: 1.15,
+        y: -24,
+        duration: 1.1,
         isMobile,
         reducedMotion: prefersReducedMotion,
       }),
     [isMobile, prefersReducedMotion]
   );
+  // Left editorial shutter unfolds from Top-Left Diagonal
   const leftShutterVariants = useMemo(
     () =>
       createCinemaVariants({
-        x: -52,
-        duration: 1.3,
-        delay: 0.2,
+        x: -44,
+        y: -20,
+        duration: 1.25,
+        delay: 0.18,
         isMobile,
         reducedMotion: prefersReducedMotion,
       }),
     [isMobile, prefersReducedMotion]
   );
+  // Dark Espresso Code Studio unfolds simultaneously from Bottom-Right Diagonal with Depth Scale (0.91 -> 1)
   const rightStudioVariants = useMemo(
     () =>
       createCinemaVariants({
-        x: 68,
-        scale: 0.96,
+        x: 54,
+        y: 34,
+        scale: 0.91,
         duration: 1.35,
-        delay: 0.22,
+        delay: 0.18,
         isMobile,
         reducedMotion: prefersReducedMotion,
       }),
@@ -230,7 +236,7 @@ export default function WorkbenchStage({
   };
 
   return (
-    /* Section 5: Solidity Workbench — Instant Trigger (amount: 0.08), Slo-Mo Cinema Finish */
+    /* Section 5: Solidity Workbench — Instant Dual-Gate Diagonal Unfold (amount: 0.04) */
     <div
       id="workbench"
       className="relative bg-[#1B120D] -mt-[2px] scroll-mt-24 section-perf"
@@ -240,13 +246,13 @@ export default function WorkbenchStage({
         aria-label="Solidity Workbench"
         className="relative z-10 rounded-t-[36px] sm:rounded-t-[48px] bg-[#F3EAE0] text-[#16100C] silk-grain pt-14 sm:pt-20 overflow-hidden shadow-[0_-24px_60px_-26px_rgba(10,6,4,0.5)] section-perf"
       >
-        {/* Lightweight static warm-amber washes over Soft Champagne Sand canvas */}
+        {/* Lightweight zero-blur pure CSS radial gradient washes over Soft Champagne Sand canvas */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute -top-20 right-[-6%] w-[480px] h-[480px] rounded-full opacity-55"
           style={{
             background:
-              "radial-gradient(ellipse at center, rgba(244, 140, 6, 0.13) 0%, rgba(232, 93, 4, 0.05) 44%, rgba(243, 234, 224, 0) 74%)",
+              "radial-gradient(circle, rgba(244, 140, 6, 0.13) 0%, rgba(232, 93, 4, 0.05) 44%, rgba(243, 234, 224, 0) 70%)",
           }}
         />
         <div
@@ -254,7 +260,7 @@ export default function WorkbenchStage({
           className="pointer-events-none absolute bottom-32 left-[-8%] w-[440px] h-[460px] rounded-full opacity-40"
           style={{
             background:
-              "radial-gradient(ellipse at center, rgba(217, 119, 54, 0.09) 0%, rgba(243, 234, 224, 0) 72%)",
+              "radial-gradient(circle, rgba(217, 119, 54, 0.09) 0%, rgba(243, 234, 224, 0) 70%)",
           }}
         />
 
@@ -265,28 +271,32 @@ export default function WorkbenchStage({
           variants={sectionOrchestrator}
           className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20"
         >
-          {/* Beat 1 (0.00s): Headline from Left (-56 -> 0), Beat 2 (+0.14s): Subtitle rises */}
+          {/* Beat 1 & 2: Headline & Subtitle Lift Out of Clean Masked Reveals (duration: 1.15s) */}
           <div className="max-w-3xl">
-            <motion.h2
-              variants={headlineVariants}
-              className="font-display font-bold text-[#16100C] text-3xl sm:text-4xl lg:text-[3rem] leading-[1.08] tracking-[-0.032em]"
-              style={{ textWrap: "balance" }}
-            >
-              Production Contract{" "}
-              <span className="text-[#E85D04]">Primitives.</span>
-            </motion.h2>
+            <div className="overflow-hidden pb-1">
+              <motion.h2
+                variants={headlineVariants}
+                className="font-display font-bold text-[#16100C] text-3xl sm:text-4xl lg:text-[3rem] leading-[1.08] tracking-[-0.032em]"
+                style={{ textWrap: "balance" }}
+              >
+                Production Contract{" "}
+                <span className="text-[#E85D04]">Primitives.</span>
+              </motion.h2>
+            </div>
 
-            <motion.p
-              variants={subtitleVariants}
-              data-testid="section-subtitle-workbench"
-              className="mt-4 max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#4A3F37]"
-            >
-              Inspect real Solidity and inline Yul guards extracted from
-              deployed DeFi, RWA, keeper, and governance systems.
-            </motion.p>
+            <div className="overflow-hidden mt-3 pb-1">
+              <motion.p
+                variants={subtitleVariants}
+                data-testid="section-subtitle-workbench"
+                className="max-w-2xl text-left text-[16px] sm:text-[17.5px] leading-[1.65] font-normal text-[#4A3F37]"
+              >
+                Inspect real Solidity and inline Yul guards extracted from
+                deployed DeFi, RWA, keeper, and governance systems.
+              </motion.p>
+            </div>
           </div>
 
-          {/* Beat 3: Solidity/Yul File Tabs Cascade One-by-One from Left (-44 -> 0, stagger 0.1s) */}
+          {/* Beat 3: Solidity/Yul File Tabs Glide from Top-Left Diagonal (-44, -24 -> 0, stagger 0.09s) */}
           <div className="mt-9 relative z-30">
             <motion.div
               role="tablist"
@@ -336,9 +346,9 @@ export default function WorkbenchStage({
             </motion.div>
           </div>
 
-          {/* Beat 4: Left Breakdown (-52 -> 0) & Right Dark Espresso Code Studio (+68 -> 0, scale 0.96 -> 1) */}
+          {/* Beat 4: Dual-Gate Diagonal Unfold — Left Top-Left vs Right Bottom-Right Depth Scale (0.91 -> 1) */}
           <div className="mt-9 relative z-20 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
-            {/* Left Shutter (5 cols): Editorial Breakdown Glides from Left */}
+            {/* Left Gate (5 cols): Editorial Breakdown */}
             <motion.div
               variants={leftShutterVariants}
               className="lg:col-span-5 flex flex-col justify-between pt-1"
@@ -347,13 +357,17 @@ export default function WorkbenchStage({
                 <motion.div
                   key={`meta-${activeInsight.id}`}
                   initial={
-                    prefersReducedMotion ? false : { opacity: 0, y: 16 }
+                    prefersReducedMotion
+                      ? false
+                      : { opacity: 0, scale: 0.985, y: 12 }
                   }
-                  animate={{ opacity: 1, y: 0 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={
-                    prefersReducedMotion ? undefined : { opacity: 0, y: -10 }
+                    prefersReducedMotion
+                      ? undefined
+                      : { opacity: 0, scale: 0.99, y: -8 }
                   }
-                  transition={{ duration: 0.55, ease: CINEMA_EASE }}
+                  transition={{ duration: 0.45, ease: CINEMA_EASE }}
                 >
                   <p className="font-mono-tabular text-xs font-semibold text-[#C84B04]">
                     {activeInsight.protocol}
@@ -400,7 +414,7 @@ export default function WorkbenchStage({
               </AnimatePresence>
             </motion.div>
 
-            {/* Right Shutter (7 cols): Dark Espresso Code Studio Glides Slo-Mo from Right (+68 -> 0, scale 0.96 -> 1) */}
+            {/* Right Gate (7 cols): Dark Espresso Code Studio Unfolds from Bottom-Right (+54, +34, scale 0.91 -> 1) */}
             <motion.div
               variants={rightStudioVariants}
               data-testid="workbench-code-panel"
@@ -413,7 +427,7 @@ export default function WorkbenchStage({
                 className="pointer-events-none absolute -top-12 left-1/2 -translate-x-1/2 w-[78%] h-[110px] z-0 opacity-60"
                 style={{
                   background:
-                    "radial-gradient(ellipse at center, rgba(232, 93, 4, 0.24) 0%, rgba(244, 162, 97, 0.08) 48%, rgba(19, 13, 10, 0) 76%)",
+                    "radial-gradient(circle, rgba(232, 93, 4, 0.24) 0%, rgba(244, 162, 97, 0.08) 44%, rgba(19, 13, 10, 0) 70%)",
                 }}
               />
 
@@ -495,19 +509,23 @@ export default function WorkbenchStage({
                 </div>
               </div>
 
-              {/* Numbered Syntax-Highlighted Solidity / Yul Code with Silky Upward Fade-Glide (y: 16 -> 0, 0.55s) */}
+              {/* Numbered Syntax-Highlighted Solidity / Yul Code with Crisp Micro-Zoom Crossfade (0.985 -> 1, y: 12 -> 0) */}
               <div className="px-4 sm:px-6 py-5 overflow-x-auto bg-[#130D0A]">
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.pre
                     key={`code-${activeInsight.id}`}
                     initial={
-                      prefersReducedMotion ? false : { opacity: 0, y: 16 }
+                      prefersReducedMotion
+                        ? false
+                        : { opacity: 0, scale: 0.985, y: 12 }
                     }
-                    animate={{ opacity: 1, y: 0 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={
-                      prefersReducedMotion ? undefined : { opacity: 0, y: -10 }
+                      prefersReducedMotion
+                        ? undefined
+                        : { opacity: 0, scale: 0.99, y: -8 }
                     }
-                    transition={{ duration: 0.55, ease: CINEMA_EASE }}
+                    transition={{ duration: 0.45, ease: CINEMA_EASE }}
                     className="font-mono-tabular text-[12px] sm:text-[12.5px] leading-[1.74] text-[#EFE6DC]"
                   >
                     <code>

@@ -1,12 +1,7 @@
 "use client";
 
-import React, { useMemo, useRef } from "react";
-import {
-  motion,
-  useReducedMotion,
-  useScroll,
-  useTransform,
-} from "framer-motion";
+import React, { useMemo } from "react";
+import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { ArrowDownRight, ArrowUpRight, Mail } from "lucide-react";
 import AmitAvatar3D from "@/components/AmitAvatar3D";
 import {
@@ -15,7 +10,6 @@ import {
   HeroSilkWave,
   REPLAY_VIEWPORT,
   ScrollHorizonSweep,
-  createCinemaVariants,
   createOrchestratorVariants,
   useIsMobile,
 } from "@/components/SectionCurves";
@@ -42,6 +36,17 @@ const CORE_SKILLS = [
   "Hardhat, Tenderly & Alchemy SDK",
 ] as const;
 
+/**
+ * Center-Out Diagonal Ripple delay per skill pill in the 4x3 desktop grid.
+ * Center pills (row 1, cols 1 & 2) bloom first at 0s, rippling diagonally outward to corners.
+ */
+const SKILL_RIPPLE_DELAYS = CORE_SKILLS.map((_, idx) => {
+  const row = Math.floor(idx / 4);
+  const col = idx % 4;
+  const dist = Math.hypot(col - 1.5, row - 1.0);
+  return Number(((dist - 0.5) * 0.26).toFixed(3));
+});
+
 export default function HeroSection({
   onOpenResume,
   onOpenGallery,
@@ -50,38 +55,39 @@ export default function HeroSection({
   const prefersReducedMotion = useReducedMotion();
   const isMobile = useIsMobile();
   const { openAgent } = useAgent();
-  const heroRef = useRef<HTMLElement | null>(null);
 
-  // Lightweight direct scroll-linked parallax (MotionValue only — zero React re-renders)
-  const { scrollYProgress } = useScroll({
-    target: heroRef,
-    offset: ["start start", "end start"],
-  });
-
-  const copyY = useTransform(scrollYProgress, [0, 1], [0, isMobile ? -8 : -18]);
-  const avatarY = useTransform(
-    scrollYProgress,
-    [0, 1],
-    [0, isMobile ? -14 : -32]
-  );
-
-  // Stationary outer orchestrator for the 12 skill pills (zero useInView React state)
+  // Stationary outer orchestrator for the 12 skill pills (zero useScroll, zero useInView state)
   const skillsOrchestrator = useMemo(
-    () => createOrchestratorVariants(0.055, 0),
+    () => createOrchestratorVariants(0, 0),
     []
   );
 
-  const skillPillVariants = useMemo(
-    () =>
-      createCinemaVariants({
-        y: 24,
-        scale: 0.94,
-        duration: 1.0,
-        isMobile,
-        reducedMotion: prefersReducedMotion,
+  const skillPillVariants = useMemo<Variants>(() => {
+    if (prefersReducedMotion) {
+      return {
+        hidden: { opacity: 1, y: 0, scale: 1 },
+        visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0 } },
+      };
+    }
+    return {
+      hidden: {
+        opacity: 0,
+        y: isMobile ? 12 : 20,
+        scale: isMobile ? 0.92 : 0.84,
+        transition: { duration: 0.2, ease: "easeOut" },
+      },
+      visible: (rippleDelay: number) => ({
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        transition: {
+          duration: 1.0,
+          delay: isMobile ? Number((rippleDelay * 0.65).toFixed(3)) : rippleDelay,
+          ease: CINEMA_EASE,
+        },
       }),
-    [isMobile, prefersReducedMotion]
-  );
+    };
+  }, [isMobile, prefersReducedMotion]);
 
   const handleScrollToContact = () => {
     const el = document.getElementById("contact");
@@ -92,20 +98,19 @@ export default function HeroSection({
 
   return (
     <section
-      ref={heroRef}
       id="top"
       className="relative bg-[#FAF6F0] text-[#16100C] silk-grain section-perf"
     >
       {/* Top Dark Espresso-Brown & Diffused Molten-Orange Curved Header Stage Behind Floating Navbar */}
       <HeroHeaderCanopy />
 
-      {/* Lightweight Static Warm-Apricot Studio Ambient Washes (pointer-events-none, z-0) */}
+      {/* Lightweight Zero-Blur Pure CSS Radial Gradient Studio Washes (0ms paint cost) */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute top-24 right-[-6%] w-[520px] h-[480px] rounded-full opacity-55 z-0"
         style={{
           background:
-            "radial-gradient(circle, rgba(244, 140, 6, 0.13) 0%, rgba(232, 93, 4, 0.04) 44%, rgba(250, 246, 240, 0) 74%)",
+            "radial-gradient(circle, rgba(244, 140, 6, 0.13) 0%, rgba(232, 93, 4, 0.04) 44%, rgba(250, 246, 240, 0) 70%)",
         }}
       />
       <div
@@ -113,33 +118,27 @@ export default function HeroSection({
         className="pointer-events-none absolute top-[30%] left-[-10%] w-[440px] h-[480px] rounded-full opacity-40 z-0"
         style={{
           background:
-            "radial-gradient(ellipse at center, rgba(217, 119, 54, 0.1) 0%, rgba(250, 246, 240, 0) 72%)",
+            "radial-gradient(circle, rgba(217, 119, 54, 0.1) 0%, rgba(250, 246, 240, 0) 70%)",
         }}
       />
 
-      {/* Translucent Apricot & Burnt-Orange Silk Wave with Lightweight Sideways Scroll Drift */}
-      <HeroSilkWave
-        idPrefix="hero-signature-silk"
-        scrollProgress={scrollYProgress}
-      />
+      {/* Signature Translucent Apricot & Burnt-Orange Silk Wave (Zero Scroll Scrubber) */}
+      <HeroSilkWave idPrefix="hero-signature-silk" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 lg:pt-10 pb-6 sm:pb-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
-          {/* Left Column: Immediate Slo-Mo Cinema Staged Arrival (ease: [0.19, 1, 0.22, 1]) */}
-          <motion.div
-            style={prefersReducedMotion ? undefined : { y: copyY }}
-            className="lg:col-span-7 flex flex-col justify-center"
-          >
-            {/* 1. Identity Lockup Glides from Left (0.08s) */}
+          {/* Left Column: Masked Skew-Curtain Reveal + Weighted Slo-Mo Settle */}
+          <div className="lg:col-span-7 flex flex-col justify-center">
+            {/* 1. Identity Lockup Glides Smoothly (0.04s) */}
             <motion.div
               data-testid="hero-identity-lockup"
               initial={
                 prefersReducedMotion
                   ? false
-                  : { opacity: 0, x: isMobile ? -20 : -44 }
+                  : { opacity: 0, x: isMobile ? -18 : -40 }
               }
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 1.2, delay: 0.08, ease: CINEMA_EASE }}
+              transition={{ duration: 1.15, delay: 0.04, ease: CINEMA_EASE }}
               className="flex flex-wrap items-center gap-x-3 gap-y-2"
             >
               <span className="font-display text-xl sm:text-2xl font-semibold tracking-tight text-[#16100C]">
@@ -154,45 +153,49 @@ export default function HeroSection({
               </span>
             </motion.div>
 
-            {/* 2. Hero 2-Line H1 Rises Smoothly (0.18s -> 0.25s) */}
-            <h1 className="mt-4 font-display font-bold text-[#16100C] text-[30px] sm:text-[36px] lg:text-[42px] leading-[1.1] tracking-[-0.025em] max-w-[26ch]">
-              <motion.span
-                initial={
-                  prefersReducedMotion
-                    ? false
-                    : { opacity: 0, y: isMobile ? 16 : 28 }
-                }
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1.25, delay: 0.18, ease: CINEMA_EASE }}
-                className="block"
-              >
-                I Architect DeFi Protocols
-              </motion.span>
-              <motion.span
-                initial={
-                  prefersReducedMotion
-                    ? false
-                    : { opacity: 0, y: isMobile ? 16 : 28 }
-                }
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1.25, delay: 0.25, ease: CINEMA_EASE }}
-                className="block mt-1"
-              >
-                Built to{" "}
-                <span className="text-[#E85D04]">Hold Under Fire.</span>
-              </motion.span>
+            {/* 2. Hero 2-Line H1: Masked Skew-Curtain Reveal (y: 105%, skewY: 2.5 -> 0%, 0, 0.12s stagger) */}
+            <h1 className="mt-4 font-display font-bold text-[#16100C] text-[30px] sm:text-[36px] lg:text-[42px] leading-[1.12] tracking-[-0.025em] max-w-[26ch]">
+              <span className="block overflow-hidden pb-1">
+                <motion.span
+                  initial={
+                    prefersReducedMotion
+                      ? false
+                      : { y: "105%", skewY: isMobile ? 1.4 : 2.5, opacity: 0.001 }
+                  }
+                  animate={{ y: "0%", skewY: 0, opacity: 1 }}
+                  transition={{ duration: 1.2, delay: 0.1, ease: CINEMA_EASE }}
+                  className="block origin-top-left"
+                >
+                  I Architect DeFi Protocols
+                </motion.span>
+              </span>
+              <span className="block overflow-hidden pb-1 mt-0.5">
+                <motion.span
+                  initial={
+                    prefersReducedMotion
+                      ? false
+                      : { y: "105%", skewY: isMobile ? 1.4 : 2.5, opacity: 0.001 }
+                  }
+                  animate={{ y: "0%", skewY: 0, opacity: 1 }}
+                  transition={{ duration: 1.2, delay: 0.22, ease: CINEMA_EASE }}
+                  className="block origin-top-left"
+                >
+                  Built to{" "}
+                  <span className="text-[#E85D04]">Hold Under Fire.</span>
+                </motion.span>
+              </span>
             </h1>
 
-            {/* 3. Bio Paragraphs Rise Smoothly (0.32s -> 0.39s) */}
-            <div className="mt-5 space-y-3 text-[15px] sm:text-[16px] leading-[1.66] text-[#4A3F37] max-w-[60ch]">
+            {/* 3. Bio Paragraphs Rise Smoothly */}
+            <div className="mt-4 space-y-3 text-[15px] sm:text-[16px] leading-[1.66] text-[#4A3F37] max-w-[60ch]">
               <motion.p
                 initial={
                   prefersReducedMotion
                     ? false
-                    : { opacity: 0, y: isMobile ? 14 : 26 }
+                    : { opacity: 0, y: isMobile ? 14 : 24 }
                 }
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1.2, delay: 0.32, ease: CINEMA_EASE }}
+                transition={{ duration: 1.15, delay: 0.3, ease: CINEMA_EASE }}
               >
                 I&apos;m Amit Kumar, a Smart Contract Engineer shipping complete
                 DeFi systems across Ethereum and EVM-compatible mainnets, from
@@ -204,10 +207,10 @@ export default function HeroSection({
                 initial={
                   prefersReducedMotion
                     ? false
-                    : { opacity: 0, y: isMobile ? 14 : 26 }
+                    : { opacity: 0, y: isMobile ? 14 : 24 }
                 }
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1.2, delay: 0.39, ease: CINEMA_EASE }}
+                transition={{ duration: 1.15, delay: 0.38, ease: CINEMA_EASE }}
                 className="text-[#5C4E45]"
               >
                 Strongest in the security-critical layer: enforcing compliance
@@ -217,7 +220,7 @@ export default function HeroSection({
               </motion.p>
             </div>
 
-            {/* 4. Primary Actions Settle Smoothly (0.44s) */}
+            {/* 4. Primary Actions Settle Smoothly */}
             <motion.div
               initial={
                 prefersReducedMotion
@@ -225,7 +228,7 @@ export default function HeroSection({
                   : { opacity: 0, y: isMobile ? 12 : 22 }
               }
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1.2, delay: 0.44, ease: CINEMA_EASE }}
+              transition={{ duration: 1.15, delay: 0.44, ease: CINEMA_EASE }}
               className="mt-6 flex flex-wrap items-center gap-3.5"
             >
               <a
@@ -253,7 +256,7 @@ export default function HeroSection({
               </a>
             </motion.div>
 
-            {/* 5. Direct Social & Contact Row (0.52s) */}
+            {/* 5. Direct Social & Contact Row */}
             <motion.div
               initial={
                 prefersReducedMotion
@@ -261,7 +264,7 @@ export default function HeroSection({
                   : { opacity: 0, y: isMobile ? 10 : 18 }
               }
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1.15, delay: 0.52, ease: CINEMA_EASE }}
+              transition={{ duration: 1.15, delay: 0.5, ease: CINEMA_EASE }}
               className="mt-5 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-x-5 gap-y-2 text-[13.5px] font-medium text-[#4A3F37]"
             >
               <div className="flex items-center gap-4">
@@ -310,21 +313,22 @@ export default function HeroSection({
                 <span>nextech.amit@gmail.com</span>
               </a>
             </motion.div>
-          </motion.div>
+          </div>
 
-          {/* Right Column: Greeting + 3D Avatar Glide Softly from Right (0.22s) */}
-          <motion.div
-            style={prefersReducedMotion ? undefined : { y: avatarY }}
-            className="lg:col-span-5 relative z-20 flex flex-col items-center"
-          >
+          {/* Right Column: Silky Depth Zoom-In (scale: 0.85 -> 1, y: 28 -> 0, opacity: 0 -> 1, 1.3s) */}
+          <div className="lg:col-span-5 relative z-20 flex flex-col items-center">
             <motion.div
               initial={
                 prefersReducedMotion
                   ? false
-                  : { opacity: 0, x: isMobile ? 22 : 48, scale: 0.96 }
+                  : {
+                      opacity: 0,
+                      scale: isMobile ? 0.9 : 0.85,
+                      y: isMobile ? 16 : 28,
+                    }
               }
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              transition={{ duration: 1.3, delay: 0.22, ease: CINEMA_EASE }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 1.3, delay: 0.16, ease: CINEMA_EASE }}
               className="relative w-full flex flex-col items-center justify-center"
             >
               <div
@@ -332,7 +336,7 @@ export default function HeroSection({
                 className="pointer-events-none absolute left-1/2 top-[48%] -translate-x-1/2 -translate-y-1/2 w-[320px] h-[320px] sm:w-[380px] sm:h-[380px] rounded-full opacity-90 z-0"
                 style={{
                   background:
-                    "radial-gradient(circle at 50% 48%, rgba(244, 140, 6, 0.16) 0%, rgba(232, 93, 4, 0.08) 44%, rgba(250, 246, 240, 0) 74%)",
+                    "radial-gradient(circle at 50% 48%, rgba(244, 140, 6, 0.16) 0%, rgba(232, 93, 4, 0.08) 44%, rgba(250, 246, 240, 0) 70%)",
                 }}
               />
               <div className="relative z-10 w-full flex flex-col items-center">
@@ -345,10 +349,10 @@ export default function HeroSection({
                 />
               </div>
             </motion.div>
-          </motion.div>
+          </div>
         </div>
 
-        {/* All 12 Skill Pills — Stationary Native Variant Orchestrator (staggerChildren: 0.055, replayable on scroll) */}
+        {/* All 12 Skill Pills — Center-Out Diagonal Ripple (Stationary Outer Observer, Replayable) */}
         <motion.div
           data-testid="hero-core-skills"
           aria-label="Core engineering skills"
@@ -359,9 +363,10 @@ export default function HeroSection({
           className="mt-10 lg:mt-12"
         >
           <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-3.5">
-            {CORE_SKILLS.map((skill) => (
+            {CORE_SKILLS.map((skill, idx) => (
               <motion.li
                 key={skill}
+                custom={SKILL_RIPPLE_DELAYS[idx]}
                 variants={skillPillVariants}
                 whileHover={
                   prefersReducedMotion || isMobile

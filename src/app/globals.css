@@ -61,19 +61,6 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* Ultra-subtle museum-grade tactile editorial paper & brushed obsidian micro film-grain */
-.editorial-grain-overlay {
-  opacity: 0.02;
-  background-image: radial-gradient(
-      rgba(20, 14, 11, 0.72) 0.55px,
-      transparent 0.55px
-    ),
-    radial-gradient(rgba(232, 93, 4, 0.42) 0.45px, transparent 0.45px);
-  background-size: 6px 6px, 9px 9px;
-  background-position: 0 0, 3px 4px;
-  transform: translateZ(0);
-}
-
 /* Strict layout & paint containment for 60-120fps scroll performance */
 .section-perf {
   contain: layout style;
@@ -336,7 +323,7 @@ body {
     rgba(255, 255, 255, 0) 100%
   );
   transform: translate3d(-120%, 0, 0) skewX(-22deg);
-  transition: transform 680ms cubic-bezier(0.19, 1, 0.22, 1);
+  transition: transform 680ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btn-cta-sheen:hover::after {
@@ -363,7 +350,7 @@ body {
   );
   transform: translate3d(-72%, 0, 0) skewX(-16deg);
   opacity: 0;
-  transition: transform 820ms cubic-bezier(0.19, 1, 0.22, 1), opacity 260ms ease;
+  transition: transform 820ms cubic-bezier(0.16, 1, 0.3, 1), opacity 260ms ease;
 }
 
 .card-sheen-sweep:hover .card-sheen-beam {
